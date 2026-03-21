@@ -1,0 +1,13 @@
+/.vite/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/coverage/
+/frontend/.env
+/frontend/.env.local
+/backend/target/
+/backend/.env
+/.idea/
+/.vscode/
+*.log
+*.local
+.DS_Store

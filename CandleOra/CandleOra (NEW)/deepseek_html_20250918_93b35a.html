@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandleOra | Handmade Candles</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #C18C5D;
+            --secondary: #F5F5F5;
+            --accent: #E8C39E;
+            --dark: #333333;
+            --light: #FFFFFF;
+            --gray: #777777;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            background-color: var(--light);
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: var(--light);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .logo span {
+            font-weight: 400;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--primary);
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--secondary);
+            border-radius: 30px;
+            padding: 8px 15px;
+        }
+        
+        .search-bar input {
+            border: none;
+            background: transparent;
+            outline: none;
+            padding: 5px;
+            width: 180px;
+        }
+        
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #a9744a;
+            transform: translateY(-2px);
+        }
+        
+        /* Categories Section */
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            margin: 15px auto;
+        }
+        
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        
+        .category-card {
+            background: var(--secondary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .category-icon {
+            font-size: 32px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        /* Products Section */
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-img {
+            height: 200px;
+            background-color: var(--accent);
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .product-price {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .current-price {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .old-price {
+            text-decoration: line-through;
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .discount {
+            background: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 15px;
+        }
+        
+        .add-to-cart {
+            width: 100%;
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-to-cart:hover {
+            background: var(--primary);
+        }
+        
+        /* Candle Fixes Section */
+        .candle-fixes {
+            background: var(--secondary);
+        }
+        
+        .fixes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .fix-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        
+        .fix-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .fix-icon {
+            font-size: 20px;
+        }
+        
+        .cause {
+            background: #fff4e6;
+            padding: 10px 15px;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .fix-steps {
+            list-style-position: inside;
+            margin-bottom: 15px;
+        }
+        
+        .fix-steps li {
+            margin-bottom: 8px;
+        }
+        
+        /* FAQ Section */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .faq-question {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-answer {
+            color: var(--gray);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 30px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30px;
+            height: 2px;
+            background: var(--primary);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #999;
+            font-size: 14px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .section {
+                padding: 60px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">Candle<span>Ora</span></div>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">Track Order</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">3</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <h1>Crafting Comfort, Redefining Spaces</h1>
+            <p>Your Home, Your Signature Style! Discover our handmade candles designed to enhance your mood and create a divine, calming ambiance.</p>
+            <a href="#" class="btn">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Our Categories</h2>
+            <div class="categories">
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-ankh"></i></div>
+                    <h3>Flower</h3>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-candle-holder"></i></div>
+                    <h3>Holder</h3>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-glass-whiskey"></i></div>
+                    <h3>Glass</h3>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-gift"></i></div>
+                    <h3>Candle Sets</h3>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-fire"></i></div>
+                    <h3>Tea Light</h3>
+                </div>
+                <div class="category-card">
+                    <div class="category-icon"><i class="fas fa-texture"></i></div>
+                    <h3>Textured</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Best Selling Products -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Best Selling Products</h2>
+            <div class="products">
+                <div class="product-card">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1545975837-5a027f02ea87?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80')"></div>
+                    <div class="product-info">
+                        <h3 class="product-title">Vanilla Dream Candle</h3>
+                        <div class="product-price">
+                            <span class="current-price">₹200.00</span>
+                            <span class="old-price">₹230.00</span>
+                            <span class="discount">-13%</span>
+                        </div>
+                        <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1580325939677-b4da23V5a4f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80')"></div>
+                    <div class="product-info">
+                        <h3 class="product-title">Lavender Serenity</h3>
+                        <div class="product-price">
+                            <span class="current-price">₹200.00</span>
+                            <span class="old-price">₹230.00</span>
+                            <span class="discount">-13%</span>
+                        </div>
+                        <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1530103862676-de8c9debad1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80')"></div>
+                    <div class="product-info">
+                        <h3 class="product-title">Ocean Breeze</h3>
+                        <div class="product-price">
+                            <span class="current-price">₹200.00</span>
+                            <span class="old-price">₹230.00</span>
+                            <span class="discount">-13%</span>
+                        </div>
+                        <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1515471208290-8316c5a6cce7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80')"></div>
+                    <div class="product-info">
+                        <h3 class="product-title">Sandalwood Bliss</h3>
+                        <div class="product-price">
+                            <span class="current-price">₹200.00</span>
+                            <span class="old-price">₹230.00</span>
+                            <span class="discount">-13%</span>
+                        </div>
+                        <button class="add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Candle Fixes Section -->
+    <section class="section candle-fixes">
+        <div class="container">
+            <h2 class="section-title">Candle Fixes</h2>
+            <p class="section-subtitle" style="text-align: center; margin-bottom: 40px;">For every candle question, there's a CandleOra solution — your trusted guide to keep the glow alive.</p>
+            
+            <div class="fixes-container">
+                <div class="fix-card">
+                    <h3><i class="fas fa-fire fix-icon"></i> Candle Stops Burning in the Middle</h3>
+                    <div class="cause">
+                        <strong>Cause:</strong> Wick might be buried in wax or too short.
+                    </div>
+                    <ol class="fix-steps">
+                        <li>Extinguish the candle and let it cool completely.</li>
+                        <li>Use a spoon or wick tool to gently remove wax around the wick.</li>
+                        <li>Trim the wick to about ½ inch and relight.</li>
+                    </ol>
+                    <a href="#" class="btn" style="background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 15px; font-size: 14px;">Watch Video Tutorial</a>
+                </div>
+                
+                <div class="fix-card">
+                    <h3><i class="fas fa-tint fix-icon"></i> Uneven Burning or Tunneling</h3>
+                    <div class="cause">
+                        <strong>Cause:</strong> Wick not centered or not burning long enough on first use.
+                    </div>
+                    <ol class="fix-steps">
+                        <li>On the next burn, allow the wax to melt all the way to the edges.</li>
+                        <li>If tunneling is already there, use a foil wrap around the candle's rim to help even it out.</li>
+                    </ol>
+                    <a href="#" class="btn" style="background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 15px; font-size: 14px;">Watch Video Tutorial</a>
+                </div>
+                
+                <div class="fix-card">
+                    <h3><i class="fas fa-wind fix-icon"></i> Low Flame or Weak Scent Throw</h3>
+                    <div class="cause">
+                        <strong>Cause:</strong> Wick trimmed too short or fragrance not dispersing.
+                    </div>
+                    <ol class="fix-steps">
+                        <li>Gently pour out a little melted wax or scoop it with a spoon.</li>
+                        <li>Relight to let the wick breathe and flame grow.</li>
+                    </ol>
+                    <a href="#" class="btn" style="background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 15px; font-size: 14px;">Watch Video Tutorial</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        What makes CandleOra candles special?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Our candles are handmade with love, tested for quality and burn performance, and designed to enhance your mood, freshen your space, and create a divine, calming ambiance.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        Do CandleOra candles have scents?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Yes! Each candle is infused with carefully selected fragrances that match its category—whether it's Peace, Relax, Sleep, Fun, Love, Nature, or more.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How long do your candles burn?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        We test each candle for optimal burn time. Depending on the size and design, our candles can burn anywhere from 20 to 60 hours without losing fragrance or quality.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        Are your candles safe for indoor use?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Yes! Our candles are made with safe, high-quality wax and wicks. However, we always recommend placing them on a heat-resistant surface and never leaving them unattended while lit.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">Shop</a></li>
+                        <li><a href="#">Our Story</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Track Order</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Customer Care</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Returns & Cancellation</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Shipping & Delivery</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Categories</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">All Products</a></li>
+                        <li><a href="#">Flower Candles</a></li>
+                        <li><a href="#">Glass Candles</a></li>
+                        <li><a href="#">Candle Holders</a></li>
+                        <li><a href="#">Tea Lights</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Follow Us</h3>
+                    <p>Stay connected with us for updates and promotions</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                Copyright © 2025 CandleOra, Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple FAQ toggle functionality
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const icon = question.querySelector('i');
+                
+                answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+                icon.className = answer.style.display === 'block' ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+            });
+        });
+    </script>
+</body>
+</html>
