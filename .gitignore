@@ -1,5 +1,6 @@
 /.vite/
 /frontend/node_modules/
+/node_modules/
 /frontend/dist/
 /frontend/coverage/
 /frontend/.env
