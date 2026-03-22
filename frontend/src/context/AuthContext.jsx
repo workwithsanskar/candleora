@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import { createContext, useContext, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { authApi } from "../services/api";
+import { formatApiError } from "../utils/format";
 import {
   AUTH_STORAGE_KEY,
   clearStoredJson,
@@ -22,12 +24,41 @@ export function AuthProvider({ children }) {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (!session?.token) {
+      return;
+    }
+
+    let isMounted = true;
+
+    authApi
+      .getProfile()
+      .then((user) => {
+        if (isMounted) {
+          setSession((current) => (current ? { ...current, user } : current));
+        }
+      })
+      .catch((error) => {
+        if (isMounted && error?.response?.status === 401) {
+          setSession(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.token]);
+
   const login = async (credentials) => {
     setIsLoading(true);
     try {
       const response = await authApi.login(credentials);
       setSession(response);
+      toast.success("Signed in successfully.");
       return response;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +69,41 @@ export function AuthProvider({ children }) {
     try {
       const response = await authApi.signup(payload);
       setSession(response);
+      toast.success("Account created successfully.");
       return response;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const googleAuth = async (payload) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.googleAuth(payload);
+      setSession(response);
+      toast.success("Google sign-in completed.");
+      return response;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const phoneAuth = async (payload) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.phoneAuth(payload);
+      setSession(response);
+      toast.success("Phone number verified.");
+      return response;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -49,13 +114,36 @@ export function AuthProvider({ children }) {
       return null;
     }
 
-    const user = await authApi.getProfile();
-    setSession((current) => (current ? { ...current, user } : current));
-    return user;
+    try {
+      const user = await authApi.getProfile();
+      setSession((current) => (current ? { ...current, user } : current));
+      return user;
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        setSession(null);
+      }
+      throw error;
+    }
+  };
+
+  const updateProfile = async (payload) => {
+    try {
+      const user = await authApi.updateProfile(payload);
+      setSession((current) => (current ? { ...current, user } : current));
+      toast.success("Profile updated.");
+      return user;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
+    }
   };
 
   const logout = () => {
+    if (typeof window !== "undefined" && window.google?.accounts?.id) {
+      window.google.accounts.id.disableAutoSelect();
+    }
     setSession(null);
+    toast.success("Signed out.");
   };
 
   return (
@@ -68,7 +156,10 @@ export function AuthProvider({ children }) {
         isLoading,
         login,
         signup,
+        googleAuth,
+        phoneAuth,
         refreshProfile,
+        updateProfile,
         logout,
       }}
     >

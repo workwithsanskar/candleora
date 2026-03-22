@@ -1,65 +1,86 @@
 import { Link } from "react-router-dom";
+import BrandLogo from "./BrandLogo";
 
 function Footer() {
+  const handleFooterNavigation = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
   return (
-    <footer className="relative border-t border-brand-primary/10 bg-brand-dark text-white">
-      <div className="container-shell grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="space-y-4">
-          <p className="font-display text-3xl font-semibold">CandleOra</p>
-          <p className="max-w-sm text-sm leading-7 text-white/75">
-            Small-batch candles, occasion-ready gifting, and helpful candle care content in one warm storefront.
-          </p>
+    <footer id="footer" className="mt-16 bg-black text-white">
+      <div className="container-shell py-14">
+        <div className="flex justify-center">
+          <BrandLogo tone="light" className="max-w-[180px] sm:max-w-[230px]" />
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-accent">
-            Shop
-          </p>
-          <Link className="block text-sm text-white/75 transition hover:text-white" to="/shop">
-            All Products
-          </Link>
-          <Link
-            className="block text-sm text-white/75 transition hover:text-white"
-            to="/occasion-picks"
-          >
-            Occasion Picks
-          </Link>
-          <Link
-            className="block text-sm text-white/75 transition hover:text-white"
-            to="/cart"
-          >
-            Cart
-          </Link>
+        <div className="mt-12 grid gap-10 border-t border-white/10 pt-10 md:grid-cols-4">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
+              Quick Links
+            </p>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/" onClick={handleFooterNavigation}>
+              Home
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/shop" onClick={handleFooterNavigation}>
+              Shop
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/about-us" onClick={handleFooterNavigation}>
+              Our Story
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/contact" onClick={handleFooterNavigation}>
+              Contact
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/orders" onClick={handleFooterNavigation}>
+              Track Order
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
+              Customer Care
+            </p>
+            <p className="text-sm text-white/70">Returns & Cancellation</p>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/privacy-policy" onClick={handleFooterNavigation}>
+              Privacy Policy
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/terms-and-conditions" onClick={handleFooterNavigation}>
+              Terms & Conditions
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/faq" onClick={handleFooterNavigation}>
+              FAQ
+            </Link>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/candle-fixes" onClick={handleFooterNavigation}>
+              Candle Fixes
+            </Link>
+            <p className="text-sm text-white/70">Shipping & Delivery</p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
+              Categories
+            </p>
+            <Link className="block text-sm text-white/70 transition hover:text-white" to="/shop" onClick={handleFooterNavigation}>
+              All Products
+            </Link>
+            <p className="text-sm text-white/70">Flower Candles</p>
+            <p className="text-sm text-white/70">Glass Candles</p>
+            <p className="text-sm text-white/70">Candle Sets</p>
+            <p className="text-sm text-white/70">Textured Candles</p>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
+              Follow Us
+            </p>
+            <p className="text-sm text-white/70">Facebook</p>
+            <p className="text-sm text-white/70">Instagram</p>
+            <p className="text-sm text-white/70">LinkedIn</p>
+            <p className="text-sm text-white/70">WhatsApp</p>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-accent">
-            Learn
-          </p>
-          <Link
-            className="block text-sm text-white/75 transition hover:text-white"
-            to="/styling-guides"
-          >
-            Styling Guides
-          </Link>
-          <Link
-            className="block text-sm text-white/75 transition hover:text-white"
-            to="/candle-fixes"
-          >
-            Candle Fixes
-          </Link>
-          <Link className="block text-sm text-white/75 transition hover:text-white" to="/faq">
-            FAQ
-          </Link>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-accent">
-            Customer Care
-          </p>
-          <p className="text-sm text-white/75">hello@candleora.com</p>
-          <p className="text-sm text-white/75">Mon-Sat, 10 AM to 7 PM</p>
-          <p className="text-sm text-white/75">Instagram / Pinterest / YouTube</p>
+        <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-white/45">
+          Copyright (c) 2026 CandleOra, Inc.
         </div>
       </div>
     </footer>

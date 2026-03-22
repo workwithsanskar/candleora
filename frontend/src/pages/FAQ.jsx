@@ -38,11 +38,14 @@ function FAQ() {
 
   return (
     <section className="container-shell space-y-8 py-10">
-      <div>
-        <p className="eyebrow">FAQ</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
+      <div className="editorial-card bg-paper-glow p-6 sm:p-8">
+        <span className="editorial-badge">FAQ</span>
+        <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.95] text-brand-dark sm:text-6xl">
           Common questions, clearly answered.
         </h1>
+        <p className="mt-5 max-w-2xl text-sm leading-8 text-brand-dark/70 sm:text-base">
+          A calmer, cleaner answer space for shipping, scent, burn time, and candle care.
+        </p>
       </div>
 
       {isLoading ? (
@@ -55,7 +58,7 @@ function FAQ() {
             const isOpen = expandedId === faq.id;
 
             return (
-              <article key={faq.id} className="panel p-5 sm:p-6">
+              <article key={faq.id} className="editorial-card p-5 sm:p-6">
                 <button
                   type="button"
                   onClick={() => setExpandedId(isOpen ? null : faq.id)}

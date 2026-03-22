@@ -6,6 +6,9 @@
 /frontend/.env.local
 /backend/target/
 /backend/.env
+/backend/data/
+/.m2/
+/tmp_py/
 /.idea/
 /.vscode/
 *.log

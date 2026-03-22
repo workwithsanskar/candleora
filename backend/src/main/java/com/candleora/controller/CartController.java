@@ -2,6 +2,7 @@ package com.candleora.controller;
 
 import com.candleora.dto.cart.CartItemRequest;
 import com.candleora.dto.cart.CartResponse;
+import com.candleora.dto.cart.CartSyncRequest;
 import com.candleora.dto.cart.UpdateCartItemRequest;
 import com.candleora.security.UserPrincipal;
 import com.candleora.service.CartService;
@@ -37,6 +38,14 @@ public class CartController {
         @Valid @RequestBody CartItemRequest request
     ) {
         return cartService.addItem(((UserPrincipal) authentication.getPrincipal()).getUser(), request);
+    }
+
+    @PostMapping("/sync")
+    public CartResponse syncCart(
+        Authentication authentication,
+        @Valid @RequestBody CartSyncRequest request
+    ) {
+        return cartService.syncCart(((UserPrincipal) authentication.getPrincipal()).getUser(), request);
     }
 
     @PutMapping("/items/{itemId}")

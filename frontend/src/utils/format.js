@@ -18,9 +18,57 @@ export function formatDate(value) {
   }).format(new Date(value));
 }
 
+export function formatDateRange(startValue, endValue) {
+  if (!startValue && !endValue) {
+    return "Delivery estimate will be confirmed soon";
+  }
+
+  if (startValue && endValue) {
+    return `${formatDate(startValue)} - ${formatDate(endValue)}`;
+  }
+
+  return formatDate(startValue ?? endValue);
+}
+
+export function titleCase(value) {
+  const normalized = String(value ?? "");
+
+  if (normalized && normalized === normalized.toUpperCase() && normalized.length <= 8) {
+    return normalized;
+  }
+
+  return normalized
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function formatApiError(error) {
+  const payload = error?.response?.data;
+  const status = error?.response?.status;
+
+  if (!error?.response) {
+    return "We couldn't reach CandleOra right now. Make sure the backend is running on http://localhost:8080 and try again.";
+  }
+
+  if (status === 409) {
+    return payload?.message ?? "This email is already registered. Try logging in instead.";
+  }
+
+  if (status === 401) {
+    return payload?.message ?? "Invalid email or password.";
+  }
+
+  if (status >= 500) {
+    return payload?.message ?? "The server hit an issue while processing your request. Please try again.";
+  }
+
   return (
-    error?.response?.data?.message ??
+    payload?.message ??
+    payload?.detail ??
+    (typeof payload === "string" ? payload : null) ??
     error?.message ??
     "Something went wrong. Please try again."
   );

@@ -14,8 +14,11 @@ vi.mock("../services/api", () => ({
   catalogApi: mockCatalogApi,
 }));
 
-vi.mock("../components/ProductCard", () => ({
-  default: ({ product }) => <div data-testid="product-card">{product.name}</div>,
+vi.mock("../context/CartContext", () => ({
+  useCart: () => ({
+    items: [],
+    addToCart: vi.fn(),
+  }),
 }));
 
 describe("Shop", () => {
@@ -25,13 +28,17 @@ describe("Shop", () => {
 
     mockCatalogApi.getCategories.mockResolvedValue([
       { id: 1, name: "Glass", slug: "glass" },
-      { id: 2, name: "Flower", slug: "flower" },
+      { id: 2, name: "Sets", slug: "candle-sets" },
+      { id: 3, name: "Holders", slug: "holder" },
+      { id: 4, name: "Tea Lights", slug: "tea-light" },
+      { id: 5, name: "Textured", slug: "textured" },
     ]);
     mockCatalogApi.getProducts.mockResolvedValue({
       content: [
-        { id: 1, name: "Lavender Ember Jar" },
-        { id: 2, name: "Rose Petal Bloom" },
+        { id: 1, name: "Lavender Ember Jar", price: 799, originalPrice: 920, rating: 4.7 },
+        { id: 2, name: "Rose Petal Bloom", price: 899, originalPrice: 999, rating: 4.8 },
       ],
+      totalElements: 24,
       totalPages: 1,
     });
   });
@@ -47,9 +54,9 @@ describe("Shop", () => {
 
     expect(await screen.findByText("Glass")).toBeInTheDocument();
     expect(await screen.findByText("Lavender Ember Jar")).toBeInTheDocument();
-    expect(screen.getAllByTestId("product-card")).toHaveLength(2);
+    expect(screen.getByText("Showing 1-2 of 24 item(s)")).toBeInTheDocument();
     expect(mockCatalogApi.getProducts).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 0, size: 8, sort: "popular" }),
+      expect.objectContaining({ page: 0, size: 12, sort: "popular" }),
     );
   });
 
@@ -62,11 +69,11 @@ describe("Shop", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Flower" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Glass" }));
 
     await waitFor(() => {
       expect(mockCatalogApi.getProducts).toHaveBeenLastCalledWith(
-        expect.objectContaining({ category: "flower" }),
+        expect.objectContaining({ category: "glass" }),
       );
     });
   });

@@ -1,6 +1,7 @@
 package com.candleora.config;
 
 import com.candleora.entity.AppUser;
+import com.candleora.entity.AuthProvider;
 import com.candleora.entity.CandleFix;
 import com.candleora.entity.Category;
 import com.candleora.entity.Faq;
@@ -87,12 +88,15 @@ public class DataSeeder implements ApplicationRunner {
             product(
                 "Lavender Ember Jar",
                 "lavender-ember-jar",
-                "A calming lavender and cedar candle poured in a soft frosted glass vessel for evening wind-down rituals.",
+                "A calming lavender and cedar candle poured in a frosted glass vessel for evening wind-down rituals.",
                 799,
+                899,
                 12,
                 18,
-                "Relaxation",
+                "Self-care",
                 4.9,
+                "Lavender, cedarwood, soft musk",
+                "40-48 hours",
                 categories.get("glass"),
                 List.of(
                     "https://images.unsplash.com/photo-1602874801006-e26c327f2f17?auto=format&fit=crop&w=900&q=80",
@@ -104,10 +108,13 @@ public class DataSeeder implements ApplicationRunner {
                 "rose-petal-bloom",
                 "Romantic rose wax sculpture with a delicate floral scent designed for gifting and table styling.",
                 949,
+                1050,
                 10,
                 12,
                 "Wedding",
                 4.8,
+                "Rose, peony, white amber",
+                "30-36 hours",
                 categories.get("flower"),
                 List.of(
                     "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=900&q=80",
@@ -119,10 +126,13 @@ public class DataSeeder implements ApplicationRunner {
                 "textured-sandstone-pillar",
                 "A warm neutral pillar candle with sculpted texture that anchors coffee tables, consoles, and shelves.",
                 689,
+                749,
                 8,
                 25,
                 "Housewarming",
                 4.7,
+                "Vanilla bean, sandalwood, warm resin",
+                "35-42 hours",
                 categories.get("textured"),
                 List.of(
                     "https://images.unsplash.com/photo-1517705008128-361805f42e86?auto=format&fit=crop&w=900&q=80",
@@ -134,10 +144,13 @@ public class DataSeeder implements ApplicationRunner {
                 "golden-aura-holder-set",
                 "Two candle holders paired with matching mini pours for ready-to-style gifting.",
                 1299,
+                1499,
                 15,
                 9,
                 "Birthday",
                 4.9,
+                "Warm amber, vanilla orchid, cashmere",
+                "24-30 hours each",
                 categories.get("candle-sets"),
                 List.of(
                     "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80",
@@ -149,10 +162,13 @@ public class DataSeeder implements ApplicationRunner {
                 "tea-light-celebration-pack",
                 "Twelve tea lights in vanilla amber for intimate dinners, festive corners, and quick decor refreshes.",
                 499,
+                549,
                 6,
                 30,
-                "Birthday",
+                "Festivals",
                 4.6,
+                "Vanilla amber, clove, soft caramel",
+                "6-8 hours each",
                 categories.get("tea-light"),
                 List.of(
                     "https://images.unsplash.com/photo-1563170351-be82bc888aa4?auto=format&fit=crop&w=900&q=80",
@@ -164,10 +180,13 @@ public class DataSeeder implements ApplicationRunner {
                 "sculpted-marble-holder",
                 "A marble-look candle holder that elevates side tables and wedding centerpieces.",
                 899,
+                989,
                 9,
                 14,
-                "Wedding",
+                "Anniversary",
                 4.7,
+                "Unscented styling accent",
+                "Pairs with standard pillar candles",
                 categories.get("holder"),
                 List.of(
                     "https://images.unsplash.com/photo-1563170351-be82bc888aa4?auto=format&fit=crop&w=900&q=80",
@@ -179,10 +198,13 @@ public class DataSeeder implements ApplicationRunner {
                 "vanilla-hearth-glass",
                 "Creamy vanilla and sandalwood with a soft amber throw, ideal for living rooms and reading nooks.",
                 849,
+                949,
                 11,
                 20,
-                "Relaxation",
+                "Self-care",
                 4.8,
+                "Vanilla, sandalwood, amber",
+                "42-50 hours",
                 categories.get("glass"),
                 List.of(
                     "https://images.unsplash.com/photo-1563170351-be82bc888aa4?auto=format&fit=crop&w=900&q=80",
@@ -194,10 +216,13 @@ public class DataSeeder implements ApplicationRunner {
                 "garden-bloom-trio",
                 "A set of three petite floral candles for gifting baskets, bridal hampers, and vanity styling.",
                 1099,
+                1265,
                 13,
                 11,
                 "Wedding",
                 4.9,
+                "Gardenia, rosewater, white musk",
+                "18-22 hours each",
                 categories.get("flower"),
                 List.of(
                     "https://images.unsplash.com/photo-1602874801006-e26c327f2f17?auto=format&fit=crop&w=900&q=80",
@@ -211,19 +236,37 @@ public class DataSeeder implements ApplicationRunner {
         if (candleFixRepository.count() == 0) {
             candleFixRepository.saveAll(List.of(
                 candleFix(
-                    "Tunneling Wax",
-                    "The candle was extinguished before a full melt pool formed across the surface.",
-                    "1. Allow the candle to burn long enough for the top layer to melt edge to edge.\n2. If tunneling has started, wrap the top with foil and leave an opening above the wick.\n3. Burn again for 1 to 2 hours and trim the wick before the next use."
+                    "Candle Stops Burning in the Middle",
+                    "Wick might be buried in wax or too short.",
+                    """
+                    1. Extinguish the candle and let it cool completely.
+                    2. Use a spoon or wick tool to gently remove wax around the wick.
+                    3. Trim the wick to about 1/2 inch and relight.
+                    """
                 ),
                 candleFix(
-                    "Smoking Wick",
-                    "The wick has become too long or has collected carbon buildup while burning.",
-                    "1. Extinguish the flame safely.\n2. Trim the wick to about 1/4 inch.\n3. Remove loose soot before relighting and keep the candle away from strong drafts."
+                    "Uneven Burning or Tunneling",
+                    "Wick not centered or not burning long enough on first use.",
+                    """
+                    1. On the next burn, allow the wax to melt all the way to the edges.
+                    2. If tunneling is already there, use a foil wrap around the candle rim to help even it out.
+                    """
                 ),
                 candleFix(
-                    "Uneven Burn",
-                    "Air movement or an off-center wick is causing one side to melt faster than the other.",
-                    "1. Place the candle on a flat, draft-free surface.\n2. Rotate the candle between burns if needed.\n3. Encourage a full melt pool on the next burn to reset the surface."
+                    "Low Flame or Weak Scent Throw",
+                    "Wick trimmed too short or fragrance is not dispersing well.",
+                    """
+                    1. Gently pour out a little melted wax or scoop it with a spoon.
+                    2. Relight to let the wick breathe and the flame grow.
+                    """
+                ),
+                candleFix(
+                    "Mushrooming Wick",
+                    "Wick is too long or has carbon build-up.",
+                    """
+                    1. Extinguish the candle.
+                    2. Trim the mushroomed tip before relighting.
+                    """
                 )
             ));
         }
@@ -271,10 +314,46 @@ public class DataSeeder implements ApplicationRunner {
 
         if (faqRepository.count() == 0) {
             faqRepository.saveAll(List.of(
-                faq("How long should I burn my candle the first time?", "Burn it until the top wax layer melts edge to edge to prevent tunneling.", 1),
-                faq("Do you offer gift-ready options?", "Yes. Occasion picks and select product sets are designed for gifting and ready presentation.", 2),
-                faq("Can I use CandleOra products for events?", "Yes. Wedding and celebration-friendly candles are included in the occasion filters.", 3),
-                faq("How do I care for the wick?", "Trim it to about 1/4 inch before each burn for a cleaner, steadier flame.", 4)
+                faq(
+                    "What makes CandleOra candles special?",
+                    "Our candles are handmade with love, tested for quality and burn performance, and designed to enhance your mood, freshen your space, and create a calming ambiance.",
+                    1
+                ),
+                faq(
+                    "Do CandleOra candles have scents?",
+                    "Yes. Each candle is infused with carefully selected fragrances that match its mood, occasion, or styling intention.",
+                    2
+                ),
+                faq(
+                    "How long do your candles burn?",
+                    "Depending on the size and design, our candles can burn anywhere from 20 to 60 hours without losing fragrance or quality.",
+                    3
+                ),
+                faq(
+                    "Are your candles safe for indoor use?",
+                    "Yes. Our candles are made with safe, high-quality wax and wicks. Always place them on a heat-resistant surface and never leave them unattended while lit.",
+                    4
+                ),
+                faq(
+                    "Can I gift CandleOra candles for special occasions?",
+                    "Absolutely. Our occasion edits are designed for birthdays, weddings, anniversaries, festivals, housewarmings, and thoughtful self-care gifting.",
+                    5
+                ),
+                faq(
+                    "How should I care for the wick?",
+                    "Trim the wick to about 1/4 inch before each burn for a cleaner flame and more even wax melt.",
+                    6
+                ),
+                faq(
+                    "How should I store my candles?",
+                    "Keep them in a cool, dry place away from direct sunlight and heat so the wax shape, color, and fragrance stay intact.",
+                    7
+                ),
+                faq(
+                    "Do you share order updates after checkout?",
+                    "Yes. You can review order details in your account, and the checkout email is used for order confirmation and invoice communication.",
+                    8
+                )
             ));
         }
     }
@@ -300,10 +379,13 @@ public class DataSeeder implements ApplicationRunner {
         String slug,
         String description,
         double price,
+        double originalPrice,
         int discount,
         int stock,
         String occasionTag,
         double rating,
+        String scentNotes,
+        String burnTime,
         Category category,
         List<String> imageUrls
     ) {
@@ -312,10 +394,13 @@ public class DataSeeder implements ApplicationRunner {
         product.setSlug(slug);
         product.setDescription(description);
         product.setPrice(BigDecimal.valueOf(price));
+        product.setOriginalPrice(BigDecimal.valueOf(originalPrice));
         product.setDiscount(discount);
         product.setStock(stock);
         product.setOccasionTag(occasionTag);
         product.setRating(BigDecimal.valueOf(rating));
+        product.setScentNotes(scentNotes);
+        product.setBurnTime(burnTime);
         product.setCategory(category);
         product.setImageUrls(imageUrls);
         return product;
@@ -325,7 +410,7 @@ public class DataSeeder implements ApplicationRunner {
         CandleFix fix = new CandleFix();
         fix.setTitle(title);
         fix.setCause(cause);
-        fix.setFixSteps(steps);
+        fix.setFixSteps(steps.strip());
         fix.setVideoUrl("https://example.com/tutorial");
         fix.setBeforeImage("https://images.unsplash.com/photo-1602874801006-e26c327f2f17?auto=format&fit=crop&w=900&q=80");
         fix.setAfterImage("https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80");
@@ -362,6 +447,9 @@ public class DataSeeder implements ApplicationRunner {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode("Password123!"));
         user.setRole(role);
+        user.setAuthProvider(AuthProvider.LOCAL);
+        user.setEmailVerified(true);
+        user.setPhoneVerified(false);
         return user;
     }
 }

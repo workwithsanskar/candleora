@@ -37,6 +37,9 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal originalPrice;
+
     @Column(nullable = false)
     private Integer discount;
 
@@ -48,6 +51,12 @@ public class Product {
 
     @Column(nullable = false, precision = 3, scale = 1)
     private BigDecimal rating;
+
+    @Column(nullable = false, length = 1200)
+    private String scentNotes;
+
+    @Column(nullable = false, length = 120)
+    private String burnTime;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
@@ -102,6 +111,14 @@ public class Product {
         this.price = price;
     }
 
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
     public Integer getDiscount() {
         return discount;
     }
@@ -132,6 +149,22 @@ public class Product {
 
     public void setRating(BigDecimal rating) {
         this.rating = rating;
+    }
+
+    public String getScentNotes() {
+        return scentNotes;
+    }
+
+    public void setScentNotes(String scentNotes) {
+        this.scentNotes = scentNotes;
+    }
+
+    public String getBurnTime() {
+        return burnTime;
+    }
+
+    public void setBurnTime(String burnTime) {
+        this.burnTime = burnTime;
     }
 
     public Category getCategory() {

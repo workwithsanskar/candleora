@@ -1,8 +1,10 @@
 package com.candleora.entity;
 
 public enum OrderStatus {
-    PLACED,
-    PROCESSING,
+    PENDING_PAYMENT,
+    CONFIRMED,
     SHIPPED,
-    DELIVERED
+    OUT_FOR_DELIVERY,
+    DELIVERED,
+    CANCELLED
 }

@@ -71,21 +71,23 @@ function StylingGuideDetail() {
 
   return (
     <section className="container-shell space-y-8 py-10">
-      <img
-        src={guide.imageUrl}
-        alt={guide.title}
-        className="panel aspect-[16/7] w-full object-cover"
-      />
-      <article className="panel p-6 sm:p-8">
-        <p className="eyebrow">Step-by-step</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
-          {guide.title}
-        </h1>
-        <p className="mt-5 text-sm leading-7 text-brand-dark/70">{guide.description}</p>
-        <div className="mt-8 whitespace-pre-line text-sm leading-8 text-brand-dark/80">
-          {guide.detailedContent}
-        </div>
-      </article>
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <img
+          src={guide.imageUrl}
+          alt={guide.title}
+          className="h-full w-full rounded-[34px] object-cover shadow-editorial"
+        />
+        <article className="editorial-card p-6 sm:p-8">
+          <p className="eyebrow">Step-by-step</p>
+          <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
+            {guide.title}
+          </h1>
+          <p className="mt-5 text-sm leading-8 text-brand-dark/70">{guide.description}</p>
+          <div className="mt-8 whitespace-pre-line text-sm leading-8 text-brand-dark/80">
+            {guide.detailedContent}
+          </div>
+        </article>
+      </div>
     </section>
   );
 }

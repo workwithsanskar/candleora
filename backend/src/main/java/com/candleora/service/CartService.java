@@ -3,6 +3,7 @@ package com.candleora.service;
 import com.candleora.dto.cart.CartItemRequest;
 import com.candleora.dto.cart.CartItemResponse;
 import com.candleora.dto.cart.CartResponse;
+import com.candleora.dto.cart.CartSyncRequest;
 import com.candleora.dto.cart.UpdateCartItemRequest;
 import com.candleora.entity.AppUser;
 import com.candleora.entity.CartItem;
@@ -44,6 +45,13 @@ public class CartService {
 
         cartItem.setQuantity(cartItem.getQuantity() + request.quantity());
         cartItemRepository.save(cartItem);
+        return getCart(user);
+    }
+
+    public CartResponse syncCart(AppUser user, CartSyncRequest request) {
+        for (CartItemRequest itemRequest : request.items()) {
+            addItem(user, itemRequest);
+        }
         return getCart(user);
     }
 

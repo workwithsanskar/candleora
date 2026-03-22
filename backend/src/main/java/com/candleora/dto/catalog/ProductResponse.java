@@ -10,10 +10,13 @@ public record ProductResponse(
     String slug,
     String description,
     BigDecimal price,
+    BigDecimal originalPrice,
     Integer discount,
     Integer stock,
     String occasionTag,
     BigDecimal rating,
+    String scentNotes,
+    String burnTime,
     CategoryResponse category,
     List<String> imageUrls,
     Instant createdAt

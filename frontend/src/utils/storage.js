@@ -1,5 +1,6 @@
 export const AUTH_STORAGE_KEY = "candleora.auth";
 export const GUEST_CART_STORAGE_KEY = "candleora.guest-cart";
+export const WISHLIST_STORAGE_KEY = "candleora.wishlist";
 
 export function readStoredJson(key, fallbackValue) {
   if (typeof window === "undefined") {

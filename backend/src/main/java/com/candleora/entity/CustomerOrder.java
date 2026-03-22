@@ -16,6 +16,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,15 @@ public class CustomerOrder {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status = OrderStatus.PLACED;
+    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentProvider paymentProvider = PaymentProvider.COD;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.COD_PENDING;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -43,6 +52,12 @@ public class CustomerOrder {
 
     @Column(nullable = false)
     private String phone;
+
+    @Column(nullable = false)
+    private String contactEmail;
+
+    @Column
+    private String alternatePhoneNumber;
 
     @Column(nullable = false)
     private String addressLine1;
@@ -59,8 +74,32 @@ public class CustomerOrder {
     @Column(nullable = false)
     private String postalCode;
 
+    @Column
+    private String locationLabel;
+
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @Column(nullable = false)
     private String paymentMethod;
+
+    @Column
+    private String gatewayOrderId;
+
+    @Column
+    private String gatewayPaymentId;
+
+    @Column(length = 512)
+    private String gatewaySignature;
+
+    @Column
+    private LocalDate estimatedDeliveryStart;
+
+    @Column
+    private LocalDate estimatedDeliveryEnd;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
@@ -93,6 +132,22 @@ public class CustomerOrder {
         this.status = status;
     }
 
+    public PaymentProvider getPaymentProvider() {
+        return paymentProvider;
+    }
+
+    public void setPaymentProvider(PaymentProvider paymentProvider) {
+        this.paymentProvider = paymentProvider;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -115,6 +170,22 @@ public class CustomerOrder {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
+
+    public String getAlternatePhoneNumber() {
+        return alternatePhoneNumber;
+    }
+
+    public void setAlternatePhoneNumber(String alternatePhoneNumber) {
+        this.alternatePhoneNumber = alternatePhoneNumber;
     }
 
     public String getAddressLine1() {
@@ -157,12 +228,76 @@ public class CustomerOrder {
         this.postalCode = postalCode;
     }
 
+    public String getLocationLabel() {
+        return locationLabel;
+    }
+
+    public void setLocationLabel(String locationLabel) {
+        this.locationLabel = locationLabel;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     public String getPaymentMethod() {
         return paymentMethod;
     }
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getGatewayOrderId() {
+        return gatewayOrderId;
+    }
+
+    public void setGatewayOrderId(String gatewayOrderId) {
+        this.gatewayOrderId = gatewayOrderId;
+    }
+
+    public String getGatewayPaymentId() {
+        return gatewayPaymentId;
+    }
+
+    public void setGatewayPaymentId(String gatewayPaymentId) {
+        this.gatewayPaymentId = gatewayPaymentId;
+    }
+
+    public String getGatewaySignature() {
+        return gatewaySignature;
+    }
+
+    public void setGatewaySignature(String gatewaySignature) {
+        this.gatewaySignature = gatewaySignature;
+    }
+
+    public LocalDate getEstimatedDeliveryStart() {
+        return estimatedDeliveryStart;
+    }
+
+    public void setEstimatedDeliveryStart(LocalDate estimatedDeliveryStart) {
+        this.estimatedDeliveryStart = estimatedDeliveryStart;
+    }
+
+    public LocalDate getEstimatedDeliveryEnd() {
+        return estimatedDeliveryEnd;
+    }
+
+    public void setEstimatedDeliveryEnd(LocalDate estimatedDeliveryEnd) {
+        this.estimatedDeliveryEnd = estimatedDeliveryEnd;
     }
 
     public List<OrderItem> getItems() {

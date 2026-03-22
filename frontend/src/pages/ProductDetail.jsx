@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import StatusView from "../components/StatusView";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { catalogApi } from "../services/api";
 import { formatApiError, formatCurrency } from "../utils/format";
 import { normalizeProduct } from "../utils/normalize";
@@ -11,6 +12,7 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
@@ -80,16 +82,17 @@ function ProductDetail() {
   }
 
   const totalPrice = product.price * quantity;
+  const wishlisted = isWishlisted(product.id);
 
   return (
     <section className="container-shell space-y-14 py-10">
-      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-8 xl:grid-cols-[0.94fr_1.06fr]">
         <div className="space-y-4">
-          <div className="panel overflow-hidden bg-brand-secondary p-4">
+          <div className="overflow-hidden rounded-[36px] border border-brand-primary/15 bg-white/80 p-4 shadow-editorial">
             <img
               src={selectedImage}
               alt={product.name}
-              className="aspect-square w-full rounded-[24px] object-cover"
+              className="aspect-[4/4.3] w-full rounded-[28px] object-cover"
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -100,7 +103,7 @@ function ProductDetail() {
                 onClick={() => setSelectedImage(imageUrl)}
                 className={`overflow-hidden rounded-[22px] border p-1 transition ${
                   selectedImage === imageUrl
-                    ? "border-brand-primary"
+                    ? "border-brand-primary shadow-float"
                     : "border-transparent bg-white/70"
                 }`}
               >
@@ -114,10 +117,12 @@ function ProductDetail() {
           </div>
         </div>
 
-        <div className="panel space-y-6 p-6 sm:p-8">
+        <div className="editorial-card space-y-6 bg-paper-glow p-6 sm:p-8">
           <div>
-            <p className="eyebrow">{product.category?.name ?? "Candle collection"}</p>
-            <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
+            <span className="editorial-badge">
+              {product.category?.name ?? "Candle collection"}
+            </span>
+            <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.95] text-brand-dark sm:text-6xl">
               {product.name}
             </h1>
             <p className="mt-3 text-sm font-semibold uppercase tracking-[0.28em] text-brand-muted">
@@ -129,9 +134,9 @@ function ProductDetail() {
             <p className="text-4xl font-extrabold text-brand-dark">
               {formatCurrency(product.price)}
             </p>
-            {product.discount > 0 && (
+            {product.originalPrice > product.price && (
               <p className="text-lg text-brand-muted line-through">
-                {formatCurrency(product.price * (1 + product.discount / 100))}
+                {formatCurrency(product.originalPrice)}
               </p>
             )}
             <p className="rounded-full bg-brand-secondary px-4 py-2 text-sm font-semibold text-brand-dark">
@@ -141,7 +146,7 @@ function ProductDetail() {
 
           <p className="text-sm leading-8 text-brand-dark/75">{product.description}</p>
 
-          <div className="grid gap-5 rounded-[28px] bg-brand-secondary p-5 sm:grid-cols-[auto_1fr] sm:items-end">
+          <div className="grid gap-5 rounded-[30px] bg-white/75 p-5 shadow-float sm:grid-cols-[auto_1fr] sm:items-end">
             <div className="space-y-2">
               <p className="text-sm font-semibold text-brand-dark">Quantity</p>
               <div className="inline-flex items-center rounded-full border border-brand-primary/15 bg-white">
@@ -155,8 +160,13 @@ function ProductDetail() {
                 <span className="min-w-12 text-center text-sm font-semibold">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((current) => current + 1)}
-                  className="px-4 py-3 text-lg"
+                  onClick={() =>
+                    setQuantity((current) =>
+                      product.stock > 0 ? Math.min(current + 1, product.stock) : current,
+                    )
+                  }
+                  disabled={product.stock <= quantity}
+                  className="px-4 py-3 text-lg disabled:opacity-40"
                 >
                   +
                 </button>
@@ -178,9 +188,10 @@ function ProductDetail() {
                 await addToCart(product, quantity);
                 navigate("/cart");
               }}
-              className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary"
+              disabled={product.stock <= 0}
+              className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Add to Cart
+              {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
             </button>
             <button
               type="button"
@@ -188,21 +199,49 @@ function ProductDetail() {
                 await addToCart(product, quantity);
                 navigate("/checkout");
               }}
-              className="rounded-full border border-brand-primary/20 px-6 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:bg-brand-primary hover:text-white"
+              disabled={product.stock <= 0}
+              className="rounded-full border border-brand-primary/20 px-6 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:bg-brand-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Buy Now
             </button>
+            <button
+              type="button"
+              onClick={() => toggleWishlist(product)}
+              className={`rounded-full border px-6 py-3 text-sm font-semibold transition ${
+                wishlisted
+                  ? "border-transparent bg-[#2f241d] text-white"
+                  : "border-brand-primary/20 text-brand-dark hover:border-brand-primary hover:bg-brand-primary hover:text-white"
+              }`}
+            >
+              {wishlisted ? "Wishlisted" : "Add to Wishlist"}
+            </button>
           </div>
 
-          <div className="rounded-[24px] border border-brand-primary/10 bg-white p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-muted">
-              Availability
-            </p>
-            <p className="mt-3 text-sm leading-7 text-brand-dark/70">
-              {product.stock > 0
-                ? `${product.stock} units available. Orders are packed with care and dispatched with protective wrapping.`
-                : "Currently unavailable."}
-            </p>
+          <div className="grid gap-4 rounded-[28px] border border-brand-primary/10 bg-white/70 p-5 md:grid-cols-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-muted">
+                Availability
+              </p>
+              <p className="mt-3 text-sm leading-7 text-brand-dark/70">
+                {product.stock > 5
+                  ? `${product.stock} units available.`
+                  : product.stock > 0
+                    ? `Only ${product.stock} left in stock.`
+                    : "Currently unavailable."}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-muted">
+                Scent notes
+              </p>
+              <p className="mt-3 text-sm leading-7 text-brand-dark/70">{product.scentNotes}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-muted">
+                Burn time
+              </p>
+              <p className="mt-3 text-sm leading-7 text-brand-dark/70">{product.burnTime}</p>
+            </div>
           </div>
         </div>
       </div>

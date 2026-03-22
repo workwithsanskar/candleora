@@ -8,10 +8,13 @@ export function normalizeProduct(product) {
     name: product?.name ?? "Candle",
     description: product?.description ?? "Hand-poured candle crafted for a warm, calm space.",
     price: Number(product?.price ?? 0),
+    originalPrice: Number(product?.originalPrice ?? product?.price ?? 0),
     discount: Number(product?.discount ?? 0),
     stock: Number(product?.stock ?? 0),
     occasionTag: product?.occasionTag ?? "Relaxation",
     rating: Number(product?.rating ?? 4.7),
+    scentNotes: product?.scentNotes ?? "Warm signature fragrance",
+    burnTime: product?.burnTime ?? "20-60 hours",
     imageUrls:
       Array.isArray(product?.imageUrls) && product.imageUrls.length
         ? product.imageUrls

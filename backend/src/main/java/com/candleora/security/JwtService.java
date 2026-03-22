@@ -35,7 +35,7 @@ public class JwtService {
 
         return Jwts.builder()
             .claims(claims)
-            .subject(user.getEmail())
+            .subject(String.valueOf(user.getId()))
             .issuedAt(Date.from(issuedAt))
             .expiration(Date.from(expiresAt))
             .signWith(getSigningKey())
@@ -51,8 +51,14 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        return extractUsername(token).equalsIgnoreCase(userDetails.getUsername())
-            && extractAllClaims(token).getExpiration().after(new Date());
+        String subject = extractUsername(token);
+        boolean subjectMatches = subject.equalsIgnoreCase(userDetails.getUsername());
+
+        if (!subjectMatches && userDetails instanceof UserPrincipal principal) {
+            subjectMatches = subject.equals(String.valueOf(principal.getId()));
+        }
+
+        return subjectMatches && extractAllClaims(token).getExpiration().after(new Date());
     }
 
     private Claims extractAllClaims(String token) {
@@ -67,7 +73,7 @@ public class JwtService {
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(jwtSecret);
-        } catch (IllegalArgumentException exception) {
+        } catch (RuntimeException exception) {
             keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         }
         return Keys.hmacShaKeyFor(keyBytes);

@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { createContext, useContext, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
 import { cartApi } from "../services/api";
 import { formatApiError } from "../utils/format";
@@ -37,9 +38,12 @@ export function CartProvider({ children }) {
         if (isAuthenticated) {
           const guestItems = readStoredJson(GUEST_CART_STORAGE_KEY, []);
           if (guestItems.length) {
-            for (const item of guestItems) {
-              await cartApi.addItem({ productId: item.productId, quantity: item.quantity });
-            }
+            await cartApi.syncCart({
+              items: guestItems.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+              })),
+            });
             clearStoredJson(GUEST_CART_STORAGE_KEY);
           }
 
@@ -57,6 +61,7 @@ export function CartProvider({ children }) {
       } catch (cartError) {
         if (isMounted) {
           setError(formatApiError(cartError));
+          toast.error(formatApiError(cartError));
         }
       } finally {
         if (isMounted) {
@@ -82,6 +87,7 @@ export function CartProvider({ children }) {
     if (isAuthenticated) {
       const response = await cartApi.addItem({ productId: product.id, quantity });
       setCart(normalizeCartResponse(response));
+      toast.success("Added to cart.");
       return;
     }
 
@@ -90,6 +96,7 @@ export function CartProvider({ children }) {
       createGuestCartItem(product, quantity),
     );
     syncGuestCart(nextItems);
+    toast.success("Added to cart.");
   };
 
   const updateQuantity = async (itemId, quantity) => {
@@ -101,6 +108,7 @@ export function CartProvider({ children }) {
     if (isAuthenticated) {
       const response = await cartApi.updateItem(itemId, { quantity });
       setCart(normalizeCartResponse(response));
+      toast.success("Cart updated.");
       return;
     }
 
@@ -110,6 +118,7 @@ export function CartProvider({ children }) {
       quantity,
     );
     syncGuestCart(nextItems);
+    toast.success("Cart updated.");
   };
 
   const removeFromCart = async (itemId) => {
@@ -117,6 +126,7 @@ export function CartProvider({ children }) {
     if (isAuthenticated) {
       const response = await cartApi.removeItem(itemId);
       setCart(normalizeCartResponse(response));
+      toast.success("Removed from cart.");
       return;
     }
 
@@ -124,6 +134,7 @@ export function CartProvider({ children }) {
       (item) => item.id !== itemId,
     );
     syncGuestCart(nextItems);
+    toast.success("Removed from cart.");
   };
 
   const clearCart = () => {

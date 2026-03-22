@@ -128,10 +128,13 @@ public class CatalogService {
             product.getSlug(),
             product.getDescription(),
             product.getPrice(),
+            product.getOriginalPrice(),
             product.getDiscount(),
             product.getStock(),
             product.getOccasionTag(),
             product.getRating(),
+            product.getScentNotes(),
+            product.getBurnTime(),
             new CategoryResponse(
                 product.getCategory().getId(),
                 product.getCategory().getName(),

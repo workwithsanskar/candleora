@@ -129,6 +129,7 @@ function Cart() {
           ) : (
             <Link
               to="/login"
+              state={{ from: { pathname: "/checkout" } }}
               className="block rounded-full bg-brand-primary px-5 py-3 text-center text-sm font-semibold text-white"
             >
               Sign in to checkout

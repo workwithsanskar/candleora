@@ -31,8 +31,18 @@ public class OrderController {
         return orderService.placeOrder(((UserPrincipal) authentication.getPrincipal()).getUser(), request);
     }
 
+    @GetMapping
+    public List<OrderResponse> getOrderHistory(Authentication authentication) {
+        return orderService.getOrders(((UserPrincipal) authentication.getPrincipal()).getUser());
+    }
+
     @GetMapping("/me")
     public List<OrderResponse> getOrders(Authentication authentication) {
         return orderService.getOrders(((UserPrincipal) authentication.getPrincipal()).getUser());
+    }
+
+    @GetMapping("/{orderId}")
+    public OrderResponse getOrder(Authentication authentication, @org.springframework.web.bind.annotation.PathVariable Long orderId) {
+        return orderService.getOrder(((UserPrincipal) authentication.getPrincipal()).getUser(), orderId);
     }
 }
