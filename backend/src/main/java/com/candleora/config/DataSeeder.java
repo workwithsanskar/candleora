@@ -359,12 +359,16 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedUsers() {
-        if (appUserRepository.count() > 0) {
+        ensureUserExists("Demo Customer", "demo@candleora.com", Role.USER);
+        ensureUserExists("CandleOra Admin", "admin@candleora.com", Role.ADMIN);
+    }
+
+    private void ensureUserExists(String name, String email, Role role) {
+        if (appUserRepository.findByEmailIgnoreCase(email).isPresent()) {
             return;
         }
 
-        appUserRepository.save(user("Demo Customer", "demo@candleora.com", Role.USER));
-        appUserRepository.save(user("CandleOra Admin", "admin@candleora.com", Role.ADMIN));
+        appUserRepository.save(user(name, email, role));
     }
 
     private Category category(String name, String slug) {
