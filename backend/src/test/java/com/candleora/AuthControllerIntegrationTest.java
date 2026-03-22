@@ -30,6 +30,25 @@ class AuthControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void publicSignupReturnsTokenAndUserPayload() throws Exception {
+        String email = "public-user-" + UUID.randomUUID() + "@candleora.com";
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/public/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new SignupBody(
+                        "Public Test User",
+                        email,
+                        "Password123!"
+                    )))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.user.email").value(email))
+            .andExpect(jsonPath("$.user.role").value("USER"));
+    }
+
+    @Test
     void loginReturnsTokenAndAllowsAccessToProfileEndpoint() throws Exception {
         String token = loginAsDemoUser();
 
@@ -42,6 +61,25 @@ class AuthControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.role").value("USER"));
     }
 
+    @Test
+    void publicLoginReturnsTokenAndAllowsAccessToProfileEndpoint() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/public/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new LoginBody(
+                        "demo@candleora.com",
+                        "Password123!"
+                    )))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.user.email").value("demo@candleora.com"))
+            .andExpect(jsonPath("$.user.role").value("USER"));
+    }
+
     private record SignupBody(String name, String email, String password) {
+    }
+
+    private record LoginBody(String email, String password) {
     }
 }

@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -48,29 +47,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1)
-    public SecurityFilterChain publicAuthSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .securityMatcher(
-                "/api/public/**",
-                "/api/auth/signup",
-                "/api/auth/register",
-                "/api/auth/login",
-                "/api/auth/google",
-                "/api/auth/phone"
-            )
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .anyRequest().permitAll());
-
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -78,6 +54,15 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/public/auth/**").permitAll()
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/auth/signup",
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/google",
+                    "/api/auth/phone"
+                ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/fixes", "/api/guides", "/api/faqs").permitAll()
                 .anyRequest().authenticated())
