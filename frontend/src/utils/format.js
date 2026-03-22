@@ -48,7 +48,10 @@ export function titleCase(value) {
 export function formatApiError(error) {
   const payload = error?.response?.data;
   const status = error?.response?.status;
-  const firebaseCode = error?.code;
+  const firebaseCode =
+    typeof error?.code === "string" && error.code.startsWith("auth/")
+      ? error.code
+      : null;
 
   if (firebaseCode) {
     return formatFirebaseError(firebaseCode);
