@@ -33,6 +33,7 @@ candleora-frontend/
   - `SPRING_DATASOURCE_PASSWORD`
   - `JWT_SECRET`
   - `FRONTEND_URL`
+  - `FRONTEND_ORIGIN_PATTERNS`
   - `GOOGLE_CLIENT_ID`
   - `FIREBASE_PROJECT_ID`
   - `RAZORPAY_KEY_ID`
@@ -47,6 +48,17 @@ candleora-frontend/
 5. Start the backend from `backend/` with `mvn spring-boot:run`.
 6. Keep that backend terminal open while you work.
 7. Run the frontend from `frontend/`.
+
+## Vercel + Render deployment
+
+- Frontend on Vercel should use:
+  - `VITE_API_BASE_URL=https://candleora.onrender.com/api`
+- Backend on Render should use:
+  - `FRONTEND_URL=https://candleora.vercel.app`
+  - `FRONTEND_ORIGIN_PATTERNS=https://*.vercel.app`
+- The Render root URL may return `403` because it is an API service. Validate the backend with routes such as:
+  - `https://candleora.onrender.com/api/products`
+  - `https://candleora.onrender.com/api/categories`
 
 ## Local backend behavior
 

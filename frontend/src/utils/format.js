@@ -50,7 +50,7 @@ export function formatApiError(error) {
   const status = error?.response?.status;
 
   if (!error?.response) {
-    return "We couldn't reach CandleOra right now. Make sure the backend is running on http://localhost:8080 and try again.";
+    return "We couldn't reach CandleOra right now. The backend may be unavailable or waking up. Please try again in a moment.";
   }
 
   if (status === 409) {

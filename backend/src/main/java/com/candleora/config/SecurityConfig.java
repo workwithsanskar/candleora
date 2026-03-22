@@ -2,7 +2,9 @@ package com.candleora.config;
 
 import com.candleora.security.AppUserDetailsService;
 import com.candleora.security.JwtAuthenticationFilter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +35,9 @@ public class SecurityConfig {
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
+
+    @Value("${app.frontend-origin-patterns:}")
+    private String frontendOriginPatterns;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -104,7 +109,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173"));
+        configuration.setAllowedOrigins(buildAllowedOrigins());
+        configuration.setAllowedOriginPatterns(buildAllowedOriginPatterns());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -112,5 +118,31 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private List<String> buildAllowedOrigins() {
+        return Stream.of(frontendUrl, "https://candleora.vercel.app", "http://localhost:5173")
+            .filter(origin -> origin != null && !origin.isBlank())
+            .distinct()
+            .toList();
+    }
+
+    private List<String> buildAllowedOriginPatterns() {
+        List<String> patterns = new ArrayList<>();
+
+        if (frontendOriginPatterns != null && !frontendOriginPatterns.isBlank()) {
+            patterns.addAll(
+                Stream.of(frontendOriginPatterns.split(","))
+                    .map(String::trim)
+                    .filter(pattern -> !pattern.isBlank())
+                    .toList()
+            );
+        }
+
+        if (!patterns.contains("https://*.vercel.app")) {
+            patterns.add("https://*.vercel.app");
+        }
+
+        return patterns;
     }
 }
