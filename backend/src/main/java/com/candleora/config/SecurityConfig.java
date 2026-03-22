@@ -2,6 +2,7 @@ package com.candleora.config;
 
 import com.candleora.security.AppUserDetailsService;
 import com.candleora.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -52,11 +53,18 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) ->
+                    writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication required")
+                )
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    writeError(response, HttpServletResponse.SC_FORBIDDEN, "Access denied")
+                )
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/public/auth/**").permitAll()
                 .requestMatchers(
-                    HttpMethod.POST,
+                    "/api/public/auth/**",
                     "/api/auth/signup",
                     "/api/auth/register",
                     "/api/auth/login",
@@ -129,5 +137,17 @@ public class SecurityConfig {
         }
 
         return patterns;
+    }
+
+    private void writeError(HttpServletResponse response, int status, String message) throws java.io.IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.getWriter().write(
+            "{\"status\":" + status + ",\"message\":\"" + message + "\"}"
+        );
     }
 }
