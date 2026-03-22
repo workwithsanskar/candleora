@@ -4,6 +4,9 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   plugins: [react()],
+  esbuild: {
+    jsxInject: 'import React from "react"',
+  },
   resolve: {
     alias: {
       tslib: fileURLToPath(new URL("./src/vendor/tslib.js", import.meta.url)),

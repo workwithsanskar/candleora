@@ -21,12 +21,12 @@ class CatalogControllerIntegrationTest extends IntegrationTestSupport {
     void getProductsAppliesCategoryAndOccasionFilters() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/products")
-                    .param("category", "glass")
-                    .param("occasion", "Relaxation")
+                    .param("category", "flower")
+                    .param("occasion", "Wedding")
             )
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].category.slug").value("glass"))
-            .andExpect(jsonPath("$.content[0].occasionTag").value("Relaxation"));
+            .andExpect(jsonPath("$.content[0].category.slug").value("flower"))
+            .andExpect(jsonPath("$.content[0].occasionTag").value("Wedding"));
     }
 
     @Test

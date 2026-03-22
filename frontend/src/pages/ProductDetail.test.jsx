@@ -1,3 +1,4 @@
+import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +20,14 @@ vi.mock("../context/CartContext", () => ({
 
 vi.mock("../services/api", () => ({
   catalogApi: mockCatalogApi,
+}));
+
+vi.mock("../context/WishlistContext", () => ({
+  useWishlist: () => ({
+    wishlistIds: [],
+    isWishlisted: () => false,
+    toggleWishlist: vi.fn(),
+  }),
 }));
 
 vi.mock("../components/ProductCard", () => ({

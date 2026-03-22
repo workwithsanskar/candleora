@@ -61,12 +61,12 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
                         "city", "Delhi",
                         "state", "Delhi",
                         "postalCode", "110001",
-                        "paymentMethod", "SIMULATED",
+                        "paymentMethod", "COD",
                         "items", List.of()
                     )))
             )
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("PLACED"))
+            .andExpect(jsonPath("$.status").value("CONFIRMED"))
             .andExpect(jsonPath("$.items[0].productId").value(1));
 
         mockMvc.perform(
@@ -74,7 +74,7 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
                     .header("Authorization", "Bearer " + token)
             )
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].status").value("PLACED"));
+            .andExpect(jsonPath("$[0].status").value("CONFIRMED"));
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/cart")
