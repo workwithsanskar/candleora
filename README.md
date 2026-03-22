@@ -29,6 +29,7 @@ candleora-frontend/
 - Run from `backend/`
 - Common env:
   - `SPRING_DATASOURCE_URL`
+  - `SPRING_DATASOURCE_DRIVER`
   - `SPRING_DATASOURCE_USERNAME`
   - `SPRING_DATASOURCE_PASSWORD`
   - `JWT_SECRET`
@@ -54,16 +55,45 @@ candleora-frontend/
 - Frontend on Vercel should use:
   - `VITE_API_BASE_URL=https://candleora.onrender.com/api`
 - Backend on Render should use:
+  - `SPRING_DATASOURCE_URL=jdbc:postgresql://<render-postgres-host>:5432/<database>`
+  - `SPRING_DATASOURCE_DRIVER=org.postgresql.Driver`
+  - `SPRING_DATASOURCE_USERNAME=<render-postgres-user>`
+  - `SPRING_DATASOURCE_PASSWORD=<render-postgres-password>`
   - `FRONTEND_URL=https://candleora.vercel.app`
   - `FRONTEND_ORIGIN_PATTERNS=https://*.vercel.app`
 - The Render root URL may return `403` because it is an API service. Validate the backend with routes such as:
   - `https://candleora.onrender.com/api/products`
   - `https://candleora.onrender.com/api/categories`
 
+## Render Postgres setup
+
+If you want accounts, carts, and orders to survive redeploys, do not keep the backend on the H2 fallback. Create a persistent PostgreSQL database in Render and wire the backend to it.
+
+1. In Render, create a PostgreSQL database.
+2. Copy the connection details from Render.
+3. In the CandleOra backend service, set:
+   - `SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/<database>`
+   - `SPRING_DATASOURCE_DRIVER=org.postgresql.Driver`
+   - `SPRING_DATASOURCE_USERNAME=<user>`
+   - `SPRING_DATASOURCE_PASSWORD=<password>`
+   - `JWT_SECRET=<long-random-secret>`
+   - `FRONTEND_URL=https://candleora.vercel.app`
+   - `FRONTEND_ORIGIN_PATTERNS=https://*.vercel.app`
+4. Redeploy the backend.
+5. Verify the database switch in the Render logs. You should no longer see `jdbc:h2:mem:candleora`.
+6. Test with:
+   - `https://candleora.onrender.com/api/products`
+   - signup on `https://candleora.vercel.app/signup`
+   - login on `https://candleora.vercel.app/login`
+
+Notes:
+- Spring Boot now infers the JDBC driver from the datasource URL automatically, so switching between H2 locally and Postgres on Render is simpler.
+- Render Postgres connection strings must be provided as JDBC URLs here. Use the host, database, username, and password values from Render rather than a raw `postgres://` URL.
+
 ## Local backend behavior
 
 - Local development works out of the box with the file-backed H2 database configured in `backend/src/main/resources/application.properties`.
-- MySQL is optional and only needed if you explicitly override the datasource env vars.
+- PostgreSQL is recommended for deployment when you need persistent accounts and orders.
 - Start the backend once and reuse that same process during development.
 - If `mvn spring-boot:run` says `Port 8080 was already in use`, CandleOra may already be running on `http://localhost:8080`.
 - You can quickly check by opening `http://localhost:8080/api/products`. If it returns CandleOra product JSON, reuse that backend instead of starting another one.
