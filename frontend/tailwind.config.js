@@ -1,20 +1,23 @@
 /** @type {import('tailwindcss').Config} */
+const withOpacity = (variableName) => `rgb(var(${variableName}) / <alpha-value>)`;
+
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
         brand: {
-          primary: "#C18C5D",
-          secondary: "#F5F5F5",
-          accent: "#E8C39E",
-          dark: "#333333",
-          light: "#FFFFFF",
-          muted: "#6E5A47",
-          surface: "#FBF7F2",
-          blush: "#E9D6CB",
-          olive: "#7A8768",
-          cocoa: "#4B3426",
+          primary: withOpacity("--color-brand-primary"),
+          secondary: withOpacity("--color-brand-secondary"),
+          accent: withOpacity("--color-brand-accent"),
+          dark: withOpacity("--color-brand-dark"),
+          light: withOpacity("--color-brand-light"),
+          muted: withOpacity("--color-brand-muted"),
+          surface: withOpacity("--color-brand-surface"),
+          blush: withOpacity("--color-brand-blush"),
+          olive: withOpacity("--color-brand-olive"),
+          cocoa: withOpacity("--color-brand-cocoa"),
         },
       },
       fontFamily: {

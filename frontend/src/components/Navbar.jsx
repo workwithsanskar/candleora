@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useTheme } from "../context/ThemeContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
 import BrandLogo from "./BrandLogo";
@@ -40,6 +41,34 @@ function BagIcon() {
     <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7">
       <path d="M7.5 7H19L17.8 18H8.6L7.5 7Z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M9 7A3 3 0 0 1 15 7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 2.5V5" strokeLinecap="round" />
+      <path d="M12 19V21.5" strokeLinecap="round" />
+      <path d="M4.9 4.9L6.7 6.7" strokeLinecap="round" />
+      <path d="M17.3 17.3L19.1 19.1" strokeLinecap="round" />
+      <path d="M2.5 12H5" strokeLinecap="round" />
+      <path d="M19 12H21.5" strokeLinecap="round" />
+      <path d="M4.9 19.1L6.7 17.3" strokeLinecap="round" />
+      <path d="M17.3 6.7L19.1 4.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <path
+        d="M19 14.8C17.9 15.3 16.7 15.6 15.4 15.6C10.8 15.6 7.1 11.9 7.1 7.3C7.1 5.9 7.4 4.6 8 3.5C4.7 4.8 2.4 8 2.4 11.7C2.4 16.6 6.4 20.6 11.3 20.6C15 20.6 18.1 18.3 19.4 15C19.5 14.7 19.3 14.6 19 14.8Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -85,6 +114,7 @@ function Navbar() {
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
   const { items: cartItems, cartCount, grandTotal } = useCart();
+  const { isDark, toggleTheme } = useTheme();
   const {
     items: wishlistItems,
     wishlistCount,
@@ -133,12 +163,17 @@ function Navbar() {
   const previewWishlistItems = wishlistItems.slice(0, 3);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#ece7e2] bg-white">
+    <header className="sticky top-0 z-50 border-b border-[#ece7e2] bg-white/95 backdrop-blur-md transition-colors duration-300 dark:border-[#4e3d32] dark:bg-[#120f0d]/95">
       <div className="container-shell">
         <div className="flex min-h-[74px] items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             <Link to="/" className="shrink-0" onClick={closeMenus}>
-              <BrandLogo compact className="max-w-[108px] sm:max-w-[140px]" showTagline />
+              <BrandLogo
+                compact
+                className="max-w-[108px] sm:max-w-[140px]"
+                showTagline
+                tone={isDark ? "light" : "dark"}
+              />
             </Link>
           </div>
 
@@ -146,7 +181,7 @@ function Navbar() {
             onSubmit={handleSearchSubmit}
             className="hidden min-w-0 flex-1 items-center justify-end lg:flex"
           >
-            <label className="flex w-full max-w-[330px] items-center gap-2 rounded-full border border-[#bcb6af] bg-white px-4 py-2 text-[11px] text-brand-dark/60">
+            <label className="flex w-full max-w-[330px] items-center gap-2 rounded-full border border-[#bcb6af] bg-white px-4 py-2 text-[11px] text-brand-dark/60 transition-colors duration-300 dark:border-[#6f5b4d] dark:bg-[#1a1411]">
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-brand-muted" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="M16 16L21 21" strokeLinecap="round" />
@@ -162,6 +197,14 @@ function Navbar() {
           </form>
 
           <div ref={panelRef} className="relative hidden items-center gap-3 pl-5 md:flex">
+            <IconButton
+              label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              active={isDark}
+              onClick={toggleTheme}
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+            </IconButton>
+
             <IconButton
               label={isAuthenticated ? "Account" : "Login or signup"}
               active={activePanel === "account"}
@@ -419,7 +462,7 @@ function Navbar() {
 
           <button
             type="button"
-            className="inline-flex rounded-full border border-[#d7d0c8] p-3 text-brand-dark md:hidden"
+            className="inline-flex rounded-full border border-[#d7d0c8] p-3 text-brand-dark transition-colors duration-300 dark:border-[#5d4a3f] md:hidden"
             onClick={() => {
               setIsOpen((open) => !open);
               setActivePanel(null);
@@ -434,7 +477,7 @@ function Navbar() {
           </button>
         </div>
 
-        <div className="hidden h-10 items-center justify-center border-t border-[#efebe6] md:flex">
+        <div className="hidden h-10 items-center justify-center border-t border-[#efebe6] transition-colors duration-300 dark:border-[#44342b] md:flex">
           <nav className="flex flex-wrap items-center gap-12">
             {desktopLinks.map((link) =>
               link.to ? (
@@ -463,10 +506,10 @@ function Navbar() {
         </div>
 
         {isOpen && (
-          <div className="border-t border-[#f0e7de] py-4 md:hidden">
-            <div className="space-y-3 rounded-[24px] border border-[#eee3d8] bg-white p-4">
+          <div className="border-t border-[#f0e7de] py-4 transition-colors duration-300 dark:border-[#4b3a30] md:hidden">
+            <div className="space-y-3 rounded-[24px] border border-[#eee3d8] bg-white p-4 transition-colors duration-300 dark:border-[#5b473b] dark:bg-[#191310]">
               <form onSubmit={handleSearchSubmit}>
-                <label className="flex items-center gap-3 rounded-full border border-[#e7ddd2] bg-[#faf7f3] px-4 py-3">
+                <label className="flex items-center gap-3 rounded-full border border-[#e7ddd2] bg-[#faf7f3] px-4 py-3 transition-colors duration-300 dark:border-[#5b473b] dark:bg-[#241c17]">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 text-brand-muted" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <circle cx="11" cy="11" r="6.5" />
                     <path d="M16 16L21 21" strokeLinecap="round" />
@@ -506,6 +549,14 @@ function Navbar() {
                   </a>
                 )
               )}
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="block w-full rounded-2xl bg-[#faf7f3] px-4 py-3 text-left text-sm font-semibold text-brand-dark transition-colors duration-300 dark:bg-[#241c17]"
+              >
+                {isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              </button>
 
               <Link
                 to="/wishlist"

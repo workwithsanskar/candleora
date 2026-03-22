@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import { useAuth } from "../context/AuthContext";
 import heroImage from "../assets/designer/candle-login-img.jpg";
-import { buildPhonePayload } from "../utils/account";
 import { formatApiError } from "../utils/format";
 
 function EyeIcon({ visible }) {
@@ -23,7 +21,7 @@ function EyeIcon({ visible }) {
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, phoneAuth, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -44,38 +42,6 @@ function Login() {
       navigate(redirectTo, { replace: true });
     } catch (loginError) {
       setError(formatApiError(loginError));
-    }
-  };
-
-  const handlePhoneLogin = async ({ idToken, phoneNumber }) => {
-    setError("");
-
-    try {
-      await phoneAuth(
-        buildPhonePayload(
-          {
-            name: "",
-            email: "",
-            phoneNumber,
-            alternatePhoneNumber: "",
-            addressLine1: "",
-            addressLine2: "",
-            city: "",
-            state: "",
-            postalCode: "",
-            gender: "",
-            dateOfBirth: "",
-            locationLabel: "",
-            latitude: "",
-            longitude: "",
-          },
-          idToken,
-          phoneNumber,
-        ),
-      );
-      navigate(redirectTo, { replace: true });
-    } catch (phoneError) {
-      setError(formatApiError(phoneError));
     }
   };
 
@@ -156,20 +122,6 @@ function Login() {
                 </button>
               </div>
             </form>
-
-            <div className="mt-7 space-y-4 border-t border-[#eee5dd] pt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-dark/45">
-                Or continue with
-              </p>
-
-              <PhoneAuthPanel
-                title="Continue with mobile OTP"
-                description="Use your verified mobile number for faster sign-in."
-                disabled={isLoading}
-                onVerified={handlePhoneLogin}
-                compact
-              />
-            </div>
           </div>
         </div>
 

@@ -319,7 +319,7 @@ function Home() {
   }
 
   return (
-    <div className="bg-white pb-20">
+    <div className="bg-transparent pb-20 transition-colors duration-300">
       <section className="container-shell pt-5 sm:pt-6">
         <div className="relative overflow-hidden rounded-[18px] border border-[#e6dacd] bg-[#1b110b] shadow-[0_24px_60px_rgba(27,17,11,0.16)] sm:rounded-[24px] lg:rounded-[28px]">
           <img

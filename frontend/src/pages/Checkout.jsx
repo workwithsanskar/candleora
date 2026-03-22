@@ -11,7 +11,7 @@ import { getCurrentLocation } from "../utils/location";
 import { loadRazorpayScript } from "../utils/razorpay";
 
 const inputClassName =
-  "w-full rounded-2xl border border-brand-primary/15 bg-brand-secondary px-4 py-3 outline-none transition focus:border-brand-primary/40 focus:bg-white";
+  "w-full rounded-2xl border border-brand-primary/15 bg-brand-secondary px-4 py-3 text-brand-dark outline-none transition focus:border-brand-primary/40 focus:bg-white dark:border-[#5b473b] dark:bg-[#1a1411] dark:text-brand-dark dark:placeholder:text-brand-dark/35 dark:focus:border-brand-primary/60 dark:focus:bg-[#241a15]";
 
 const steps = [
   { id: 1, label: "Shipping" },
@@ -192,8 +192,8 @@ function Checkout() {
   }
 
   return (
-    <section className="container-shell space-y-8 py-10">
-      <div className="editorial-card bg-paper-glow p-6 sm:p-8">
+    <section className="container-shell space-y-8 py-10 transition-colors duration-300">
+      <div className="editorial-card bg-paper-glow p-6 sm:p-8 dark:border-[#5b473b] dark:bg-[#17110f] dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)]">
         <p className="eyebrow">Secure checkout</p>
         <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -216,10 +216,10 @@ function Checkout() {
                 }}
                 className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
                   stepItem.id === step
-                    ? "bg-brand-dark text-white"
+                    ? "bg-brand-dark text-white dark:bg-brand-primary"
                     : stepItem.id < step
                       ? "bg-brand-primary text-white"
-                      : "bg-white/80 text-brand-dark"
+                      : "bg-white/80 text-brand-dark dark:bg-[#241c17] dark:text-brand-dark"
                 }`}
               >
                 {stepItem.id}. {stepItem.label}
@@ -230,7 +230,7 @@ function Checkout() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="panel space-y-6 p-6 sm:p-8">
+        <div className="panel space-y-6 p-6 sm:p-8 dark:border-[#5b473b] dark:bg-[#17110f] dark:shadow-[0_20px_52px_rgba(0,0,0,0.34)]">
           {step === 1 && (
             <>
               <div>
@@ -366,7 +366,7 @@ function Checkout() {
                     type="button"
                     onClick={handleUseCurrentLocation}
                     disabled={isLocating}
-                    className="rounded-full border border-brand-primary/20 px-5 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:text-brand-primary disabled:opacity-60"
+                    className="rounded-full border border-brand-primary/20 px-5 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:text-brand-primary disabled:opacity-60 dark:border-[#6a5446] dark:bg-[#221915] dark:hover:border-brand-primary dark:hover:bg-[#2b201a]"
                   >
                     {isLocating ? "Detecting location..." : "Use current location"}
                   </button>
@@ -429,8 +429,8 @@ function Checkout() {
                     }
                     className={`rounded-[28px] border p-5 text-left transition ${
                       form.paymentMethod === method.value
-                        ? "border-brand-primary bg-brand-secondary shadow-float"
-                        : "border-brand-primary/10 bg-white"
+                        ? "border-brand-primary bg-brand-secondary shadow-float dark:border-brand-primary/70 dark:bg-[#241a15]"
+                        : "border-brand-primary/10 bg-white dark:border-[#5b473b] dark:bg-[#1a1411]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -507,7 +507,7 @@ function Checkout() {
               <button
                 type="button"
                 onClick={goToPreviousStep}
-                className="rounded-full border border-brand-primary/20 px-5 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:text-brand-primary"
+                className="rounded-full border border-brand-primary/20 px-5 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:text-brand-primary dark:border-[#6a5446] dark:bg-[#221915] dark:hover:border-brand-primary dark:hover:bg-[#2b201a]"
               >
                 Back
               </button>
@@ -517,7 +517,7 @@ function Checkout() {
               <button
                 type="button"
                 onClick={goToNextStep}
-                className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary"
+                className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary dark:bg-brand-primary dark:text-[#120f0d] dark:hover:bg-[#d5a676]"
               >
                 Continue
               </button>
@@ -526,7 +526,7 @@ function Checkout() {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handlePlaceOrder}
-                className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60"
+                className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60 dark:bg-brand-primary dark:text-[#120f0d] dark:hover:bg-[#d5a676]"
               >
                 {isSubmitting
                   ? form.paymentMethod === "COD"
@@ -540,7 +540,7 @@ function Checkout() {
           </div>
         </div>
 
-        <aside className="panel h-fit space-y-5 p-6">
+        <aside className="panel h-fit space-y-5 p-6 dark:border-[#5b473b] dark:bg-[#120f0d] dark:shadow-[0_20px_52px_rgba(0,0,0,0.34)]">
           <div>
             <p className="eyebrow">Summary</p>
             <h2 className="mt-3 font-display text-3xl font-semibold text-brand-dark">
@@ -552,7 +552,7 @@ function Checkout() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-[20px] bg-brand-secondary p-4"
+                className="flex items-center justify-between gap-3 rounded-[20px] bg-brand-secondary p-4 dark:bg-[#1c1512] dark:ring-1 dark:ring-[#3f3129]"
               >
                 <div>
                   <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
@@ -565,7 +565,7 @@ function Checkout() {
             ))}
           </div>
 
-          <div className="space-y-3 rounded-[24px] bg-[#fcf7f1] p-5">
+          <div className="space-y-3 rounded-[24px] bg-[#fcf7f1] p-5 dark:bg-[linear-gradient(180deg,_rgba(39,28,22,0.96),_rgba(24,18,15,0.98))] dark:ring-1 dark:ring-[#4e3d32]">
             <div className="flex items-center justify-between text-sm text-brand-dark/70">
               <span>Subtotal</span>
               <span>{formatCurrency(grandTotal)}</span>

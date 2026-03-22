@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import { useAuth } from "../context/AuthContext";
 import signupImage from "../assets/designer/signup-candle-img.jpg";
 import {
-  buildPhonePayload,
   buildSignupPayload,
   createAccountForm,
 } from "../utils/account";
@@ -26,7 +24,7 @@ function EyeIcon({ visible }) {
 
 function Signup() {
   const navigate = useNavigate();
-  const { signup, phoneAuth, isLoading } = useAuth();
+  const { signup, isLoading } = useAuth();
   const [form, setForm] = useState(() => ({
     ...createAccountForm(),
     confirmPassword: "",
@@ -82,17 +80,6 @@ function Signup() {
       navigate("/profile", { replace: true });
     } catch (signupError) {
       setError(formatApiError(signupError));
-    }
-  };
-
-  const handlePhoneSignup = async ({ idToken, phoneNumber }) => {
-    setError("");
-
-    try {
-      await phoneAuth(buildPhonePayload(form, idToken, phoneNumber));
-      navigate("/profile", { replace: true });
-    } catch (phoneError) {
-      setError(formatApiError(phoneError));
     }
   };
 
@@ -231,21 +218,6 @@ function Signup() {
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
-
-            <div className="mt-7 space-y-4 border-t border-[#eee5dd] pt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-dark/45">
-                Or continue with
-              </p>
-
-              <PhoneAuthPanel
-                title="Sign up with mobile OTP"
-                description="Verify your mobile number and create your CandleOra account faster."
-                defaultPhoneNumber={form.phoneNumber}
-                disabled={isLoading}
-                onVerified={handlePhoneSignup}
-                compact
-              />
-            </div>
           </div>
         </div>
 

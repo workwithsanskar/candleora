@@ -76,6 +76,11 @@ candleora-frontend/
   - `POST /api/public/auth/login`
 - Google sign-in uses the client ID in both frontend and backend env files.
 - Phone OTP uses Firebase Authentication on the frontend and Firebase project token verification on the backend.
+- For Firebase OTP to work end to end:
+  - frontend needs `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_APP_ID`
+  - backend needs `FIREBASE_PROJECT_ID`
+  - Firebase Authentication must have Phone sign-in enabled
+  - Firebase authorized domains must include `localhost` for local development and your deployed frontend domain such as `candleora.vercel.app`
 - Razorpay online payment uses sandbox credentials and the backend verification endpoints:
   - `POST /api/payments/razorpay/order`
   - `POST /api/payments/razorpay/verify`

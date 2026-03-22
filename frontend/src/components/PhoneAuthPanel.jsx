@@ -52,6 +52,10 @@ function PhoneAuthPanel({
   const [isVerifying, setIsVerifying] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
+  const isSecureContextReady =
+    typeof window === "undefined" ||
+    window.isSecureContext ||
+    window.location.hostname === "localhost";
 
   useEffect(() => {
     setPhoneNumber(defaultPhoneNumber ?? "");
@@ -87,6 +91,7 @@ function PhoneAuthPanel({
     setError("");
     setStatusMessage("");
     setIsSending(true);
+    setOtp("");
 
     try {
       const verifier = await ensureVerifier();
@@ -129,7 +134,7 @@ function PhoneAuthPanel({
         idToken,
         phoneNumber: credential.user.phoneNumber ?? phoneNumber,
       });
-      setStatusMessage("Phone authentication completed.");
+      setStatusMessage("Phone verified. You're being signed in.");
       setOtp("");
       confirmationRef.current = null;
       await signOutFirebaseAuth();
@@ -177,6 +182,12 @@ function PhoneAuthPanel({
       </div>
 
       <div className={`${compact ? "mt-4 gap-3" : "mt-5 gap-4"} grid sm:grid-cols-[1fr_auto]`}>
+        {!isSecureContextReady && (
+          <div className="sm:col-span-2 rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            Phone OTP works only on HTTPS or localhost. Open this page in a secure browser context to continue.
+          </div>
+        )}
+
         <label className="space-y-2 sm:col-span-2">
           <span className={`${compact ? "text-[12px]" : "text-sm"} font-semibold text-brand-dark`}>
             Mobile number
@@ -196,7 +207,7 @@ function PhoneAuthPanel({
         <button
           type="button"
           onClick={handleSendOtp}
-          disabled={disabled || isSending || isVerifying}
+          disabled={disabled || isSending || isVerifying || !isSecureContextReady}
           className={`rounded-full border border-brand-primary/20 px-5 font-semibold text-brand-dark transition hover:border-brand-primary hover:text-brand-primary disabled:opacity-60 sm:w-fit ${
             compact ? "py-2.5 text-[12px]" : "py-3 text-sm"
           }`}
@@ -223,7 +234,7 @@ function PhoneAuthPanel({
         <button
           type="button"
           onClick={handleVerifyOtp}
-          disabled={disabled || isSending || isVerifying}
+          disabled={disabled || isSending || isVerifying || !isSecureContextReady}
           className={`rounded-full bg-brand-dark px-5 font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60 sm:self-end ${
             compact ? "py-2.5 text-[12px]" : "py-3 text-sm"
           }`}

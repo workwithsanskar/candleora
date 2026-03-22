@@ -48,6 +48,11 @@ export function titleCase(value) {
 export function formatApiError(error) {
   const payload = error?.response?.data;
   const status = error?.response?.status;
+  const firebaseCode = error?.code;
+
+  if (firebaseCode) {
+    return formatFirebaseError(firebaseCode);
+  }
 
   if (!error?.response) {
     return "We couldn't reach CandleOra right now. The backend may be unavailable or waking up. Please try again in a moment.";
@@ -58,7 +63,15 @@ export function formatApiError(error) {
   }
 
   if (status === 401) {
+    if (payload?.message === "Phone authentication failed") {
+      return "The OTP could not be verified. Please request a new code and try again.";
+    }
+
     return payload?.message ?? "Invalid email or password.";
+  }
+
+  if (status === 503 && payload?.message === "Phone authentication is not configured on the server") {
+    return "Phone OTP login is not configured on the server yet. Add the Firebase project ID on the backend and try again.";
   }
 
   if (status >= 500) {
@@ -72,4 +85,44 @@ export function formatApiError(error) {
     error?.message ??
     "Something went wrong. Please try again."
   );
+}
+
+function formatFirebaseError(code) {
+  switch (code) {
+    case "auth/invalid-phone-number":
+      return "Enter a valid mobile number with the country code.";
+    case "auth/missing-phone-number":
+      return "Enter your mobile number to continue.";
+    case "auth/invalid-verification-code":
+      return "The OTP you entered is incorrect. Please try again.";
+    case "auth/code-expired":
+      return "This OTP has expired. Request a new code and try again.";
+    case "auth/missing-verification-code":
+      return "Enter the OTP to continue.";
+    case "auth/quota-exceeded":
+      return "OTP quota has been reached for now. Please try again later.";
+    case "auth/too-many-requests":
+      return "Too many OTP attempts were made. Please wait a bit before trying again.";
+    case "auth/captcha-check-failed":
+      return "reCAPTCHA verification failed. Please retry the OTP request.";
+    case "auth/network-request-failed":
+      return "We couldn't reach Firebase right now. Check your connection and try again.";
+    case "auth/configuration-not-found":
+      return "Firebase phone auth is not configured for this project yet. Enable Phone sign-in in Firebase Authentication and verify your app settings.";
+    case "auth/operation-not-allowed":
+      return "Phone sign-in is not enabled for this Firebase project yet. Turn it on in Firebase Authentication and try again.";
+    case "auth/app-not-authorized":
+      return "This domain is not authorized for Firebase phone sign-in. Add your current site to Firebase authorized domains and try again.";
+    default:
+      return errorMessageFromCode(code);
+  }
+}
+
+function errorMessageFromCode(code) {
+  const label = String(code).replace(/^auth\//, "").replace(/-/g, " ");
+  if (!label) {
+    return "Something went wrong. Please try again.";
+  }
+
+  return label.charAt(0).toUpperCase() + label.slice(1) + ".";
 }

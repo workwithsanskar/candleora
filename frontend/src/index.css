@@ -6,9 +6,47 @@
 
 @layer base {
   :root {
-    color: #333333;
-    background: #fffaf5;
+    --color-brand-primary: 193 140 93;
+    --color-brand-secondary: 245 245 245;
+    --color-brand-accent: 232 195 158;
+    --color-brand-dark: 51 51 51;
+    --color-brand-light: 255 255 255;
+    --color-brand-muted: 110 90 71;
+    --color-brand-surface: 251 247 242;
+    --color-brand-blush: 233 214 203;
+    --color-brand-olive: 122 135 104;
+    --color-brand-cocoa: 75 52 38;
+    --theme-body-start: 255 250 245;
+    --theme-body-mid: 248 237 225;
+    --theme-body-end: 252 248 243;
+    --theme-panel: 255 255 255;
+    --theme-panel-soft: 250 245 239;
+    --theme-border: 230 218 205;
+    --theme-grid: 255 255 255;
+    color: rgb(var(--color-brand-dark));
+    background: rgb(var(--color-brand-surface));
     font-family: "Poppins", "Segoe UI", sans-serif;
+  }
+
+  html.dark {
+    color-scheme: dark;
+    --color-brand-primary: 214 169 120;
+    --color-brand-secondary: 38 31 27;
+    --color-brand-accent: 200 164 126;
+    --color-brand-dark: 245 235 226;
+    --color-brand-light: 26 21 18;
+    --color-brand-muted: 181 157 137;
+    --color-brand-surface: 16 12 10;
+    --color-brand-blush: 86 63 50;
+    --color-brand-olive: 131 145 111;
+    --color-brand-cocoa: 34 25 20;
+    --theme-body-start: 17 13 11;
+    --theme-body-mid: 24 18 15;
+    --theme-body-end: 19 14 12;
+    --theme-panel: 31 24 20;
+    --theme-panel-soft: 42 32 26;
+    --theme-border: 83 66 54;
+    --theme-grid: 255 255 255;
   }
 
   * {
@@ -23,9 +61,18 @@
     @apply m-0 min-h-screen bg-brand-surface text-brand-dark antialiased;
     position: relative;
     background-image:
-      radial-gradient(circle at 8% 0%, rgba(232, 195, 158, 0.38), transparent 26%),
-      radial-gradient(circle at 92% 10%, rgba(193, 140, 93, 0.16), transparent 20%),
-      linear-gradient(180deg, #fffaf5 0%, #f8ede1 48%, #fcf8f3 100%);
+      radial-gradient(circle at 8% 0%, rgb(var(--color-brand-accent) / 0.38), transparent 26%),
+      radial-gradient(circle at 92% 10%, rgb(var(--color-brand-primary) / 0.16), transparent 20%),
+      linear-gradient(
+        180deg,
+        rgb(var(--theme-body-start)) 0%,
+        rgb(var(--theme-body-mid)) 48%,
+        rgb(var(--theme-body-end)) 100%
+      );
+    transition:
+      background-color 220ms ease,
+      color 220ms ease,
+      background-image 220ms ease;
   }
 
   body::before {
@@ -34,11 +81,15 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+      linear-gradient(rgb(var(--theme-grid) / 0.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--theme-grid) / 0.22) 1px, transparent 1px);
     background-size: 120px 120px;
     mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
     opacity: 0.14;
+  }
+
+  html.dark body::before {
+    opacity: 0.06;
   }
 
   img {
@@ -68,7 +119,9 @@
   }
 
   .panel {
-    @apply rounded-[30px] border border-brand-primary/15 bg-white/80 shadow-editorial backdrop-blur-md;
+    background: rgb(var(--theme-panel) / 0.82);
+    border: 1px solid rgb(var(--theme-border) / 0.55);
+    @apply rounded-[30px] shadow-editorial backdrop-blur-md;
   }
 
   .section-title {
@@ -80,14 +133,83 @@
   }
 
   .editorial-card {
-    @apply rounded-[34px] border border-brand-primary/15 bg-white/80 shadow-editorial backdrop-blur-md;
+    background: rgb(var(--theme-panel) / 0.82);
+    border: 1px solid rgb(var(--theme-border) / 0.55);
+    @apply rounded-[34px] shadow-editorial backdrop-blur-md;
   }
 
   .editorial-badge {
-    @apply inline-flex items-center rounded-full border border-brand-primary/20 bg-white/75 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-muted;
+    background: rgb(var(--theme-panel) / 0.75);
+    @apply inline-flex items-center rounded-full border border-brand-primary/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-muted;
   }
 
   .section-copy {
     @apply text-sm leading-8 text-brand-dark/70 sm:text-base;
   }
+}
+
+@layer utilities {
+  .theme-surface-card {
+    background-color: rgb(var(--theme-panel) / 1);
+    border-color: rgb(var(--theme-border) / 1);
+  }
+}
+
+html.dark .bg-white {
+  background-color: rgb(var(--theme-panel) / 1) !important;
+}
+
+html.dark .bg-white\/90 {
+  background-color: rgb(var(--theme-panel) / 0.9) !important;
+}
+
+html.dark .bg-white\/80 {
+  background-color: rgb(var(--theme-panel) / 0.82) !important;
+}
+
+html.dark .bg-white\/75,
+html.dark .bg-white\/70 {
+  background-color: rgb(var(--theme-panel) / 0.75) !important;
+}
+
+html.dark .bg-brand-secondary,
+html.dark .bg-\[\#faf7f3\],
+html.dark .bg-\[\#faf5ef\] {
+  background-color: rgb(var(--theme-panel-soft) / 1) !important;
+}
+
+html.dark .bg-\[\#bcbcbc\] {
+  background-color: rgb(84 70 61 / 1) !important;
+}
+
+html.dark .bg-\[\#414141\] {
+  background-color: rgb(96 77 65 / 1) !important;
+}
+
+html.dark .bg-\[\#5f5a55\] {
+  background-color: rgb(var(--color-brand-primary) / 0.88) !important;
+}
+
+html.dark .bg-\[\#2d2d2d\],
+html.dark .bg-\[\#2a2a2a\],
+html.dark .bg-black {
+  background-color: rgb(11 8 7 / 1) !important;
+}
+
+html.dark .bg-brand-dark {
+  background-color: rgb(11 8 7 / 1) !important;
+}
+
+html.dark [class*="border-\\[#"] {
+  border-color: rgb(var(--theme-border) / 1) !important;
+}
+
+html.dark .shadow-\[0_20px_48px_rgba\(42\,28\,18\,0\.07\)\],
+html.dark .shadow-\[0_18px_42px_rgba\(42\,28\,18\,0\.05\)\],
+html.dark .shadow-\[0_24px_60px_rgba\(27\,17\,11\,0\.16\)\],
+html.dark .shadow-\[0_28px_70px_rgba\(25\,18\,14\,0\.22\)\],
+html.dark .shadow-\[0_12px_24px_rgba\(51\,51\,51\,0\.08\)\],
+html.dark .shadow-\[0_8px_18px_rgba\(209\,171\,92\,0\.12\)\],
+html.dark .shadow-\[0_16px_40px_rgba\(25\,18\,14\,0\.08\)\] {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28) !important;
 }
