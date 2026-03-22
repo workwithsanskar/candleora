@@ -6,6 +6,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -76,6 +78,19 @@ public class JwtService {
         } catch (RuntimeException exception) {
             keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         }
+
+        if (keyBytes.length < 32) {
+            keyBytes = sha256(keyBytes);
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private byte[] sha256(byte[] input) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(input);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is required for JWT signing", exception);
+        }
     }
 }
