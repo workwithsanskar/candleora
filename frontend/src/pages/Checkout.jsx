@@ -464,7 +464,7 @@ function Checkout() {
               </div>
 
               <div className="grid gap-5 lg:grid-cols-2">
-                <div className="rounded-[28px] bg-brand-secondary p-5">
+                <div className="rounded-[28px] bg-brand-secondary p-5 dark:bg-[#1c1512] dark:ring-1 dark:ring-[#3f3129]">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
                     Shipping
                   </p>
@@ -481,7 +481,7 @@ function Checkout() {
                   </div>
                 </div>
 
-                <div className="rounded-[28px] bg-brand-secondary p-5">
+                <div className="rounded-[28px] bg-brand-secondary p-5 dark:bg-[#1c1512] dark:ring-1 dark:ring-[#3f3129]">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
                     Payment
                   </p>
