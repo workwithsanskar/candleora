@@ -19,16 +19,24 @@ export default {
           olive: withOpacity("--color-brand-olive"),
           cocoa: withOpacity("--color-brand-cocoa"),
         },
+        success: "#2E7D32",
+        danger: "#D32F2F",
       },
       fontFamily: {
         display: ['"Playfair Display"', "Georgia", "serif"],
         sans: ['"Poppins"', '"Segoe UI"', "sans-serif"],
         brand: ['"Playfair Display"', "Georgia", "serif"],
       },
+      fontSize: {
+        "heading-lg": "2.5rem",
+        "heading-md": "2rem",
+        "heading-sm": "1.5rem",
+        body: "1rem",
+      },
       boxShadow: {
-        candle: "0 18px 45px rgba(74, 44, 18, 0.14)",
-        editorial: "0 30px 80px rgba(75, 52, 38, 0.16)",
-        float: "0 14px 35px rgba(75, 52, 38, 0.12)",
+        candle: "0 8px 24px rgba(0, 0, 0, 0.08)",
+        editorial: "0 8px 24px rgba(0, 0, 0, 0.08)",
+        float: "0 8px 24px rgba(0, 0, 0, 0.08)",
       },
       backgroundImage: {
         "soft-radial":

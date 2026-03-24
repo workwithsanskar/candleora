@@ -12,12 +12,12 @@ function Cart() {
     <section className="container-shell py-10">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
-          <div>
-            <p className="eyebrow">Cart</p>
-            <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
-              Your candle selection
-            </h1>
-          </div>
+        <div>
+          <p className="eyebrow">Cart</p>
+          <h1 className="page-title mt-3">
+            Your candle selection
+          </h1>
+        </div>
 
           {isLoading ? (
             <StatusView
@@ -33,7 +33,7 @@ function Cart() {
               action={
                 <Link
                   to="/shop"
-                  className="mt-6 inline-flex rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white"
+                  className="btn btn-primary mt-6"
                 >
                   Start shopping
                 </Link>
@@ -51,7 +51,7 @@ function Cart() {
                   className="aspect-square w-full rounded-[22px] object-cover"
                 />
                 <div>
-                  <h2 className="font-display text-3xl font-semibold text-brand-dark">
+                  <h2 className="panel-title">
                     {item.productName}
                   </h2>
                   <p className="mt-2 text-sm font-semibold text-brand-muted">
@@ -97,7 +97,7 @@ function Cart() {
         <aside className="panel h-fit space-y-6 p-6">
           <div>
             <p className="eyebrow">Summary</p>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-brand-dark">
+            <h2 className="panel-title mt-3">
               Order snapshot
             </h2>
           </div>
@@ -122,7 +122,7 @@ function Cart() {
           {isAuthenticated ? (
             <Link
               to="/checkout"
-              className="block rounded-full bg-brand-dark px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-primary"
+              className="btn btn-secondary w-full text-center"
             >
               Proceed to checkout
             </Link>
@@ -130,7 +130,7 @@ function Cart() {
             <Link
               to="/login"
               state={{ from: { pathname: "/checkout" } }}
-              className="block rounded-full bg-brand-primary px-5 py-3 text-center text-sm font-semibold text-white"
+              className="btn btn-primary w-full text-center"
             >
               Sign in to checkout
             </Link>

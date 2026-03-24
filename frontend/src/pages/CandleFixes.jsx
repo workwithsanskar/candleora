@@ -62,39 +62,21 @@ function normalizeFixes(rawFixes) {
   });
 }
 
-function FixPlaceholderGallery() {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div
-          key={index}
-          data-testid="fix-placeholder"
-          className={`h-[180px] rounded-[16px] bg-[#bcbcbc] sm:h-[200px] lg:h-[220px] ${
-            index === 2 ? "col-span-full sm:col-auto" : ""
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
-
 function CandleFixSection({ fix }) {
   const steps = parseFixSteps(fix.fixSteps);
 
   return (
-    <article className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-12">
-      <div className="max-w-[480px] space-y-4">
-        <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-brand-dark sm:text-[2.2rem]">
+    <article className="grid gap-6 border-b border-black/8 pb-8 last:border-b-0 last:pb-0 lg:grid-cols-[minmax(0,360px)_1fr] lg:items-start lg:gap-10">
+      <div className="space-y-2 text-left">
+        <h2 className="font-display text-heading-sm font-semibold leading-tight text-black">
           {fix.title}
         </h2>
 
-        <p className="text-[1rem] font-semibold leading-7 text-[#d43737]">
-          Cause: {fix.cause}
-        </p>
+        <p className="text-sm font-semibold leading-7 text-danger">Cause: {fix.cause}</p>
 
-        <div className="pt-2">
-          <p className="text-[1rem] font-medium text-brand-dark">Fix:</p>
-          <ul className="mt-3 list-disc space-y-2 pl-6 text-[1rem] leading-8 text-brand-dark/72">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-black">Fix:</p>
+          <ul className="list-disc space-y-1.5 pl-5 text-sm leading-6 text-black/72">
             {steps.map((step) => (
               <li key={step}>{step}</li>
             ))}
@@ -102,7 +84,15 @@ function CandleFixSection({ fix }) {
         </div>
       </div>
 
-      <FixPlaceholderGallery />
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:max-w-[540px]">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={`${fix.id}-image-${index + 1}`}
+            className="aspect-[1/0.9] rounded-[10px] bg-[#b8b8b8]"
+            aria-hidden="true"
+          />
+        ))}
+      </div>
     </article>
   );
 }
@@ -158,27 +148,22 @@ function CandleFixes() {
   }
 
   return (
-    <div className="bg-white">
-      <section className="container-shell py-12 sm:py-16 lg:py-20">
-        <div className="mx-auto max-w-[1240px]">
-          <header className="max-w-[840px]">
-            <h1 className="text-[2.6rem] font-semibold tracking-[-0.04em] text-brand-dark sm:text-[3.1rem]">
-              CANDLE FIXES
-            </h1>
-            <p className="mt-4 text-[1rem] leading-8 text-brand-dark/55 sm:text-[1.05rem]">
-              For every candle question, there&apos;s a CandleOra solution - your trusted guide to
-              keep the glow alive.
-            </p>
-          </header>
+    <section className="container-shell py-12 sm:py-16">
+      <div className="w-full">
+        <header className="max-w-[760px]">
+          <h1 className="font-display text-heading-lg font-semibold text-black">CANDLE FIXES</h1>
+          <p className="mt-4 text-sm leading-7 text-black/62">
+            For every candle question, there&apos;s a CandleOra solution - your trusted guide to keep the glow alive.
+          </p>
+        </header>
 
-          <div className="mt-14 space-y-20 sm:mt-16 sm:space-y-24 lg:mt-20 lg:space-y-28">
-            {fixes.map((fix) => (
-              <CandleFixSection key={fix.id} fix={fix} />
-            ))}
-          </div>
+        <div className="mt-8 space-y-8 sm:mt-10 sm:space-y-10">
+          {fixes.map((fix) => (
+            <CandleFixSection key={fix.id} fix={fix} />
+          ))}
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }
 

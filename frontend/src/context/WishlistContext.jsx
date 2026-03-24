@@ -8,7 +8,17 @@ import {
   writeStoredJson,
 } from "../utils/storage";
 
-const WishlistContext = createContext(null);
+const defaultWishlistContext = {
+  items: [],
+  wishlistCount: 0,
+  isWishlisted: () => false,
+  addToWishlist: () => {},
+  removeFromWishlist: () => {},
+  toggleWishlist: () => false,
+  clearWishlist: () => {},
+};
+
+const WishlistContext = createContext(defaultWishlistContext);
 
 function normalizeWishlistItem(product) {
   const item = normalizeProduct(product);
@@ -90,10 +100,5 @@ WishlistProvider.propTypes = {
 
 export function useWishlist() {
   const context = useContext(WishlistContext);
-
-  if (!context) {
-    throw new Error("useWishlist must be used within WishlistProvider");
-  }
-
   return context;
 }

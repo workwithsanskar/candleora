@@ -4,12 +4,11 @@ import heroImage from "../assets/designer/image.png";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
 import stylingGuideCard from "../assets/designer/styling-guides-card.png";
+import ProductCard from "../components/ProductCard";
 import StatusView from "../components/StatusView";
-import { useCart } from "../context/CartContext";
-import { useWishlist } from "../context/WishlistContext";
+import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
-import { formatApiError, formatCurrency } from "../utils/format";
-import { normalizeProduct } from "../utils/normalize";
+import { formatApiError } from "../utils/format";
 
 const recommendationCards = [
   {
@@ -53,49 +52,24 @@ const customerStories = [
   },
 ];
 
-const categoryLabels = {
-  flower: "Flower",
-  holder: "Holder",
-  glass: "Glass",
-  "candle-sets": "Candle Sets",
-  "tea-light": "Tea Light",
-  textured: "Textured Candles",
-};
-
-function StarRow({ compact = false }) {
-  const sizeClassName = compact ? "h-3 w-3" : "h-3.5 w-3.5";
-
-  return (
-    <div className="flex items-center gap-0.5 text-[#f1b643]">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <svg
-          key={index}
-          viewBox="0 0 24 24"
-          className={`${sizeClassName} fill-current`}
-          aria-hidden="true"
-        >
-          <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
-function ArrowButton({ direction, label }) {
+function ArrowButton({ direction, label, onClick, disabled }) {
   const rotation = direction === "left" ? "rotate-180" : "";
 
   return (
     <button
       type="button"
-      className="hidden h-10 w-10 items-center justify-center text-brand-dark/30 transition hover:text-brand-dark lg:inline-flex"
+      onClick={onClick}
+      disabled={disabled}
+      className="hidden items-center justify-center text-[#a6a6a6] transition hover:text-black disabled:cursor-not-allowed disabled:opacity-35 lg:inline-flex"
       aria-label={label}
+      title={label}
     >
       <svg
         viewBox="0 0 24 24"
-        className={`h-6 w-6 ${rotation}`}
+        className={`h-[39px] w-[23px] ${rotation}`}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
       >
         <path d="M8 5L16 12L8 19" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -103,119 +77,14 @@ function ArrowButton({ direction, label }) {
   );
 }
 
-function HeartIcon({ filled = false }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6">
-      <path
-        d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path
-        d="M2.5 12C4.4 8.7 7.8 6.5 12 6.5C16.2 6.5 19.6 8.7 21.5 12C19.6 15.3 16.2 17.5 12 17.5C7.8 17.5 4.4 15.3 2.5 12Z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="2.5" />
-    </svg>
-  );
-}
-
-function HomeProductCard({
-  product,
-  onAddToCart,
-  onToggleWishlist,
-  wishlisted,
-  isInCart,
-}) {
-  const item = normalizeProduct(product);
-
-  return (
-    <article className="space-y-2">
-      <Link to={`/product/${item.id}`} className="block">
-        <div className="relative overflow-hidden rounded-[8px] bg-[#d7d7d7]">
-          <img
-            src={item.imageUrls[0]}
-            alt={item.name}
-            className="aspect-[0.82] w-full object-cover"
-          />
-          {item.discount > 0 && (
-            <span className="absolute left-2 top-2 rounded-full bg-[#ff3a3a] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-white">
-              {item.discount}% off
-            </span>
-          )}
-          <button
-            type="button"
-            className={`absolute right-2 top-2 rounded-full p-1.5 drop-shadow-[0_3px_10px_rgba(0,0,0,0.25)] transition ${
-              wishlisted ? "bg-[#2f241d] text-white" : "text-white"
-            }`}
-            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            onClick={(event) => {
-              event.preventDefault();
-              onToggleWishlist(item);
-            }}
-          >
-            <HeartIcon filled={wishlisted} />
-          </button>
-        </div>
-      </Link>
-
-      <div className="space-y-1 text-center">
-        <Link to={`/product/${item.id}`}>
-          <h3 className="truncate text-[12px] text-brand-dark">{item.name}</h3>
-        </Link>
-        <div className="flex items-center justify-center gap-1.5 text-[11px]">
-          {item.originalPrice > item.price && (
-            <span className="text-brand-dark/40 line-through">
-              {formatCurrency(item.originalPrice)}
-            </span>
-          )}
-          <span className="font-semibold text-brand-dark">{formatCurrency(item.price)}</span>
-        </div>
-        <div className="flex items-center justify-center gap-1.5">
-          <StarRow compact />
-          <span className="text-[10px] text-brand-dark/55">({item.rating.toFixed(1)})</span>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onAddToCart(item, 1)}
-        disabled={item.stock <= 0}
-        className={`inline-flex w-full items-center justify-center gap-2 rounded-[4px] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition ${
-          item.stock <= 0
-            ? "cursor-not-allowed bg-[#d4d4d4]"
-            : isInCart
-              ? "bg-[#0b8f12] hover:bg-[#08770e]"
-              : "bg-[#f2b84b] hover:bg-[#dfaa46]"
-        }`}
-      >
-        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M3 5H5L7.2 15.2C7.4 16.1 8.2 16.8 9.1 16.8H17.4C18.3 16.8 19.1 16.2 19.3 15.3L21 8H6.2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="10" cy="20" r="1.2" />
-          <circle cx="18" cy="20" r="1.2" />
-        </svg>
-        {item.stock <= 0 ? "Out of Stock" : isInCart ? "Added" : "Add to Cart"}
-      </button>
-    </article>
-  );
-}
-
 function CategoryTile({ category, className = "" }) {
   return (
     <Link
-      to={`/shop?category=${category.slug}`}
-      className={`relative block overflow-hidden rounded-[10px] bg-[#cfcfcf] ${className}`.trim()}
+      to={category.to}
+      className={`group relative block overflow-hidden rounded-[14px] bg-[#cfcfcf] ${className}`.trim()}
     >
-      <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
-      <span className="absolute bottom-3 left-3 text-[13px] font-medium text-white">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent transition group-hover:from-black/45" />
+      <span className="absolute bottom-4 left-4 text-base font-medium text-white">
         {category.name}
       </span>
     </Link>
@@ -224,37 +93,38 @@ function CategoryTile({ category, className = "" }) {
 
 function TestimonialCard({ story }) {
   return (
-    <article className="rounded-[12px] border border-[#f0d5a0] bg-white px-4 py-3 shadow-[0_8px_18px_rgba(209,171,92,0.12)]">
+    <article className="rounded-[14px] border border-[#f0d5a0] bg-white px-5 py-4 shadow-[0_8px_18px_rgba(209,171,92,0.12)]">
       <div className="flex items-center gap-2">
         <span className="inline-flex h-4 w-4 rounded-full bg-black" />
-        <p className="text-[11px] font-semibold text-brand-dark">{story.name}</p>
-        <span className="text-[10px] text-brand-dark/45">{story.date}</span>
+        <p className="text-sm font-semibold text-black">{story.name}</p>
+        <span className="text-sm text-black/45">{story.date}</span>
       </div>
-      <p className="mt-2 text-[11px] leading-5 text-brand-dark/65">{story.quote}</p>
-      <div className="mt-2">
-        <StarRow compact />
+      <p className="mt-3 text-sm leading-6 text-black/72">{story.quote}</p>
+      <div className="mt-3 flex items-center gap-0.5 text-[#f3b33d]">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <svg key={index} viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+            <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
+          </svg>
+        ))}
       </div>
     </article>
   );
 }
 
 function Home() {
-  const { addToCart, items: cartItems } = useCart();
-  const { isWishlisted, toggleWishlist } = useWishlist();
-  const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [error, setError] = useState("");
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [productSlide, setProductSlide] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadHomeData = async () => {
       try {
-        const [categoryResponse, productResponse, faqResponse] = await Promise.all([
-          catalogApi.getCategories(),
-          catalogApi.getProducts({ size: 4, sort: "popular" }),
+        const [productResponse, faqResponse] = await Promise.all([
+          catalogApi.getProducts({ size: 8, sort: "popular" }),
           contentApi.getFaqs(),
         ]);
 
@@ -262,9 +132,9 @@ function Home() {
           return;
         }
 
-        setCategories(categoryResponse);
         setFeaturedProducts(productResponse.content ?? []);
-        setFaqs(faqResponse.slice(0, 4));
+        setFaqs((faqResponse ?? []).slice(0, 4));
+        setExpandedFaq(faqResponse?.[0]?.id ?? null);
       } catch (homeError) {
         if (isMounted) {
           setError(formatApiError(homeError));
@@ -279,25 +149,18 @@ function Home() {
     };
   }, []);
 
-  const categoryMap = useMemo(() => {
-    const map = new Map();
-    categories.forEach((category) => {
-      map.set(category.slug, category);
-    });
-    return map;
-  }, [categories]);
+  const featuredProductGroups = useMemo(() => {
+    const groups = [];
 
-  const getCategory = (slug) =>
-    categoryMap.get(slug) ?? {
-      id: slug,
-      slug,
-      name: categoryLabels[slug] ?? slug,
-    };
+    for (let index = 0; index < featuredProducts.length; index += 4) {
+      groups.push(featuredProducts.slice(index, index + 4));
+    }
 
-  const cartProductIds = useMemo(
-    () => new Set(cartItems.map((item) => Number(item.productId ?? item.id))),
-    [cartItems],
-  );
+    return groups.length ? groups : [[]];
+  }, [featuredProducts]);
+
+  const visibleFeaturedProducts = featuredProductGroups[productSlide] ?? [];
+  const hasMultipleSlides = featuredProductGroups.length > 1;
 
   if (error) {
     return (
@@ -306,10 +169,7 @@ function Home() {
           title="The storefront could not load"
           message={error}
           action={
-            <Link
-              to="/shop"
-              className="mt-6 inline-flex rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white"
-            >
+            <Link to="/shop" className="btn btn-primary mt-6">
               Browse the shop
             </Link>
           }
@@ -319,114 +179,127 @@ function Home() {
   }
 
   return (
-    <div className="bg-transparent pb-20 transition-colors duration-300">
-      <section className="container-shell pt-5 sm:pt-6">
-        <div className="relative overflow-hidden rounded-[18px] border border-[#e6dacd] bg-[#1b110b] shadow-[0_24px_60px_rgba(27,17,11,0.16)] sm:rounded-[24px] lg:rounded-[28px]">
-          <img
-            src={heroImage}
-            alt="CandleOra hero arrangement"
-            className="h-[330px] w-full object-cover sm:h-[430px] lg:h-[520px]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[rgba(0,0,0,0.36)] via-[rgba(0,0,0,0.1)] to-transparent" />
-          <div className="absolute left-[6%] top-[14%] max-w-[290px] sm:max-w-[360px] lg:max-w-[430px]">
-            <h1 className="text-[1.9rem] font-semibold leading-[1.22] text-white sm:text-[2.35rem] lg:text-[3rem]">
+    <div className="bg-white pb-20">
+      <section className="relative w-full overflow-hidden bg-black">
+        <img
+          src={heroImage}
+          alt="CandleOra hero arrangement"
+          className="h-[360px] w-full object-cover sm:h-[460px] lg:h-[620px]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
+        <div className="container-shell absolute inset-0 flex items-center">
+          <div className="max-w-[620px]">
+            <h1 className="font-display text-[2rem] font-semibold leading-[1.08] text-white sm:text-[2.5rem] lg:text-[3rem]">
               <span className="block">Crafting Comfort, Redefining</span>
               <span className="block">Spaces. Your Home, Your Signature</span>
               <span className="block">Style!</span>
             </h1>
             <Link
               to="/shop"
-              className="mt-4 inline-flex rounded-[4px] bg-white px-4 py-2 text-[13px] font-semibold text-brand-dark shadow-[0_6px_16px_rgba(0,0,0,0.16)] transition hover:bg-brand-primary hover:text-white"
+              className="btn btn-primary mt-5"
             >
               Shop Now
             </Link>
           </div>
-          <div className="pointer-events-none absolute -bottom-14 left-1/2 h-24 w-[128%] -translate-x-1/2 rounded-[100%] bg-white sm:-bottom-16 sm:h-28 lg:-bottom-20 lg:h-32" />
+        </div>
+      </section>
+
+      <section className="container-shell py-10 sm:py-12">
+        <h2 className="section-title text-center">Our Best Selling Products</h2>
+
+        <div className="relative mt-10 lg:px-10">
+          <div className="hidden lg:block">
+            <div className="absolute left-0 top-[146px]">
+              <ArrowButton
+                direction="left"
+                label="Previous products"
+                disabled={!hasMultipleSlides || productSlide === 0}
+                onClick={() => setProductSlide((currentSlide) => Math.max(currentSlide - 1, 0))}
+              />
+            </div>
+            <div className="absolute right-0 top-[146px]">
+              <ArrowButton
+                direction="right"
+                label="Next products"
+                disabled={!hasMultipleSlides || productSlide === featuredProductGroups.length - 1}
+                onClick={() =>
+                  setProductSlide((currentSlide) =>
+                    Math.min(currentSlide + 1, featuredProductGroups.length - 1),
+                  )
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid justify-items-center gap-x-[18px] gap-y-6 sm:grid-cols-2 xl:grid-cols-[repeat(4,286px)]">
+            {visibleFeaturedProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                badgeLabel={productSlide === 0 && index === 0 ? "NEW" : null}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="container-shell py-14 sm:py-16">
-        <h2 className="text-center text-[1.95rem] font-semibold tracking-[-0.02em] text-brand-dark">
-          Our Best Selling Products
-        </h2>
-
-        <div className="mt-10 grid gap-4 lg:grid-cols-[40px_1fr_40px] lg:items-center">
-          <ArrowButton direction="left" label="Previous products" />
-
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {featuredProducts.map((product) => (
-              <HomeProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-                onToggleWishlist={toggleWishlist}
-                wishlisted={isWishlisted(product.id)}
-                isInCart={cartProductIds.has(Number(product.id))}
-              />
-            ))}
-          </div>
-
-          <ArrowButton direction="right" label="Next products" />
-        </div>
-      </section>
-
-      <section className="container-shell py-8">
-        <h2 className="text-center text-[1.95rem] font-semibold tracking-[-0.02em] text-brand-dark">
-          View Our Range Of Categories
-        </h2>
+        <h2 className="section-title text-center">View Our Range Of Categories</h2>
 
         <div className="mt-10">
-          <div className="grid gap-4 lg:grid-cols-[1fr_0.82fr_1fr]">
-            <CategoryTile category={getCategory("flower")} className="min-h-[250px] lg:min-h-[360px]" />
+          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.8fr_1.05fr]">
+            <CategoryTile category={getCategoryBySlug("")} className="min-h-[250px] lg:min-h-[360px]" />
             <div className="grid gap-4">
-              <CategoryTile category={getCategory("holder")} className="min-h-[118px] lg:min-h-[172px]" />
-              <CategoryTile category={getCategory("glass")} className="min-h-[118px] lg:min-h-[172px]" />
+              <CategoryTile category={getCategoryBySlug("candle-sets")} className="min-h-[118px] lg:min-h-[172px]" />
+              <CategoryTile category={getCategoryBySlug("glass")} className="min-h-[118px] lg:min-h-[172px]" />
             </div>
-            <CategoryTile category={getCategory("candle-sets")} className="min-h-[250px] lg:min-h-[360px]" />
+            <CategoryTile category={getCategoryBySlug("tea-light")} className="min-h-[250px] lg:min-h-[360px]" />
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_1.45fr]">
-            <CategoryTile category={getCategory("tea-light")} className="min-h-[118px]" />
-            <CategoryTile category={getCategory("textured")} className="min-h-[118px]" />
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+            <CategoryTile category={getCategoryBySlug("flower")} className="min-h-[118px]" />
+            <CategoryTile category={getCategoryBySlug("creation")} className="min-h-[118px]" />
           </div>
         </div>
       </section>
 
-      <section className="mt-8 bg-[#f2b84b] py-4">
-        <p className="text-center text-[13px] font-semibold uppercase tracking-[0.08em] text-brand-dark">
-          Free Delivery When You Spend Over Rs.1999/-
+      <section className="bg-brand-primary py-4">
+        <p className="text-center text-sm font-semibold text-black sm:text-base">
+          Free Delivery &amp; Free Gift when you spend over Rs. 1999/-
         </p>
       </section>
 
-      <section id="recommendations" className="container-shell py-16">
-        <h2 className="text-[1.95rem] font-semibold tracking-[-0.02em] text-brand-dark">
+      <section id="recommendations" className="container-shell py-16 sm:py-20">
+        <h2 className="section-title">
           The Recommendations
         </h2>
 
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
+        <div className="mt-12 grid gap-x-8 gap-y-10 lg:grid-cols-3">
           {recommendationCards.map((card) => (
-            <article key={card.title} className="mx-auto w-full max-w-[290px] text-center">
+            <article
+              key={card.title}
+              className="mx-auto flex h-full w-full max-w-[360px] flex-col items-center text-center"
+            >
               <Link
                 to={card.to}
-                className="relative block overflow-hidden rounded-[10px] shadow-[0_12px_24px_rgba(51,51,51,0.08)]"
+                className="relative block w-full overflow-hidden rounded-[16px] shadow-[0_12px_24px_rgba(51,51,51,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(51,51,51,0.14)]"
               >
-                <img
-                  src={card.image}
-                  alt={card.title}
-                  className="aspect-[0.94] w-full object-cover"
-                />
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(232,195,158,0.38)] px-4 py-3 backdrop-blur-[1px]">
-                  <h3 className="text-[1.1rem] font-semibold uppercase tracking-[0.04em] text-black">
+                <img src={card.image} alt={card.title} className="aspect-square w-full object-cover" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(232,195,158,0.42)] px-4 py-4 backdrop-blur-[1.5px]">
+                  <h3 className="text-[1.15rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.25rem]">
                     {card.title}
                   </h3>
                 </div>
               </Link>
-              <p className="mt-3 text-[13px] leading-5 text-brand-dark/75">{card.description}</p>
+
+              <div className="mt-5 flex min-h-[86px] w-full items-start justify-center px-3">
+                <p className="max-w-[300px] text-[1rem] leading-8 text-black/72">{card.description}</p>
+              </div>
+
               <Link
                 to={card.to}
-                className="mt-4 inline-flex min-w-[168px] items-center justify-center gap-2 rounded-[4px] bg-black px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white"
+                className="btn btn-secondary mt-auto h-[50px] w-[210px] tracking-[0.12em] uppercase hover:-translate-y-0.5"
               >
-                <EyeIcon />
                 View
               </Link>
             </article>
@@ -434,10 +307,8 @@ function Home() {
         </div>
       </section>
 
-      <section className="container-shell py-8">
-        <h2 className="text-[1.95rem] font-semibold tracking-[-0.02em] text-brand-dark">
-          Our Happy Customers
-        </h2>
+      <section className="container-shell py-8 sm:py-10">
+        <h2 className="section-title">Our Happy Customers</h2>
 
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           {customerStories.map((story) => (
@@ -448,39 +319,37 @@ function Home() {
 
       <section id="faq" className="container-shell grid gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="space-y-4">
-          <h2 className="text-[1.95rem] font-semibold tracking-[-0.02em] text-brand-dark">
-            Frequently Asked Questions
-          </h2>
-          <p className="max-w-sm text-[13px] leading-7 text-brand-dark/65">
-            Learn more about shipping, candle care, and burn-time details before placing your first
-            CandleOra order.
+          <h2 className="section-title">Frequently Asked Questions</h2>
+          <p className="max-w-sm text-sm leading-7 text-black/62">
+            Learn more about shipping, candle care, and burn-time details before placing your first CandleOra order.
           </p>
         </div>
 
-        <div className="space-y-2">
-          {faqs.map((faq) => (
-            <button
-              key={faq.id}
-              type="button"
-              onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
-              className="w-full border-b border-[#e9e0d6] pb-4 text-left"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-[14px] font-medium text-brand-dark">{faq.question}</span>
-                <span className="pt-0.5 text-brand-dark/45">{expandedFaq === faq.id ? "-" : "+"}</span>
-              </div>
-              {expandedFaq === faq.id && (
-                <p className="mt-3 max-w-2xl text-[13px] leading-7 text-brand-dark/65">
-                  {faq.answer}
-                </p>
-              )}
-            </button>
-          ))}
+        <div className="space-y-3">
+          {faqs.map((faq) => {
+            const isOpen = expandedFaq === faq.id;
+
+            return (
+              <article key={faq.id} className="rounded-[14px] border border-black/12 bg-white px-5 py-4">
+                <button
+                  type="button"
+                  onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
+                  className="flex w-full items-start justify-between gap-4 text-left"
+                >
+                  <span className="text-base font-medium text-black">{faq.question}</span>
+                  <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
+                </button>
+                {isOpen && (
+                  <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
+                )}
+              </article>
+            );
+          })}
 
           <div className="flex justify-end pt-2">
             <Link
               to="/faq"
-              className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-dark transition hover:text-brand-primary"
+              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
             >
               View More
               <span className="text-base leading-none">+</span>

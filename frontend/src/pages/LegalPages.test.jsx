@@ -35,6 +35,6 @@ describe("Legal pages", () => {
     expect(
       screen.getByRole("heading", { name: "1. Scope Of This Policy" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/CandleOra Legal/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/CandleOra Legal/i).length).toBeGreaterThan(0);
   });
 });

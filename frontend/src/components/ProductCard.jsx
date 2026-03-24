@@ -4,108 +4,123 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
 import { normalizeProduct } from "../utils/normalize";
+import Tooltip from "./Tooltip";
 
-function ProductCard({ product }) {
-  const { addToCart } = useCart();
+function HeartIcon({ filled = false }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-[18px] w-[18px]"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.7"
+    >
+      <path
+        d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StarRow() {
+  return (
+    <div className="flex items-center justify-center gap-0.5 text-[#f3b33d]">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <svg key={index} viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+          <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+function ProductCard({ product, badgeLabel = null }) {
+  const { addToCart, items: cartItems } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const item = normalizeProduct(product);
   const wishlisted = isWishlisted(item.id);
+  const isInCart = cartItems.some(
+    (cartItem) => Number(cartItem.productId ?? cartItem.id) === Number(item.id),
+  );
+  const activeBadge = badgeLabel ?? (item.discount > 0 ? `-${item.discount}%` : null);
+  const isNewBadge = activeBadge?.toUpperCase() === "NEW";
 
   return (
-    <article className="group overflow-hidden rounded-[30px] border border-brand-primary/15 bg-white/80 shadow-float transition duration-300 hover:-translate-y-1 hover:shadow-editorial">
+    <article className="group mx-auto w-full max-w-[286px] transition duration-300 hover:-translate-y-1">
       <Link to={`/product/${item.id}`} className="block">
-        <div className="relative aspect-[4/4.65] overflow-hidden bg-[#f1e6db]">
+        <div className="relative h-[360px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
           <img
             src={item.imageUrls[0]}
             alt={item.name}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#241912]/35 via-transparent to-white/10" />
-          <div className="absolute inset-x-4 top-4 flex items-center justify-between">
-            <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-primary shadow-float">
-              {item.category?.name ?? "Candles"}
+          {activeBadge && (
+            <span
+              className={`absolute left-3 top-3 inline-flex h-[27px] min-w-[52px] items-center justify-center rounded-[10px] px-3 text-sm font-semibold leading-none text-white ${
+                isNewBadge ? "bg-[#ff0000]" : "bg-black"
+              }`}
+            >
+              {activeBadge}
             </span>
-            <div className="flex items-center gap-2">
-              {item.discount > 0 && (
-                <span className="rounded-full bg-brand-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                  {item.discount}% off
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                onClick={(event) => {
-                  event.preventDefault();
-                  toggleWishlist(item);
-                }}
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
-                  wishlisted
-                    ? "border-transparent bg-[#2f241d] text-white"
-                    : "border-white/60 bg-white/90 text-brand-dark"
-                }`}
-              >
-                <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7">
-                  <path
-                    d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div className="absolute inset-x-4 bottom-4">
-            <span className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-brand-dark shadow-float">
-              {item.occasionTag}
-            </span>
-          </div>
+          )}
+          <Tooltip
+            content={wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            className="absolute right-3 top-3"
+          >
+            <button
+              type="button"
+              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              onClick={(event) => {
+                event.preventDefault();
+                toggleWishlist(item);
+              }}
+              className={`inline-flex h-[22px] w-[22px] items-center justify-center transition ${
+                wishlisted ? "text-danger" : "text-danger/90"
+              }`}
+            >
+              <HeartIcon filled={wishlisted} />
+            </button>
+          </Tooltip>
         </div>
       </Link>
 
-      <div className="space-y-4 p-5">
-        <div>
-          <Link to={`/product/${item.id}`}>
-            <h3 className="font-display text-[2rem] font-semibold leading-none text-brand-dark">
-              {item.name}
-            </h3>
-          </Link>
-          <p className="mt-3 min-h-[3rem] text-sm leading-7 text-brand-dark/70">
-            {item.description}
-          </p>
+      <div className="space-y-1.5 pt-2.5 text-center">
+        <Link to={`/product/${item.id}`}>
+          <h3 className="line-clamp-2 min-h-[56px] font-heading text-heading-sm leading-[1.15] text-black">
+            {item.name}
+          </h3>
+        </Link>
+
+        <div className="flex items-center justify-center gap-2 text-[16px] leading-none">
+          {item.originalPrice > item.price && (
+            <span className="text-black/35 line-through">
+              {formatCurrency(item.originalPrice)}
+            </span>
+          )}
+          <span className="font-semibold text-black">{formatCurrency(item.price)}</span>
         </div>
 
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-2xl font-extrabold text-brand-dark">
-              {formatCurrency(item.price)}
-            </p>
-            {item.originalPrice > item.price && (
-              <p className="text-sm text-brand-muted line-through">
-                {formatCurrency(item.originalPrice)}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2 text-right">
-            <p className="rounded-full bg-[#f8efe5] px-3 py-2 text-sm font-semibold text-brand-muted">
-              Rating {item.rating.toFixed(1)}
-            </p>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-primary">
-              {item.stock > 5
-                ? "In stock"
-                : item.stock > 0
-                  ? `Only ${item.stock} left`
-                  : "Out of stock"}
-            </p>
-          </div>
+        <div className="flex items-center justify-center gap-1">
+          <StarRow />
+          <span className="text-[11px] text-black/55">({Math.max(1, Math.round(item.rating))})</span>
         </div>
 
         <button
           type="button"
-          className="w-full rounded-full bg-brand-dark px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className={`inline-flex h-[35px] w-full items-center justify-center rounded-[5px] px-4 text-[12px] font-semibold uppercase tracking-[0.04em] shadow-[0_4px_4px_rgba(0,0,0,0.25)] transition ${
+            item.stock <= 0
+              ? "cursor-not-allowed bg-black/15 text-black/45"
+              : isInCart
+                ? "bg-success text-white hover:bg-[#25652a]"
+                : "bg-brand-primary text-black hover:bg-[#dfa129]"
+          }`}
           disabled={item.stock <= 0}
           onClick={() => addToCart(item, 1)}
         >
-          {item.stock > 0 ? "Add to Cart" : "Out of Stock"}
+          {item.stock > 0 ? (isInCart ? "Added" : "Add to Cart") : "Out of Stock"}
         </button>
       </div>
     </article>
@@ -113,6 +128,7 @@ function ProductCard({ product }) {
 }
 
 ProductCard.propTypes = {
+  badgeLabel: PropTypes.string,
   product: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     name: PropTypes.string.isRequired,

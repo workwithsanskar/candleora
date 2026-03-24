@@ -89,7 +89,7 @@ function Signup() {
         <div className="bg-white px-6 py-7 sm:px-9 sm:py-8 lg:px-10 lg:py-9">
           <div className="mx-auto max-w-[520px]">
             <div>
-              <h1 className="text-[2.3rem] font-semibold tracking-[-0.03em] text-brand-dark sm:text-[2.7rem]">
+              <h1 className="page-title tracking-[-0.03em]">
                 Signup
               </h1>
               <p className="mt-2 text-[14px] leading-6 text-brand-dark/60">
@@ -213,7 +213,7 @@ function Signup() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-full bg-[#2d2d2d] px-6 py-3.5 text-[14px] font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60"
+                className="btn btn-secondary w-full disabled:opacity-60"
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>

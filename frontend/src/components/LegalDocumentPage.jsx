@@ -8,7 +8,7 @@ function LegalDocumentPage({ title, intro, lastUpdated, sections }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-dark/45">
             CandleOra Legal
           </p>
-          <h1 className="mt-3 text-[2rem] font-semibold tracking-[-0.03em] text-brand-dark sm:text-[2.45rem]">
+          <h1 className="page-title mt-3 tracking-[-0.03em]">
             {title}
           </h1>
           <p className="mt-4 text-[14px] leading-7 text-brand-dark/72">{intro}</p>
@@ -20,9 +20,7 @@ function LegalDocumentPage({ title, intro, lastUpdated, sections }) {
         <div className="mt-8 space-y-8 border-t border-[#f0e8df] pt-8">
           {sections.map((section) => (
             <article key={section.heading} className="space-y-3">
-              <h2 className="text-[1.1rem] font-semibold text-brand-dark">
-                {section.heading}
-              </h2>
+              <h2 className="card-title">{section.heading}</h2>
               {section.paragraphs?.map((paragraph) => (
                 <p
                   key={paragraph}

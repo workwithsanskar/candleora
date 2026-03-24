@@ -69,6 +69,7 @@ describe("ProductDetail", () => {
     );
 
     expect(await screen.findByText("Lavender Ember Jar")).toBeInTheDocument();
+    expect(screen.getByTestId("related-product")).toHaveTextContent("Vanilla Hearth Glass");
     fireEvent.click(screen.getAllByRole("button", { name: "+" })[0]);
     fireEvent.click(screen.getByRole("button", { name: "Add to Cart" }));
 
@@ -80,7 +81,6 @@ describe("ProductDetail", () => {
     });
 
     expect(await screen.findByText("Cart page")).toBeInTheDocument();
-    expect(screen.getByTestId("related-product")).toHaveTextContent("Vanilla Hearth Glass");
   });
 
   it("shows an unavailable state when product loading fails", async () => {

@@ -17,7 +17,7 @@ function Wishlist() {
           action={
             <Link
               to="/shop"
-              className="mt-6 inline-flex rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white"
+              className="btn btn-primary mt-6"
             >
               Explore the shop
             </Link>
@@ -32,7 +32,7 @@ function Wishlist() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Wishlist</p>
-          <h1 className="mt-3 font-display text-5xl font-semibold text-brand-dark">
+          <h1 className="page-title mt-3">
             Saved for later
           </h1>
         </div>
@@ -63,7 +63,7 @@ function Wishlist() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">
                   {item.category?.name ?? "Candles"}
                 </p>
-                <h2 className="mt-2 font-display text-3xl font-semibold text-brand-dark">
+                <h2 className="panel-title mt-2">
                   {item.name}
                 </h2>
                 <div className="mt-3 flex items-center gap-2">
@@ -86,13 +86,13 @@ function Wishlist() {
                   type="button"
                   onClick={() => addToCart(item, 1)}
                   disabled={item.stock <= 0}
-                  className="rounded-full bg-brand-dark px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn btn-secondary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add to cart
                 </button>
                 <Link
                   to={`/product/${item.id}`}
-                  className="rounded-full border border-brand-primary/20 px-5 py-2.5 text-sm font-semibold text-brand-dark transition hover:border-brand-primary hover:bg-brand-primary hover:text-white"
+                  className="btn btn-outline"
                 >
                   View product
                 </Link>

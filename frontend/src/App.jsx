@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,13 +25,15 @@ import Signup from "./pages/Signup";
 import StylingGuideDetail from "./pages/StylingGuideDetail";
 import StylingGuides from "./pages/StylingGuides";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import TrackOrder from "./pages/TrackOrder";
+import UnderConstruction from "./pages/UnderConstruction";
 import Wishlist from "./pages/Wishlist";
 
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="flex min-h-screen flex-col bg-transparent transition-colors duration-300">
+      <div className="flex min-h-screen flex-col bg-white text-brand-dark">
         <Navbar />
 
         <main className="flex-1">
@@ -44,7 +46,10 @@ function App() {
             <Route path="/occasion-picks" element={<OccasionPicks />} />
             <Route path="/styling-guides" element={<StylingGuides />} />
             <Route path="/styling-guides/:slug" element={<StylingGuideDetail />} />
+            <Route path="/under-construction" element={<UnderConstruction />} />
+            <Route path="/under-construction/:featureSlug" element={<UnderConstruction />} />
             <Route path="/candle-fixes" element={<CandleFixes />} />
+            <Route path="/fixes" element={<CandleFixes />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -77,6 +82,14 @@ function App() {
               }
             />
             <Route
+              path="/track"
+              element={
+                <ProtectedRoute>
+                  <TrackOrder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/orders"
               element={
                 <ProtectedRoute>
@@ -100,7 +113,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/track" element={<Navigate replace to="/orders" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

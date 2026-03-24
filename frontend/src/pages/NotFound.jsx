@@ -10,7 +10,7 @@ function NotFound() {
         action={
           <Link
             to="/"
-            className="mt-6 inline-flex rounded-full bg-brand-primary px-5 py-3 text-sm font-semibold text-white"
+            className="btn btn-primary mt-6"
           >
             Back to home
           </Link>

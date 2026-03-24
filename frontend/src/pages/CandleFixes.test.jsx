@@ -19,7 +19,7 @@ describe("CandleFixes", () => {
     mockContentApi.getFixes.mockReset();
   });
 
-  it("renders the candle fixes layout with bullet steps and placeholders", async () => {
+  it("renders the candle fixes layout with bullet steps in compact cards", async () => {
     mockContentApi.getFixes.mockResolvedValue([
       {
         id: 1,
@@ -69,7 +69,7 @@ describe("CandleFixes", () => {
     expect(screen.getByText("Mushrooming Wick")).toBeInTheDocument();
     expect(screen.getByText("Cause: Wick is too long or has carbon build-up.")).toBeInTheDocument();
     expect(screen.queryByText(/^1\./)).not.toBeInTheDocument();
-    expect(screen.getAllByTestId("fix-placeholder")).toHaveLength(12);
+    expect(screen.getAllByRole("article")).toHaveLength(4);
     expect(screen.queryAllByRole("img")).toHaveLength(0);
   });
 

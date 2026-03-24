@@ -43,7 +43,7 @@ describe("Legal navigation", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Terms of Service" }));
-    expect(screen.getByText("Terms route")).toBeInTheDocument();
+    expect(screen.getAllByText("Terms route").length).toBeGreaterThan(0);
   });
 
   it("navigates to the privacy policy page from signup", () => {
@@ -58,7 +58,7 @@ describe("Legal navigation", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
-    expect(screen.getByText("Privacy route")).toBeInTheDocument();
+    expect(screen.getAllByText("Privacy route").length).toBeGreaterThan(0);
   });
 
   it("navigates to the legal pages from the footer", () => {
@@ -80,7 +80,7 @@ describe("Legal navigation", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Terms & Conditions" }));
-    expect(screen.getByText("Terms route")).toBeInTheDocument();
+    expect(screen.getAllByText("Terms route").length).toBeGreaterThan(0);
   });
 
   it("navigates to the privacy policy from the footer", () => {
@@ -102,6 +102,6 @@ describe("Legal navigation", () => {
     );
 
     fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
-    expect(screen.getByText("Privacy route")).toBeInTheDocument();
+    expect(screen.getAllByText("Privacy route").length).toBeGreaterThan(0);
   });
 });

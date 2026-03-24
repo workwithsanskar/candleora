@@ -3,7 +3,7 @@ function AboutUs() {
     <div className="bg-white">
       <section className="container-shell py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-[1220px]">
-          <h1 className="text-center text-[2.5rem] font-semibold tracking-[-0.04em] text-brand-dark sm:text-[3rem] lg:text-[4rem]">
+          <h1 className="page-title text-center tracking-[-0.04em]">
             Who We Are &amp; What We Do
           </h1>
 

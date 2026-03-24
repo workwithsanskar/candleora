@@ -28,7 +28,7 @@ describe("Profile overview", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("MY ACCOUNT")).toBeInTheDocument();
+    expect(screen.getByText("My Account")).toBeInTheDocument();
     expect(screen.getByText(/Welcome back, Ananya/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Orders/i })).toHaveAttribute("href", "/orders");
     expect(screen.getByRole("link", { name: /Addresses/i })).toHaveAttribute(

@@ -57,7 +57,7 @@ describe("Shop", () => {
     expect(await screen.findByText("Lavender Ember Jar")).toBeInTheDocument();
     expect(screen.getByText("Showing 1-2 of 24 item(s)")).toBeInTheDocument();
     expect(mockCatalogApi.getProducts).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 0, size: 12, sort: "popular" }),
+      expect.objectContaining({ page: 0, size: 8, sort: "popular" }),
     );
   });
 
@@ -70,7 +70,7 @@ describe("Shop", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Glass" }));
+    fireEvent.click((await screen.findAllByRole("button", { name: "Glass" }))[0]);
 
     await waitFor(() => {
       expect(mockCatalogApi.getProducts).toHaveBeenLastCalledWith(

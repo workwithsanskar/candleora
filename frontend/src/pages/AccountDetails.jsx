@@ -116,62 +116,49 @@ function AccountDetails() {
   }
 
   return (
-    <section className="container-shell space-y-8 py-10 sm:py-12">
-      <div className="space-y-4">
-        <p className="text-sm font-medium uppercase tracking-[0.14em] text-brand-dark/45">
-          User Account
-        </p>
-        <h1 className="text-[2.7rem] font-semibold tracking-[-0.04em] text-brand-dark">
-          ACCOUNT DETAILS
-        </h1>
-        <p className="max-w-3xl text-base leading-8 text-brand-dark/62">
-          Update your saved contact details, delivery information, and account profile in one place.
-        </p>
-      </div>
+    <section className="container-shell py-14 sm:py-16">
+      <div className="mx-auto max-w-[980px] space-y-8">
+        <div className="space-y-3">
+          <h1 className="text-heading-lg font-semibold uppercase tracking-[-0.02em] text-black">
+            Account Details
+          </h1>
+          <p className="max-w-[920px] text-body leading-8 text-black/62">
+            Update your saved contact details and delivery information from one clear overview.
+          </p>
+        </div>
 
-      <form className="panel space-y-6 p-6 sm:p-8" onSubmit={handleSubmit}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="eyebrow">Manage profile</p>
-            <h2 className="mt-3 font-display text-4xl font-semibold text-brand-dark">
-              {profile?.name ?? "CandleOra customer"}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-brand-dark/70">
-              {profile?.email ?? "Your account details are available after sign-in."}
-            </p>
+        <form className="space-y-8" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-black">Profile Information</h2>
+            <AccountProfileFields
+              form={form}
+              onChange={handleChange}
+              onUseCurrentLocation={handleUseCurrentLocation}
+              isLocating={isLocating}
+              emailReadOnly
+            />
           </div>
 
-          <Link
-            to="/profile"
-            className="rounded-full border border-[#d8d2cb] px-5 py-3 text-sm font-semibold text-brand-dark transition hover:border-brand-dark"
-          >
-            Back to overview
-          </Link>
-        </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="btn btn-secondary min-w-[220px] rounded-full disabled:opacity-60"
+            >
+              {isSaving ? "Saving Changes..." : "Save Changes"}
+            </button>
 
-        <div id="addresses" className="space-y-6">
-          <AccountProfileFields
-            form={form}
-            onChange={handleChange}
-            onUseCurrentLocation={handleUseCurrentLocation}
-            isLocating={isLocating}
-            emailReadOnly
-          />
-        </div>
+            <Link to="/profile" className="text-sm font-medium text-black/58 underline underline-offset-4">
+              Back to overview
+            </Link>
+          </div>
 
-        {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
-        {successMessage && (
-          <p className="text-sm font-semibold text-green-700">{successMessage}</p>
-        )}
-
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="rounded-full bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-primary disabled:opacity-60"
-        >
-          {isSaving ? "Saving profile..." : "Save profile"}
-        </button>
-      </form>
+          {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+          {successMessage && (
+            <p className="text-sm font-semibold text-green-700">{successMessage}</p>
+          )}
+        </form>
+      </div>
     </section>
   );
 }
