@@ -87,6 +87,7 @@ export const contentApi = {
   getFixes: () => api.get("/fixes").then(unwrap),
   getGuides: () => api.get("/guides").then(unwrap),
   getFaqs: () => api.get("/faqs").then(unwrap),
+  submitContactMessage: (payload) => api.post("/contact", payload, { skipAuth: true }).then(unwrap),
 };
 
 export default api;

@@ -91,6 +91,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/fixes", "/api/guides", "/api/faqs").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated())
             .authenticationProvider(authenticationProvider())
@@ -165,7 +166,8 @@ public class SecurityConfig {
             new AntPathRequestMatcher("/api/auth/register"),
             new AntPathRequestMatcher("/api/auth/login"),
             new AntPathRequestMatcher("/api/auth/google"),
-            new AntPathRequestMatcher("/api/auth/phone")
+            new AntPathRequestMatcher("/api/auth/phone"),
+            new AntPathRequestMatcher("/api/contact")
         };
     }
 

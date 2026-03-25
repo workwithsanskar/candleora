@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import heroImage from "../assets/designer/image.png";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
 import stylingGuideCard from "../assets/designer/styling-guides-card.png";
-import ProductCard from "../components/ProductCard";
+import ProductSlider from "../components/ProductSlider";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
@@ -52,31 +52,6 @@ const customerStories = [
   },
 ];
 
-function ArrowButton({ direction, label, onClick, disabled }) {
-  const rotation = direction === "left" ? "rotate-180" : "";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="hidden items-center justify-center text-[#a6a6a6] transition hover:text-black disabled:cursor-not-allowed disabled:opacity-35 lg:inline-flex"
-      aria-label={label}
-      title={label}
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className={`h-[39px] w-[23px] ${rotation}`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      >
-        <path d="M8 5L16 12L8 19" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
-
 function CategoryTile({ category, className = "" }) {
   return (
     <Link
@@ -116,7 +91,6 @@ function Home() {
   const [faqs, setFaqs] = useState([]);
   const [error, setError] = useState("");
   const [expandedFaq, setExpandedFaq] = useState(null);
-  const [productSlide, setProductSlide] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -148,19 +122,6 @@ function Home() {
       isMounted = false;
     };
   }, []);
-
-  const featuredProductGroups = useMemo(() => {
-    const groups = [];
-
-    for (let index = 0; index < featuredProducts.length; index += 4) {
-      groups.push(featuredProducts.slice(index, index + 4));
-    }
-
-    return groups.length ? groups : [[]];
-  }, [featuredProducts]);
-
-  const visibleFeaturedProducts = featuredProductGroups[productSlide] ?? [];
-  const hasMultipleSlides = featuredProductGroups.length > 1;
 
   if (error) {
     return (
@@ -207,39 +168,13 @@ function Home() {
       <section className="container-shell py-10 sm:py-12">
         <h2 className="section-title text-center">Our Best Selling Products</h2>
 
-        <div className="relative mt-10 lg:px-10">
-          <div className="hidden lg:block">
-            <div className="absolute left-0 top-[146px]">
-              <ArrowButton
-                direction="left"
-                label="Previous products"
-                disabled={!hasMultipleSlides || productSlide === 0}
-                onClick={() => setProductSlide((currentSlide) => Math.max(currentSlide - 1, 0))}
-              />
-            </div>
-            <div className="absolute right-0 top-[146px]">
-              <ArrowButton
-                direction="right"
-                label="Next products"
-                disabled={!hasMultipleSlides || productSlide === featuredProductGroups.length - 1}
-                onClick={() =>
-                  setProductSlide((currentSlide) =>
-                    Math.min(currentSlide + 1, featuredProductGroups.length - 1),
-                  )
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid justify-items-center gap-x-[18px] gap-y-6 sm:grid-cols-2 xl:grid-cols-[repeat(4,286px)]">
-            {visibleFeaturedProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                badgeLabel={productSlide === 0 && index === 0 ? "NEW" : null}
-              />
-            ))}
-          </div>
+        <div className="mt-10 px-2 lg:px-10 xl:px-14">
+          <ProductSlider
+            products={featuredProducts}
+            arrowTopClass="top-[180px]"
+            arrowLeftClass="-left-12 xl:-left-16"
+            arrowRightClass="-right-12 xl:-right-16"
+          />
         </div>
       </section>
 

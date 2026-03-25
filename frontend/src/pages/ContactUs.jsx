@@ -1,6 +1,107 @@
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+import { contentApi } from "../services/api";
+import { formatApiError } from "../utils/format";
+import { clearStoredJson, readStoredJson, writeStoredJson } from "../utils/storage";
+
+const CONTACT_DRAFT_STORAGE_KEY = "candleora.contact-draft";
+
+const emptyForm = {
+  name: "",
+  email: "",
+  phone: "",
+  subject: "",
+  message: "",
+};
+
+function buildInitialForm(user) {
+  return {
+    ...emptyForm,
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    phone: user?.phone ?? "",
+  };
+}
+
 function ContactUs() {
-  const handleSubmit = (event) => {
+  const { user } = useAuth();
+  const [form, setForm] = useState(() => buildInitialForm(user));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [error, setError] = useState("");
+  const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
+
+  useEffect(() => {
+    const savedDraft = readStoredJson(CONTACT_DRAFT_STORAGE_KEY, null);
+
+    if (savedDraft) {
+      setForm((current) => ({
+        ...current,
+        ...savedDraft,
+      }));
+    } else {
+      setForm(buildInitialForm(user));
+    }
+
+    setHasHydratedDraft(true);
+  }, [user]);
+
+  useEffect(() => {
+    if (!hasHydratedDraft) {
+      return;
+    }
+
+    writeStoredJson(CONTACT_DRAFT_STORAGE_KEY, form);
+  }, [form, hasHydratedDraft]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    setError("");
+    setStatusMessage("");
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const trimmedForm = Object.fromEntries(
+      Object.entries(form).map(([key, value]) => [key, String(value ?? "").trim()]),
+    );
+
+    if (
+      !trimmedForm.name ||
+      !trimmedForm.email ||
+      !trimmedForm.phone ||
+      !trimmedForm.subject ||
+      !trimmedForm.message
+    ) {
+      setError("Please fill in all fields before sending your message.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+    setStatusMessage("");
+
+    try {
+      await contentApi.submitContactMessage(trimmedForm);
+      clearStoredJson(CONTACT_DRAFT_STORAGE_KEY);
+      setForm(buildInitialForm(user));
+      setStatusMessage("Your message has been sent successfully. Our team will get back to you shortly.");
+      toast.success("Message sent successfully.");
+    } catch (submitError) {
+      const message = formatApiError(submitError);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,11 +148,17 @@ function ContactUs() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
                     placeholder="Your Name"
                     className="input-pill"
                   />
                   <input
                     type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
                     placeholder="Your E-mail"
                     className="input-pill"
                   />
@@ -60,11 +167,17 @@ function ContactUs() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
                     placeholder="Phone Number"
                     className="input-pill"
                   />
                   <input
                     type="text"
+                    name="subject"
+                    value={form.subject}
+                    onChange={handleChange}
                     placeholder="Subject"
                     className="input-pill"
                   />
@@ -72,12 +185,18 @@ function ContactUs() {
 
                 <textarea
                   rows="6"
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
                   placeholder="Message"
                   className="min-h-[160px] w-full rounded-[24px] border border-black/15 px-5 py-4 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black"
                 />
 
-                <button type="submit" className="btn btn-primary">
-                  Send Message
+                {error && <p className="text-sm font-semibold text-danger">{error}</p>}
+                {statusMessage && <p className="text-sm font-semibold text-success">{statusMessage}</p>}
+
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-60">
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
               </form>
             </div>

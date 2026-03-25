@@ -1,9 +1,13 @@
 package com.candleora.service;
 
 import com.candleora.dto.content.CandleFixResponse;
+import com.candleora.dto.content.ContactMessageRequest;
+import com.candleora.dto.content.ContactMessageResponse;
 import com.candleora.dto.content.FaqResponse;
 import com.candleora.dto.content.StylingGuideResponse;
+import com.candleora.entity.ContactMessage;
 import com.candleora.repository.CandleFixRepository;
+import com.candleora.repository.ContactMessageRepository;
 import com.candleora.repository.FaqRepository;
 import com.candleora.repository.StylingGuideRepository;
 import java.util.List;
@@ -17,15 +21,18 @@ public class ContentService {
     private final CandleFixRepository candleFixRepository;
     private final StylingGuideRepository stylingGuideRepository;
     private final FaqRepository faqRepository;
+    private final ContactMessageRepository contactMessageRepository;
 
     public ContentService(
         CandleFixRepository candleFixRepository,
         StylingGuideRepository stylingGuideRepository,
-        FaqRepository faqRepository
+        FaqRepository faqRepository,
+        ContactMessageRepository contactMessageRepository
     ) {
         this.candleFixRepository = candleFixRepository;
         this.stylingGuideRepository = stylingGuideRepository;
         this.faqRepository = faqRepository;
+        this.contactMessageRepository = contactMessageRepository;
     }
 
     public List<CandleFixResponse> getFixes() {
@@ -67,5 +74,27 @@ public class ContentService {
                 faq.getOrderIndex()
             ))
             .toList();
+    }
+
+    @Transactional
+    public ContactMessageResponse createContactMessage(ContactMessageRequest request) {
+        ContactMessage contactMessage = new ContactMessage();
+        contactMessage.setName(request.name().trim());
+        contactMessage.setEmail(request.email().trim().toLowerCase());
+        contactMessage.setPhone(request.phone().trim());
+        contactMessage.setSubject(request.subject().trim());
+        contactMessage.setMessage(request.message().trim());
+
+        ContactMessage savedMessage = contactMessageRepository.save(contactMessage);
+
+        return new ContactMessageResponse(
+            savedMessage.getId(),
+            savedMessage.getName(),
+            savedMessage.getEmail(),
+            savedMessage.getPhone(),
+            savedMessage.getSubject(),
+            savedMessage.getMessage(),
+            savedMessage.getCreatedAt()
+        );
     }
 }
