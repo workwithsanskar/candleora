@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
+import { getProductPath } from "../utils/normalize";
 import BrandLogo from "./BrandLogo";
 import Tooltip from "./Tooltip";
 
@@ -298,7 +299,7 @@ function Navbar() {
                     <div className="space-y-4">
                       {previewWishlistItems.map((item) => (
                         <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-center gap-3">
-                          <Link to={`/product/${item.id}`} onClick={closeMenus}>
+                          <Link to={getProductPath(item)} onClick={closeMenus}>
                             <img
                               src={item.imageUrl}
                               alt={item.name}
@@ -307,7 +308,7 @@ function Navbar() {
                           </Link>
                           <div className="min-w-0">
                             <Link
-                              to={`/product/${item.id}`}
+                              to={getProductPath(item)}
                               onClick={closeMenus}
                               className="block truncate text-sm font-medium text-black"
                             >

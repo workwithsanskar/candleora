@@ -1,6 +1,16 @@
 const fallbackImage =
   "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80";
 
+export function getProductPath(product) {
+  const slug = String(product?.slug ?? "").trim();
+
+  if (slug) {
+    return `/product/${slug}`;
+  }
+
+  return `/product/${product?.id ?? ""}`;
+}
+
 export function normalizeProduct(product) {
   return {
     id: Number(product?.id),

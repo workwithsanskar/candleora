@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: candleora-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: FRONTEND_URL
+        value: https://candleora.vercel.app
+      - key: FRONTEND_ORIGIN_PATTERNS
+        value: https://*.vercel.app
+      - key: APP_REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER
+        value: "false"
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

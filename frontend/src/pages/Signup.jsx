@@ -148,6 +148,7 @@ function Signup() {
                     value={form.name}
                     onChange={handleChange}
                     placeholder="lorem Ipsum"
+                    autoComplete="name"
                     className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                   />
                 </label>
@@ -161,6 +162,7 @@ function Signup() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="loremipsum@gmail.com"
+                    autoComplete="email"
                     className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                   />
                 </label>
@@ -178,6 +180,7 @@ function Signup() {
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Password"
+                      autoComplete="new-password"
                       className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 pr-14 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                     />
                     <button
@@ -205,6 +208,7 @@ function Signup() {
                       value={form.confirmPassword}
                       onChange={handleChange}
                       placeholder="Confirm Password"
+                      autoComplete="new-password"
                       className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 pr-14 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                     />
                     <button

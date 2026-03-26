@@ -81,6 +81,8 @@ export const orderApi = {
 };
 
 export const paymentApi = {
+  createPhonePeOrder: (payload) => api.post("/payments/phonepe/order", payload).then(unwrap),
+  getPhonePeStatus: (orderId) => api.get(`/payments/phonepe/status/${orderId}`).then(unwrap),
   createRazorpayOrder: (payload) => api.post("/payments/razorpay/order", payload).then(unwrap),
   verifyRazorpayPayment: (payload) =>
     api.post("/payments/razorpay/verify", payload).then(unwrap),

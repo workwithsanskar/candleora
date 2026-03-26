@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
-import { normalizeProduct } from "../utils/normalize";
+import { getProductPath, normalizeProduct } from "../utils/normalize";
 import Tooltip from "./Tooltip";
 
 function HeartIcon({ filled = false }) {
@@ -46,10 +46,11 @@ function ProductCard({ product, badgeLabel = null }) {
   );
   const activeBadge = badgeLabel ?? (item.discount > 0 ? `-${item.discount}%` : null);
   const isNewBadge = activeBadge?.toUpperCase() === "NEW";
+  const productPath = getProductPath(item);
 
   return (
     <article className="group mx-auto w-full max-w-[286px] transition duration-300 hover:-translate-y-1">
-      <Link to={`/product/${item.id}`} className="block">
+      <Link to={productPath} className="block">
         <div className="relative h-[360px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
           <img
             src={item.imageUrls[0]}
@@ -88,7 +89,7 @@ function ProductCard({ product, badgeLabel = null }) {
       </Link>
 
       <div className="space-y-1.5 pt-2.5 text-center">
-        <Link to={`/product/${item.id}`}>
+        <Link to={productPath}>
           <h3 className="line-clamp-2 min-h-[56px] font-heading text-heading-sm leading-[1.15] text-black">
             {item.name}
           </h3>

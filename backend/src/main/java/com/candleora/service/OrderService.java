@@ -53,7 +53,7 @@ public class OrderService {
         if (!"COD".equals(paymentMethod)) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Use the Razorpay payment endpoint for online payments"
+                "Use the online payment endpoint for non-COD orders"
             );
         }
 
@@ -71,6 +71,14 @@ public class OrderService {
     }
 
     public CustomerOrder createPendingOnlineOrder(AppUser user, PlaceOrderRequest request) {
+        return createPendingOnlineOrder(user, request, PaymentProvider.RAZORPAY);
+    }
+
+    public CustomerOrder createPendingOnlineOrder(
+        AppUser user,
+        PlaceOrderRequest request,
+        PaymentProvider paymentProvider
+    ) {
         String paymentMethod = normalizePaymentMethod(request.paymentMethod());
         if ("COD".equals(paymentMethod)) {
             throw new ResponseStatusException(
@@ -82,7 +90,7 @@ public class OrderService {
         CustomerOrder order = buildOrder(user, request, paymentMethod);
         validateOrderEligibility(user, order);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
-        order.setPaymentProvider(PaymentProvider.RAZORPAY);
+        order.setPaymentProvider(paymentProvider);
         order.setPaymentStatus(PaymentStatus.PENDING);
         return customerOrderRepository.save(order);
     }

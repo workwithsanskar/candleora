@@ -6,7 +6,11 @@ import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { orderApi, paymentApi } from "../services/api";
-import { buildCheckoutPayload, createCheckoutForm } from "../utils/account";
+import {
+  buildCheckoutPayload,
+  createCheckoutForm,
+  mergeCheckoutFormWithUser,
+} from "../utils/account";
 import {
   canUseCashOnDelivery,
   COD_LIMIT,
@@ -16,7 +20,13 @@ import {
 } from "../utils/authFlow";
 import { formatApiError, formatCurrency } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
-import { loadRazorpayScript } from "../utils/razorpay";
+import { PHONEPE_COMING_SOON_MESSAGE, PHONEPE_ENABLED } from "../utils/payments";
+import {
+  CHECKOUT_DRAFT_STORAGE_KEY,
+  clearStoredJson,
+  readStoredJson,
+  writeStoredJson,
+} from "../utils/storage";
 
 const inputClassName =
   "w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-brand-dark outline-none transition focus:border-brand-primary/40 focus:bg-white";
@@ -37,11 +47,17 @@ const requiredShippingFields = [
   "postalCode",
 ];
 
+const indianPhonePattern = /^[6-9]\d{9}$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const postalCodePattern = /^\d{6}$/;
+
 function Checkout() {
   const navigate = useNavigate();
   const { user, phoneAuth, refreshProfile, sendEmailVerification } = useAuth();
   const { items, grandTotal, clearCart } = useCart();
-  const [form, setForm] = useState(() => createCheckoutForm(user));
+  const [form, setForm] = useState(() =>
+    mergeCheckoutFormWithUser(readStoredJson(CHECKOUT_DRAFT_STORAGE_KEY, {}), user),
+  );
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -50,10 +66,12 @@ function Checkout() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user) {
-      setForm(createCheckoutForm(user));
-    }
+    setForm((current) => mergeCheckoutFormWithUser(current, user));
   }, [user]);
+
+  useEffect(() => {
+    writeStoredJson(CHECKOUT_DRAFT_STORAGE_KEY, form);
+  }, [form]);
 
   const phoneVerificationRequired = requiresPhoneVerification(user);
   const emailVerificationRecommended = requiresEmailVerification(user);
@@ -61,7 +79,7 @@ function Checkout() {
 
   useEffect(() => {
     if (!codEnabled && form.paymentMethod === "COD") {
-      setForm((current) => ({ ...current, paymentMethod: "RAZORPAY" }));
+      setForm((current) => ({ ...current, paymentMethod: PHONEPE_ENABLED ? "PHONEPE" : "" }));
     }
   }, [codEnabled, form.paymentMethod]);
 
@@ -91,7 +109,9 @@ function Checkout() {
 
     const refreshedUser = await refreshProfile().catch(() => response?.user ?? null);
     if (refreshedUser) {
-      setForm(createCheckoutForm(refreshedUser));
+      setForm((current) =>
+        mergeCheckoutFormWithUser({ ...current, phone: phoneNumber || current.phone }, refreshedUser),
+      );
     } else if (phoneNumber) {
       setForm((current) => ({ ...current, phone: phoneNumber }));
     }
@@ -116,6 +136,48 @@ function Checkout() {
 
     if (missingField) {
       setError("Complete the shipping address before continuing.");
+      return false;
+    }
+
+    if (!emailPattern.test(String(form.contactEmail).trim())) {
+      setError("Enter a valid email address for order confirmation.");
+      return false;
+    }
+
+    const normalizedPhone = String(form.phone).replace(/\D/g, "");
+    if (!indianPhonePattern.test(normalizedPhone)) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return false;
+    }
+
+    if (form.alternatePhoneNumber) {
+      const normalizedAlternatePhone = String(form.alternatePhoneNumber).replace(/\D/g, "");
+      if (!indianPhonePattern.test(normalizedAlternatePhone)) {
+        setError("Enter a valid alternate 10-digit mobile number or leave it blank.");
+        return false;
+      }
+    }
+
+    if (!postalCodePattern.test(String(form.postalCode).trim())) {
+      setError("Enter a valid 6-digit postal code.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validatePaymentStep = () => {
+    if (!form.paymentMethod) {
+      setError(
+        PHONEPE_ENABLED
+          ? "Choose a payment method before continuing."
+          : `No payment method is available for this order right now. ${PHONEPE_COMING_SOON_MESSAGE}`,
+      );
+      return false;
+    }
+
+    if (!PHONEPE_ENABLED && form.paymentMethod === "PHONEPE") {
+      setError(PHONEPE_COMING_SOON_MESSAGE);
       return false;
     }
 
@@ -149,6 +211,10 @@ function Checkout() {
       return;
     }
 
+    if (step === 2 && !validatePaymentStep()) {
+      return;
+    }
+
     setStep((currentStep) => Math.min(currentStep + 1, steps.length));
   };
 
@@ -163,60 +229,26 @@ function Checkout() {
     const payload = buildCheckoutPayload(form, checkoutItems);
 
     try {
+      if (!PHONEPE_ENABLED && form.paymentMethod === "PHONEPE") {
+        throw new Error(PHONEPE_COMING_SOON_MESSAGE);
+      }
+
+      if (!form.paymentMethod) {
+        throw new Error("Select a payment method before placing the order.");
+      }
+
       if (form.paymentMethod === "COD") {
         const order = await orderApi.createOrder(payload);
+        clearStoredJson(CHECKOUT_DRAFT_STORAGE_KEY);
         clearCart();
         toast.success("Order placed successfully.");
         navigate(`/order-confirmation/${order.id}`, { replace: true });
         return;
       }
 
-      const razorpayOrder = await paymentApi.createRazorpayOrder(payload);
-      const Razorpay = await loadRazorpayScript();
-
-      const paymentResult = await new Promise((resolve, reject) => {
-        const instance = new Razorpay({
-          key: razorpayOrder.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-          order_id: razorpayOrder.razorpayOrderId,
-          name: "CandleOra",
-          description: `Order #${razorpayOrder.orderId}`,
-          prefill: {
-            name: razorpayOrder.customerName || form.shippingName,
-            email: razorpayOrder.customerEmail || form.contactEmail,
-            contact: razorpayOrder.customerPhone || form.phone,
-          },
-          theme: {
-            color: "#C18C5D",
-          },
-          modal: {
-            ondismiss: () => reject(new Error("Payment was cancelled before completion.")),
-          },
-          handler: (response) => resolve(response),
-        });
-
-        instance.on("payment.failed", (response) => {
-          reject(
-            new Error(
-              response?.error?.description || "Payment failed. Please try again.",
-            ),
-          );
-        });
-
-        instance.open();
-      });
-
-      const order = await paymentApi.verifyRazorpayPayment({
-        orderId: razorpayOrder.orderId,
-        razorpayOrderId: paymentResult.razorpay_order_id,
-        razorpayPaymentId: paymentResult.razorpay_payment_id,
-        razorpaySignature: paymentResult.razorpay_signature,
-      });
-
-      clearCart();
-      toast.success("Payment verified and order confirmed.");
-      navigate(`/order-confirmation/${order.id}`, { replace: true });
+      const phonePePayment = await paymentApi.createPhonePeOrder(payload);
+      toast.success("Redirecting to PhonePe...");
+      window.location.assign(phonePePayment.checkoutUrl);
     } catch (submitError) {
       setError(formatApiError(submitError));
     } finally {
@@ -269,7 +301,7 @@ function Checkout() {
         ))}
       </div>
 
-      <div className="space-y-3 rounded-[24px] bg-white p-5">
+        <div className="space-y-3 rounded-[24px] bg-white p-5">
         <div className="flex items-center justify-between text-sm text-brand-dark/70">
           <span>Subtotal</span>
           <span>{formatCurrency(grandTotal)}</span>
@@ -280,7 +312,13 @@ function Checkout() {
         </div>
         <div className="flex items-center justify-between text-sm text-brand-dark/70">
           <span>Payment mode</span>
-          <span>{form.paymentMethod === "COD" ? "COD" : "Razorpay"}</span>
+          <span>
+            {form.paymentMethod === "COD"
+              ? "COD"
+              : form.paymentMethod === "PHONEPE"
+                ? "PhonePe"
+                : "Not available"}
+          </span>
         </div>
         <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3">
           <span className="text-sm font-semibold text-brand-dark">Grand total</span>
@@ -320,7 +358,7 @@ function Checkout() {
               Complete your CandleOra order.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-8 text-brand-dark/70">
-              Shipping, payment, and final review now live in a cleaner three-step checkout flow with COD and Razorpay sandbox support.
+              Shipping, payment, and final review now live in a cleaner three-step checkout flow with COD and PhonePe hosted checkout support.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -329,7 +367,11 @@ function Checkout() {
                 key={stepItem.id}
                 type="button"
                 onClick={() => {
-                  if (stepItem.id <= step || validateShippingStep()) {
+                  const canAdvance =
+                    stepItem.id <= step ||
+                    (step === 1 ? validateShippingStep() : step === 2 ? validatePaymentStep() : true);
+
+                  if (canAdvance) {
                     setStep(stepItem.id);
                   }
                 }}
@@ -427,6 +469,7 @@ function Checkout() {
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
+                    inputMode="tel"
                     autoComplete="tel"
                   />
                 </label>
@@ -438,6 +481,7 @@ function Checkout() {
                     name="alternatePhoneNumber"
                     value={form.alternatePhoneNumber}
                     onChange={handleChange}
+                    inputMode="tel"
                     autoComplete="tel-national"
                   />
                 </label>
@@ -497,6 +541,7 @@ function Checkout() {
                     name="postalCode"
                     value={form.postalCode}
                     onChange={handleChange}
+                    inputMode="numeric"
                     autoComplete="postal-code"
                   />
                 </label>
@@ -559,12 +604,15 @@ function Checkout() {
                 </h2>
               </div>
 
-              <div className="grid gap-4">
-                {[ 
+          <div className="grid gap-4">
+                {[
                   {
-                    value: "RAZORPAY",
-                    title: "Razorpay Online",
-                    description: "Card, UPI, wallet, and netbanking via Razorpay sandbox.",
+                    value: "PHONEPE",
+                    title: "PhonePe Online",
+                    description: PHONEPE_ENABLED
+                      ? "UPI, cards, netbanking, and wallets through PhonePe hosted checkout."
+                      : PHONEPE_COMING_SOON_MESSAGE,
+                    disabled: !PHONEPE_ENABLED,
                   },
                   {
                     value: "COD",
@@ -572,6 +620,7 @@ function Checkout() {
                     description: codEnabled
                       ? "Pay after the package reaches you."
                       : `Available only for totals up to ${formatCurrency(COD_LIMIT)}.`,
+                    disabled: !codEnabled,
                   },
                 ].map((method) => (
                   <button
@@ -580,12 +629,12 @@ function Checkout() {
                     onClick={() =>
                       setForm((current) => ({ ...current, paymentMethod: method.value }))
                     }
-                    disabled={method.value === "COD" && !codEnabled}
+                    disabled={method.disabled}
                     className={`rounded-[28px] border p-5 text-left transition ${
                       form.paymentMethod === method.value
                         ? "border-brand-primary bg-white shadow-float"
                         : "border-brand-primary/10 bg-white"
-                    } ${method.value === "COD" && !codEnabled ? "cursor-not-allowed opacity-60" : ""}`}
+                    } ${method.disabled ? "cursor-not-allowed opacity-60" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -641,12 +690,18 @@ function Checkout() {
                   </p>
                   <div className="mt-4 space-y-2 text-sm leading-7 text-brand-dark/80">
                     <p className="font-semibold text-brand-dark">
-                      {form.paymentMethod === "COD" ? "Cash on Delivery" : "Razorpay Online"}
+                      {form.paymentMethod === "COD"
+                        ? "Cash on Delivery"
+                        : form.paymentMethod === "PHONEPE"
+                          ? "PhonePe Online"
+                          : "Payment method unavailable"}
                     </p>
                     <p>
                       {form.paymentMethod === "COD"
                         ? "Your order will be confirmed immediately and paid on delivery."
-                        : "You will be redirected to the Razorpay checkout modal to finish the payment."}
+                        : form.paymentMethod === "PHONEPE"
+                          ? "You will be redirected to PhonePe to finish the payment securely."
+                          : PHONEPE_COMING_SOON_MESSAGE}
                     </p>
                   </div>
                 </div>
@@ -655,6 +710,12 @@ function Checkout() {
           )}
 
           {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
+
+          {!PHONEPE_ENABLED && (
+            <p className="text-sm text-brand-dark/65">
+              {PHONEPE_COMING_SOON_MESSAGE}
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-3 pt-2">
             {step > 1 && (
@@ -685,10 +746,10 @@ function Checkout() {
                 {isSubmitting
                   ? form.paymentMethod === "COD"
                     ? "Placing order..."
-                    : "Preparing payment..."
+                    : "Redirecting to PhonePe..."
                   : form.paymentMethod === "COD"
                     ? "Place order"
-                    : "Pay with Razorpay"}
+                    : "Pay with PhonePe"}
               </button>
             )}
           </div>

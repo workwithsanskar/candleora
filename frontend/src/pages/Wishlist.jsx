@@ -3,6 +3,7 @@ import StatusView from "../components/StatusView";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
+import { getProductPath } from "../utils/normalize";
 
 function Wishlist() {
   const { addToCart } = useCart();
@@ -91,7 +92,7 @@ function Wishlist() {
                   Add to cart
                 </button>
                 <Link
-                  to={`/product/${item.id}`}
+                  to={getProductPath(item)}
                   className="btn btn-outline"
                 >
                   View product

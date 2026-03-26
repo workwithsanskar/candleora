@@ -17,6 +17,7 @@ import OccasionPicks from "./pages/OccasionPicks";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderDetail from "./pages/OrderDetail";
 import Orders from "./pages/Orders";
+import PhonePeReturn from "./pages/PhonePeReturn";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProductDetail from "./pages/ProductDetail";
 import Profile from "./pages/Profile";
@@ -64,6 +65,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout/phonepe-return"
+              element={
+                <ProtectedRoute>
+                  <PhonePeReturn />
                 </ProtectedRoute>
               }
             />

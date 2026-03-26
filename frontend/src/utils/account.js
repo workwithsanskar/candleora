@@ -1,3 +1,5 @@
+import { PHONEPE_ENABLED } from "./payments";
+
 export const accountFormDefaults = {
   name: "",
   email: "",
@@ -50,7 +52,29 @@ export function createCheckoutForm(user = {}) {
     locationLabel: user?.locationLabel ?? "",
     latitude: normalizeNumberForForm(user?.latitude),
     longitude: normalizeNumberForForm(user?.longitude),
-    paymentMethod: "RAZORPAY",
+    paymentMethod: PHONEPE_ENABLED ? "PHONEPE" : "COD",
+  };
+}
+
+export function mergeCheckoutFormWithUser(draft = {}, user = {}) {
+  const base = createCheckoutForm(user);
+
+  return {
+    ...base,
+    ...draft,
+    shippingName: draft?.shippingName || base.shippingName,
+    phone: draft?.phone || base.phone,
+    contactEmail: draft?.contactEmail || base.contactEmail,
+    alternatePhoneNumber: draft?.alternatePhoneNumber || base.alternatePhoneNumber,
+    addressLine1: draft?.addressLine1 || base.addressLine1,
+    addressLine2: draft?.addressLine2 || base.addressLine2,
+    city: draft?.city || base.city,
+    state: draft?.state || base.state,
+    postalCode: draft?.postalCode || base.postalCode,
+    locationLabel: draft?.locationLabel || base.locationLabel,
+    latitude: draft?.latitude || base.latitude,
+    longitude: draft?.longitude || base.longitude,
+    paymentMethod: draft?.paymentMethod || base.paymentMethod,
   };
 }
 

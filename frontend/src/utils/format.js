@@ -33,6 +33,14 @@ export function formatDateRange(startValue, endValue) {
 export function titleCase(value) {
   const normalized = String(value ?? "");
 
+  if (normalized === "PHONEPE") {
+    return "PhonePe";
+  }
+
+  if (normalized === "RAZORPAY") {
+    return "Razorpay";
+  }
+
   if (normalized && normalized === normalized.toUpperCase() && normalized.length <= 8) {
     return normalized;
   }
@@ -89,6 +97,10 @@ export function formatApiError(error) {
 
   if (status === 503 && payload?.message === "Phone authentication is not configured on the server") {
     return "Phone OTP login is not configured on the server yet. Add the Firebase project ID on the backend and try again.";
+  }
+
+  if (status === 503 && payload?.message === "PhonePe is not configured on the server") {
+    return "Online payment is not active yet. PhonePe will be enabled once the merchant credentials are added.";
   }
 
   if (status >= 500) {

@@ -89,9 +89,11 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/health/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/fixes", "/api/guides", "/api/faqs").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/payments/phonepe/callback").permitAll()
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated())
             .authenticationProvider(authenticationProvider())

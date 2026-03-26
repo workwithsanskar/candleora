@@ -86,14 +86,12 @@ public class CatalogService {
         return PagedResponse.from(productPage);
     }
 
-    public ProductResponse getProduct(Long id) {
-        return toProductResponse(productRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found")));
+    public ProductResponse getProduct(String identifier) {
+        return toProductResponse(findProduct(identifier));
     }
 
-    public List<ProductResponse> getRelatedProducts(Long id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+    public List<ProductResponse> getRelatedProducts(String identifier) {
+        Product product = findProduct(identifier);
 
         return productRepository.findTop4ByCategoryAndIdNotOrderByCreatedAtDesc(product.getCategory(), product.getId())
             .stream()
@@ -119,6 +117,21 @@ public class CatalogService {
             return Sort.by(Sort.Order.desc("createdAt"));
         }
         return Sort.by(Sort.Order.desc("rating"), Sort.Order.desc("createdAt"));
+    }
+
+    private Product findProduct(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+        }
+
+        try {
+            Long numericId = Long.parseLong(identifier);
+            return productRepository.findById(numericId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        } catch (NumberFormatException ignored) {
+            return productRepository.findBySlugIgnoreCase(identifier)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        }
     }
 
     private ProductResponse toProductResponse(Product product) {

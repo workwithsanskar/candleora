@@ -36,14 +36,14 @@ public class CatalogController {
         return catalogService.getProducts(search, category, minPrice, maxPrice, occasion, sort, page, size);
     }
 
-    @GetMapping("/products/{id}")
-    public ProductResponse getProduct(@PathVariable Long id) {
-        return catalogService.getProduct(id);
+    @GetMapping("/products/{identifier}")
+    public ProductResponse getProduct(@PathVariable String identifier) {
+        return catalogService.getProduct(identifier);
     }
 
-    @GetMapping("/products/{id}/related")
-    public List<ProductResponse> getRelatedProducts(@PathVariable Long id) {
-        return catalogService.getRelatedProducts(id);
+    @GetMapping("/products/{identifier}/related")
+    public List<ProductResponse> getRelatedProducts(@PathVariable String identifier) {
+        return catalogService.getRelatedProducts(identifier);
     }
 
     @GetMapping("/categories")

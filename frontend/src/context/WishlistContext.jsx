@@ -25,6 +25,7 @@ function normalizeWishlistItem(product) {
 
   return {
     id: item.id,
+    slug: item.slug,
     name: item.name,
     price: item.price,
     originalPrice: item.originalPrice,
