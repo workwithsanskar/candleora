@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import OrderHistorySkeleton from "../components/OrderHistorySkeleton";
 import StatusView from "../components/StatusView";
 import { orderApi } from "../services/api";
 import { formatApiError, formatCurrency, formatDate, titleCase } from "../utils/format";
@@ -59,11 +60,7 @@ function Orders() {
   }, []);
 
   if (isLoading) {
-    return (
-      <section className="container-shell py-16">
-        <StatusView title="Loading orders" message="Fetching your recent CandleOra purchases." />
-      </section>
-    );
+    return <OrderHistorySkeleton />;
   }
 
   if (error) {

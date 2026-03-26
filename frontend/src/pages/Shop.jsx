@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import StatusView from "../components/StatusView";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
 import { catalogApi } from "../services/api";
@@ -102,6 +103,7 @@ function Shop() {
   const showingFrom = visibleCount > 0 ? 1 : 0;
   const showingTo = visibleCount;
   const hasMorePages = page + 1 < totalPages;
+  const initialSkeletonCount = 6;
 
   return (
     <section className="container-shell py-10 sm:py-12">
@@ -171,10 +173,11 @@ function Shop() {
           </div>
 
           {isLoading && page === 0 ? (
-            <StatusView
-              title="Loading the candle shelf"
-              message="We are pulling the latest catalog from the CandleOra API."
-            />
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: initialSkeletonCount }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
+            </div>
           ) : error ? (
             <StatusView
               title="Products could not be loaded"
@@ -196,6 +199,11 @@ function Shop() {
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
+                {isLoading &&
+                  page > 0 &&
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <ProductCardSkeleton key={`loading-${index}`} />
+                  ))}
               </div>
 
               {hasMorePages && (

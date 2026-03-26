@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import heroImage from "../assets/designer/image.png";
+import heroImage from "../assets/designer/image-optimized.jpg";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
 import stylingGuidesCard from "../assets/designer/styling-guides-card.png";

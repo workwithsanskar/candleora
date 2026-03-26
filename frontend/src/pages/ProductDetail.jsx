@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { m, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import ProductDetailSkeleton from "../components/ProductDetailSkeleton";
 import ProductSlider from "../components/ProductSlider";
+import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -69,6 +72,7 @@ function ProductDetail() {
   const [selectedPack, setSelectedPack] = useState(4);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     let isMounted = true;
@@ -103,15 +107,18 @@ function ProductDetail() {
     };
   }, [id]);
 
+  const handleAddToCart = async () => {
+    await addToCart(product, quantity);
+    navigate("/cart");
+  };
+
+  const handleBuyNow = async () => {
+    await addToCart(product, quantity);
+    navigate("/checkout");
+  };
+
   if (isLoading) {
-    return (
-      <section className="container-shell py-16">
-        <StatusView
-          title="Loading product details"
-          message="Fetching the product gallery, pricing, and related recommendations."
-        />
-      </section>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (error || !product) {
@@ -139,7 +146,7 @@ function ProductDetail() {
   ];
 
   return (
-    <section className="container-shell py-8 sm:py-10">
+    <section className="container-shell py-8 pb-28 sm:py-10 sm:pb-32 lg:pb-10">
       <div className="mb-7 flex flex-wrap items-center gap-2 text-[12px] text-black/42">
         <Link to="/" className="transition hover:text-black">
           Shop Listing
@@ -164,6 +171,8 @@ function ProductDetail() {
               <img
                 src={imageUrl}
                 alt={product.name}
+                loading="lazy"
+                decoding="async"
                 className="aspect-[0.76] w-full object-cover"
               />
             </button>
@@ -175,6 +184,8 @@ function ProductDetail() {
             <img
               src={selectedImage}
               alt={product.name}
+              loading="eager"
+              decoding="async"
               className="aspect-[0.8] w-full object-cover"
             />
           </div>
@@ -188,19 +199,27 @@ function ProductDetail() {
                   {product.name}
                 </h1>
               </div>
-              <button
+              <m.button
                 type="button"
                 title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 onClick={() => toggleWishlist(product)}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.9 }}
                 className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
                   wishlisted
                     ? "border-danger/30 bg-danger/10 text-danger"
                     : "border-black/10 text-black/45 hover:border-black hover:text-black"
                 }`}
               >
-                <HeartIcon filled={wishlisted} />
-              </button>
+                <m.span
+                  key={wishlisted ? "wishlisted" : "not-wishlisted"}
+                  initial={prefersReducedMotion ? false : { scale: 0.85, opacity: 0.8 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HeartIcon filled={wishlisted} />
+                </m.span>
+              </m.button>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -278,28 +297,24 @@ function ProductDetail() {
               </div>
             </div>
 
-            <button
+            <m.button
               type="button"
-              onClick={async () => {
-                await addToCart(product, quantity);
-                navigate("/cart");
-              }}
+              onClick={handleAddToCart}
               disabled={product.stock <= 0}
+              whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
               className="inline-flex h-[42px] w-full items-center justify-center rounded-full border border-black/18 bg-white px-6 text-sm font-semibold text-black transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
-            </button>
-            <button
+            </m.button>
+            <m.button
               type="button"
-              onClick={async () => {
-                await addToCart(product, quantity);
-                navigate("/checkout");
-              }}
+              onClick={handleBuyNow}
               disabled={product.stock <= 0}
+              whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
               className="inline-flex h-[42px] w-full items-center justify-center rounded-full bg-success px-6 text-sm font-semibold text-white transition hover:bg-[#25652a] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Buy Now
-            </button>
+            </m.button>
           </div>
 
           <div className="space-y-3 border-t border-black/10 pt-3 text-sm text-black/56">
@@ -330,7 +345,7 @@ function ProductDetail() {
         </div>
       </div>
 
-      <div className="mt-14 border-t border-black/10 pt-12">
+      <Reveal className="mt-14 border-t border-black/10 pt-12" delay={0.06}>
         <div className="flex items-center gap-4 text-heading-sm font-medium text-black/58">
           <button
             type="button"
@@ -425,9 +440,9 @@ function ProductDetail() {
             </form>
           </div>
         )}
-      </div>
+      </Reveal>
 
-      <div className="mt-16 space-y-6">
+      <Reveal className="mt-16 space-y-6" delay={0.1}>
         <h2 className="section-title">Similar Products</h2>
         <ProductSlider
           products={relatedProducts}
@@ -435,7 +450,33 @@ function ProductDetail() {
           arrowLeftClass="-left-10 lg:-left-12"
           arrowRightClass="-right-10 lg:-right-12"
         />
-      </div>
+      </Reveal>
+
+      <m.div
+        initial={prefersReducedMotion ? false : { y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/96 px-4 py-3 shadow-[0_-12px_28px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden"
+      >
+        <div className="mx-auto flex max-w-[640px] items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-black">{product.name}</p>
+            <p className="text-lg font-bold text-black">{formatCurrency(product.price)}</p>
+          </div>
+          <div className="rounded-full border border-black/10 px-3 py-2 text-sm font-semibold text-black">
+            Qty {quantity}
+          </div>
+          <m.button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.97 }}
+            className="btn btn-secondary min-w-[160px] rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
+          </m.button>
+        </div>
+      </m.div>
     </section>
   );
 }

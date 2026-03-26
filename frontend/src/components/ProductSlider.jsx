@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import ProductCard from "./ProductCard";
 
 function ArrowButton({ direction, onClick, disabled }) {
@@ -34,6 +35,7 @@ function ProductSlider({
 }) {
   const [cardsPerPage, setCardsPerPage] = useState(4);
   const [page, setPage] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const updateCardsPerPage = () => {
@@ -98,16 +100,25 @@ function ProductSlider({
           </div>
         )}
 
-        <div className="flex items-start justify-center gap-4 lg:gap-5">
-          {visibleProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              variant="compact"
-              compactIndex={page * cardsPerPage + index}
-            />
-          ))}
-        </div>
+        <AnimatePresence mode="wait" initial={false}>
+          <m.div
+            key={`${page}-${cardsPerPage}`}
+            className="flex items-start justify-center gap-4 lg:gap-5"
+            initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {visibleProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                variant="compact"
+                compactIndex={page * cardsPerPage + index}
+              />
+            ))}
+          </m.div>
+        </AnimatePresence>
 
         {pageCount > 1 && (
           <div className={`absolute ${arrowRightClass} ${arrowTopClass} -translate-y-1/2`}>

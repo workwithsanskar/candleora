@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import heroImage from "../assets/designer/image.png";
+import heroImage from "../assets/designer/image-optimized.jpg";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
 import stylingGuideCard from "../assets/designer/styling-guides-card.png";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
+import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
@@ -91,6 +93,7 @@ function Home() {
   const [faqs, setFaqs] = useState([]);
   const [error, setError] = useState("");
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +115,10 @@ function Home() {
       } catch (homeError) {
         if (isMounted) {
           setError(formatApiError(homeError));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
     };
@@ -145,6 +152,8 @@ function Home() {
         <img
           src={heroImage}
           alt="CandleOra hero arrangement"
+          loading="eager"
+          fetchPriority="high"
           className="h-[360px] w-full object-cover sm:h-[460px] lg:h-[620px]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
@@ -166,36 +175,48 @@ function Home() {
       </section>
 
       <section className="container-shell py-10 sm:py-12">
-        <h2 className="section-title text-center">Our Best Selling Products</h2>
+        <Reveal>
+          <h2 className="section-title text-center">Our Best Selling Products</h2>
 
-        <div className="mt-10 px-2 lg:px-10 xl:px-14">
-          <ProductSlider
-            products={featuredProducts}
-            arrowTopClass="top-[180px]"
-            arrowLeftClass="-left-12 xl:-left-16"
-            arrowRightClass="-right-12 xl:-right-16"
-          />
-        </div>
+          <div className="mt-10 px-2 lg:px-10 xl:px-14">
+            {isLoading ? (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : (
+              <ProductSlider
+                products={featuredProducts}
+                arrowTopClass="top-[180px]"
+                arrowLeftClass="-left-12 xl:-left-16"
+                arrowRightClass="-right-12 xl:-right-16"
+              />
+            )}
+          </div>
+        </Reveal>
       </section>
 
       <section className="container-shell py-14 sm:py-16">
-        <h2 className="section-title text-center">View Our Range Of Categories</h2>
+        <Reveal delay={0.05}>
+          <h2 className="section-title text-center">View Our Range Of Categories</h2>
 
-        <div className="mt-10">
-          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.8fr_1.05fr]">
-            <CategoryTile category={getCategoryBySlug("")} className="min-h-[250px] lg:min-h-[360px]" />
-            <div className="grid gap-4">
-              <CategoryTile category={getCategoryBySlug("candle-sets")} className="min-h-[118px] lg:min-h-[172px]" />
-              <CategoryTile category={getCategoryBySlug("glass")} className="min-h-[118px] lg:min-h-[172px]" />
+          <div className="mt-10">
+            <div className="grid gap-4 lg:grid-cols-[1.05fr_0.8fr_1.05fr]">
+              <CategoryTile category={getCategoryBySlug("")} className="min-h-[250px] lg:min-h-[360px]" />
+              <div className="grid gap-4">
+                <CategoryTile category={getCategoryBySlug("candle-sets")} className="min-h-[118px] lg:min-h-[172px]" />
+                <CategoryTile category={getCategoryBySlug("glass")} className="min-h-[118px] lg:min-h-[172px]" />
+              </div>
+              <CategoryTile category={getCategoryBySlug("tea-light")} className="min-h-[250px] lg:min-h-[360px]" />
             </div>
-            <CategoryTile category={getCategoryBySlug("tea-light")} className="min-h-[250px] lg:min-h-[360px]" />
-          </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-            <CategoryTile category={getCategoryBySlug("flower")} className="min-h-[118px]" />
-            <CategoryTile category={getCategoryBySlug("creation")} className="min-h-[118px]" />
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+              <CategoryTile category={getCategoryBySlug("flower")} className="min-h-[118px]" />
+              <CategoryTile category={getCategoryBySlug("creation")} className="min-h-[118px]" />
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="bg-brand-primary py-4">
@@ -205,92 +226,104 @@ function Home() {
       </section>
 
       <section id="recommendations" className="container-shell py-16 sm:py-20">
-        <h2 className="section-title">
-          The Recommendations
-        </h2>
+        <Reveal delay={0.08}>
+          <h2 className="section-title">
+            The Recommendations
+          </h2>
 
-        <div className="mt-12 grid gap-x-8 gap-y-10 lg:grid-cols-3">
-          {recommendationCards.map((card) => (
-            <article
-              key={card.title}
-              className="mx-auto flex h-full w-full max-w-[360px] flex-col items-center text-center"
-            >
-              <Link
-                to={card.to}
-                className="relative block w-full overflow-hidden rounded-[16px] shadow-[0_12px_24px_rgba(51,51,51,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(51,51,51,0.14)]"
+          <div className="mt-12 grid gap-x-8 gap-y-10 lg:grid-cols-3">
+            {recommendationCards.map((card) => (
+              <article
+                key={card.title}
+                className="mx-auto flex h-full w-full max-w-[360px] flex-col items-center text-center"
               >
-                <img src={card.image} alt={card.title} className="aspect-square w-full object-cover" />
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(232,195,158,0.42)] px-4 py-4 backdrop-blur-[1.5px]">
-                  <h3 className="text-[1.15rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.25rem]">
-                    {card.title}
-                  </h3>
+                <Link
+                  to={card.to}
+                  className="relative block w-full overflow-hidden rounded-[16px] shadow-[0_12px_24px_rgba(51,51,51,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(51,51,51,0.14)]"
+                >
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-square w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(232,195,158,0.42)] px-4 py-4 backdrop-blur-[1.5px]">
+                    <h3 className="text-[1.15rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.25rem]">
+                      {card.title}
+                    </h3>
+                  </div>
+                </Link>
+
+                <div className="mt-5 flex min-h-[86px] w-full items-start justify-center px-3">
+                  <p className="max-w-[300px] text-[1rem] leading-8 text-black/72">{card.description}</p>
                 </div>
-              </Link>
 
-              <div className="mt-5 flex min-h-[86px] w-full items-start justify-center px-3">
-                <p className="max-w-[300px] text-[1rem] leading-8 text-black/72">{card.description}</p>
-              </div>
-
-              <Link
-                to={card.to}
-                className="btn btn-secondary mt-auto h-[50px] w-[210px] tracking-[0.12em] uppercase hover:-translate-y-0.5"
-              >
-                View
-              </Link>
-            </article>
-          ))}
-        </div>
+                <Link
+                  to={card.to}
+                  className="btn btn-secondary mt-auto h-[50px] w-[210px] tracking-[0.12em] uppercase hover:-translate-y-0.5"
+                >
+                  View
+                </Link>
+              </article>
+            ))}
+          </div>
+        </Reveal>
       </section>
 
       <section className="container-shell py-8 sm:py-10">
-        <h2 className="section-title">Our Happy Customers</h2>
+        <Reveal delay={0.1}>
+          <h2 className="section-title">Our Happy Customers</h2>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {customerStories.map((story) => (
-            <TestimonialCard key={story.name} story={story} />
-          ))}
-        </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {customerStories.map((story) => (
+              <TestimonialCard key={story.name} story={story} />
+            ))}
+          </div>
+        </Reveal>
       </section>
 
       <section id="faq" className="container-shell grid gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="space-y-4">
-          <h2 className="section-title">Frequently Asked Questions</h2>
-          <p className="max-w-sm text-sm leading-7 text-black/62">
-            Learn more about shipping, candle care, and burn-time details before placing your first CandleOra order.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {faqs.map((faq) => {
-            const isOpen = expandedFaq === faq.id;
-
-            return (
-              <article key={faq.id} className="rounded-[14px] border border-black/12 bg-white px-5 py-4">
-                <button
-                  type="button"
-                  onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
-                  className="flex w-full items-start justify-between gap-4 text-left"
-                >
-                  <span className="text-base font-medium text-black">{faq.question}</span>
-                  <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
-                </button>
-                {isOpen && (
-                  <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
-                )}
-              </article>
-            );
-          })}
-
-          <div className="flex justify-end pt-2">
-            <Link
-              to="/faq"
-              className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
-            >
-              View More
-              <span className="text-base leading-none">+</span>
-            </Link>
+        <Reveal className="contents" delay={0.12}>
+          <div className="space-y-4">
+            <h2 className="section-title">Frequently Asked Questions</h2>
+            <p className="max-w-sm text-sm leading-7 text-black/62">
+              Learn more about shipping, candle care, and burn-time details before placing your first CandleOra order.
+            </p>
           </div>
-        </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq) => {
+              const isOpen = expandedFaq === faq.id;
+
+              return (
+                <article key={faq.id} className="rounded-[14px] border border-black/12 bg-white px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
+                    className="flex w-full items-start justify-between gap-4 text-left"
+                  >
+                    <span className="text-base font-medium text-black">{faq.question}</span>
+                    <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
+                  )}
+                </article>
+              );
+            })}
+
+            <div className="flex justify-end pt-2">
+              <Link
+                to="/faq"
+                className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
+              >
+                View More
+                <span className="text-base leading-none">+</span>
+              </Link>
+            </div>
+          </div>
+        </Reveal>
       </section>
     </div>
   );

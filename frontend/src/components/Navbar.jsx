@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -56,6 +57,8 @@ function SearchIcon() {
 }
 
 function IconButton({ onClick, label, children, badge, active = false, accent = false }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <Tooltip content={label} position="bottom">
       <button
@@ -72,11 +75,20 @@ function IconButton({ onClick, label, children, badge, active = false, accent = 
         }`}
       >
         {children}
-        {badge > 0 && (
-          <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-brand-primary px-1 text-[9px] font-bold leading-none text-white">
-            {badge}
-          </span>
-        )}
+        <AnimatePresence initial={false}>
+          {badge > 0 && (
+            <m.span
+              key={badge}
+              initial={prefersReducedMotion ? false : { scale: 0.72, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { scale: 0.72, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-brand-primary px-1 text-[9px] font-bold leading-none text-white"
+            >
+              {badge}
+            </m.span>
+          )}
+        </AnimatePresence>
       </button>
     </Tooltip>
   );

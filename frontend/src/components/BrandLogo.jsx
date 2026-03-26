@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import logoImage from "../assets/designer/logo-candleora-web.png";
+import logoImage from "../assets/designer/logo-candleora-web-optimized.png";
 
 function BrandLogo({ tone, compact, showTagline, className, imageClassName }) {
   const wrapperClassName = compact

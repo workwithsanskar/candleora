@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -39,6 +40,7 @@ function StarRow() {
 function ProductCard({ product, badgeLabel = null }) {
   const { addToCart, items: cartItems } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
+  const prefersReducedMotion = useReducedMotion();
   const item = normalizeProduct(product);
   const wishlisted = isWishlisted(item.id);
   const isInCart = cartItems.some(
@@ -55,6 +57,8 @@ function ProductCard({ product, badgeLabel = null }) {
           <img
             src={item.imageUrls[0]}
             alt={item.name}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
           {activeBadge && (
@@ -70,7 +74,7 @@ function ProductCard({ product, badgeLabel = null }) {
             content={wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
             className="absolute right-3 top-3"
           >
-            <button
+            <m.button
               type="button"
               aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
               title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -78,12 +82,20 @@ function ProductCard({ product, badgeLabel = null }) {
                 event.preventDefault();
                 toggleWishlist(item);
               }}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.88 }}
               className={`inline-flex h-[22px] w-[22px] items-center justify-center transition ${
                 wishlisted ? "text-danger" : "text-danger/90"
               }`}
             >
-              <HeartIcon filled={wishlisted} />
-            </button>
+              <m.span
+                key={wishlisted ? "wishlisted" : "not-wishlisted"}
+                initial={prefersReducedMotion ? false : { scale: 0.82, opacity: 0.8 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <HeartIcon filled={wishlisted} />
+              </m.span>
+            </m.button>
           </Tooltip>
         </div>
       </Link>
@@ -109,7 +121,7 @@ function ProductCard({ product, badgeLabel = null }) {
           <span className="text-[11px] text-black/55">({Math.max(1, Math.round(item.rating))})</span>
         </div>
 
-        <button
+        <m.button
           type="button"
           className={`inline-flex h-[35px] w-full items-center justify-center rounded-[5px] px-4 text-[12px] font-semibold uppercase tracking-[0.04em] shadow-[0_4px_4px_rgba(0,0,0,0.25)] transition ${
             item.stock <= 0
@@ -119,10 +131,18 @@ function ProductCard({ product, badgeLabel = null }) {
                 : "bg-brand-primary text-black hover:bg-[#dfa129]"
           }`}
           disabled={item.stock <= 0}
+          whileTap={prefersReducedMotion || item.stock <= 0 ? undefined : { scale: 0.98 }}
           onClick={() => addToCart(item, 1)}
         >
-          {item.stock > 0 ? (isInCart ? "Added" : "Add to Cart") : "Out of Stock"}
-        </button>
+          <m.span
+            key={isInCart ? "in-cart" : "not-in-cart"}
+            initial={prefersReducedMotion ? false : { y: 4, opacity: 0.75 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.18 }}
+          >
+            {item.stock > 0 ? (isInCart ? "Added" : "Add to Cart") : "Out of Stock"}
+          </m.span>
+        </m.button>
       </div>
     </article>
   );
