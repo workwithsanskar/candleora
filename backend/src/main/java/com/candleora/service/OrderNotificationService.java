@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -40,7 +41,7 @@ public class OrderNotificationService {
         CustomerOrderRepository customerOrderRepository,
         InvoiceService invoiceService,
         TemplateEngine templateEngine,
-        JavaMailSender mailSender,
+        ObjectProvider<JavaMailSender> mailSenderProvider,
         @Qualifier("appTaskExecutor") TaskExecutor taskExecutor,
         @Value("${spring.mail.host:}") String mailHost,
         @Value("${app.invoice.from-email:no-reply@candleora.com}") String fromEmail,
@@ -51,7 +52,7 @@ public class OrderNotificationService {
         this.customerOrderRepository = customerOrderRepository;
         this.invoiceService = invoiceService;
         this.templateEngine = templateEngine;
-        this.mailSender = mailSender;
+        this.mailSender = mailSenderProvider.getIfAvailable();
         this.taskExecutor = taskExecutor;
         this.mailHost = mailHost;
         this.fromEmail = fromEmail;
@@ -88,7 +89,7 @@ public class OrderNotificationService {
                 return;
             }
 
-            if (!StringUtils.hasText(mailHost)) {
+            if (!StringUtils.hasText(mailHost) || mailSender == null) {
                 logger.info("Skipping order confirmation email because Spring Mail is not configured");
                 return;
             }
