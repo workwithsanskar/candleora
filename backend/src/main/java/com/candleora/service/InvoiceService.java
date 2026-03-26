@@ -100,7 +100,11 @@ public class InvoiceService {
                 lineTotal(item)
             )).toList()
         );
-        context.setVariable("subtotal", formatMoney(order.getTotalAmount()));
+        BigDecimal subtotal = order.getSubtotalAmount() == null ? order.getTotalAmount() : order.getSubtotalAmount();
+        BigDecimal discount = order.getDiscountAmount() == null ? BigDecimal.ZERO : order.getDiscountAmount();
+        context.setVariable("subtotal", formatMoney(subtotal));
+        context.setVariable("discount", formatMoney(discount));
+        context.setVariable("hasDiscount", discount.compareTo(BigDecimal.ZERO) > 0);
         context.setVariable("grandTotal", formatMoney(order.getTotalAmount()));
 
         String html = templateEngine.process("invoice/order-invoice", context);

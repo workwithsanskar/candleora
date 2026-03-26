@@ -18,6 +18,20 @@ export function formatDate(value) {
   }).format(new Date(value));
 }
 
+export function formatDateTime(value) {
+  if (!value) {
+    return "Soon";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function formatDateRange(startValue, endValue) {
   if (!startValue && !endValue) {
     return "Delivery estimate will be confirmed soon";

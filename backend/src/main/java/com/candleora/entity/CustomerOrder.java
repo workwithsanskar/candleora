@@ -47,6 +47,15 @@ public class CustomerOrder {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotalAmount;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(length = 64)
+    private String couponCode;
+
     @Column(nullable = false)
     private String shippingName;
 
@@ -110,6 +119,12 @@ public class CustomerOrder {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column
+    private Instant cancelledAt;
+
+    @Column(length = 512)
+    private String cancellationReason;
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();
@@ -157,6 +172,30 @@ public class CustomerOrder {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getSubtotalAmount() {
+        return subtotalAmount;
+    }
+
+    public void setSubtotalAmount(BigDecimal subtotalAmount) {
+        this.subtotalAmount = subtotalAmount;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
     }
 
     public String getShippingName() {
@@ -321,5 +360,21 @@ public class CustomerOrder {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(Instant cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 }

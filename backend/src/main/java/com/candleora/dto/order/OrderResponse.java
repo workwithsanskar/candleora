@@ -12,6 +12,9 @@ public record OrderResponse(
     String paymentStatus,
     String paymentMethod,
     BigDecimal totalAmount,
+    BigDecimal subtotalAmount,
+    BigDecimal discountAmount,
+    String couponCode,
     Instant createdAt,
     LocalDate estimatedDeliveryStart,
     LocalDate estimatedDeliveryEnd,
@@ -31,6 +34,10 @@ public record OrderResponse(
     String locationLabel,
     Double latitude,
     Double longitude,
+    Boolean canCancel,
+    Instant cancelDeadline,
+    Instant cancelledAt,
+    String cancellationReason,
     List<OrderItemResponse> items
 ) {
 }

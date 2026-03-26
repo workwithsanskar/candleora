@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { orderApi, paymentApi } from "../services/api";
+import { couponApi, orderApi, paymentApi } from "../services/api";
 import {
   buildCheckoutPayload,
   createCheckoutForm,
@@ -50,6 +50,8 @@ const requiredShippingFields = [
 const indianPhonePattern = /^[6-9]\d{9}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const postalCodePattern = /^\d{6}$/;
+const SAMPLE_COUPON_CODE = String(import.meta.env.VITE_SAMPLE_COUPON_CODE ?? "").trim();
+const SAMPLE_COUPON_HINT = String(import.meta.env.VITE_SAMPLE_COUPON_HINT ?? "").trim();
 
 function Checkout() {
   const navigate = useNavigate();
@@ -63,6 +65,9 @@ function Checkout() {
   const [isLocating, setIsLocating] = useState(false);
   const [isSendingEmailVerification, setIsSendingEmailVerification] = useState(false);
   const [emailVerificationPreviewUrl, setEmailVerificationPreviewUrl] = useState("");
+  const [couponQuote, setCouponQuote] = useState(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -75,7 +80,8 @@ function Checkout() {
 
   const phoneVerificationRequired = requiresPhoneVerification(user);
   const emailVerificationRecommended = requiresEmailVerification(user);
-  const codEnabled = canUseCashOnDelivery(user, grandTotal);
+  const effectiveTotal = couponQuote?.totalAmount ?? grandTotal;
+  const codEnabled = canUseCashOnDelivery(user, effectiveTotal);
 
   useEffect(() => {
     if (!codEnabled && form.paymentMethod === "COD") {
@@ -92,9 +98,57 @@ function Checkout() {
     [items],
   );
 
+  const cartSignature = useMemo(
+    () => checkoutItems.map((item) => `${item.productId}:${item.quantity}`).join("|"),
+    [checkoutItems],
+  );
+
+  useEffect(() => {
+    if (couponQuote) {
+      setCouponQuote(null);
+      setCouponError("");
+    }
+  }, [cartSignature]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+
+    if (name === "couponCode") {
+      setCouponQuote(null);
+      setCouponError("");
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = String(form.couponCode ?? "").trim();
+    if (!code) {
+      setCouponError("Enter a coupon code to apply.");
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError("");
+
+    try {
+      const response = await couponApi.validate({
+        code,
+        items: checkoutItems,
+      });
+      setCouponQuote(response);
+      setForm((current) => ({ ...current, couponCode: response.code }));
+      toast.success("Coupon applied.");
+    } catch (applyError) {
+      setCouponError(formatApiError(applyError));
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleClearCoupon = () => {
+    setForm((current) => ({ ...current, couponCode: "" }));
+    setCouponQuote(null);
+    setCouponError("");
   };
 
   const handlePhoneVerified = async ({ idToken, phoneNumber }) => {
@@ -235,7 +289,7 @@ function Checkout() {
   const handlePlaceOrder = async () => {
     setError("");
     setIsSubmitting(true);
-    const payload = buildCheckoutPayload(form, checkoutItems);
+      const payload = buildCheckoutPayload(form, checkoutItems);
 
     try {
       if (!PHONEPE_ENABLED && form.paymentMethod === "PHONEPE") {
@@ -313,8 +367,14 @@ function Checkout() {
         <div className="space-y-3 rounded-[24px] bg-white p-5">
         <div className="flex items-center justify-between text-sm text-brand-dark/70">
           <span>Subtotal</span>
-          <span>{formatCurrency(grandTotal)}</span>
+          <span>{formatCurrency(couponQuote?.subtotalAmount ?? grandTotal)}</span>
         </div>
+        {couponQuote?.discountAmount ? (
+          <div className="flex items-center justify-between text-sm text-brand-dark/70">
+            <span>Discount</span>
+            <span>-{formatCurrency(couponQuote.discountAmount)}</span>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between text-sm text-brand-dark/70">
           <span>Shipping</span>
           <span>Free</span>
@@ -332,8 +392,55 @@ function Checkout() {
         <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3">
           <span className="text-sm font-semibold text-brand-dark">Grand total</span>
           <span className="text-2xl font-extrabold text-brand-dark">
-            {formatCurrency(grandTotal)}
+            {formatCurrency(effectiveTotal)}
           </span>
+        </div>
+      </div>
+
+      <div className="rounded-[24px] bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
+          Coupon
+        </p>
+        {SAMPLE_COUPON_CODE && (
+          <div className="mt-3 rounded-[18px] bg-brand-primary/10 px-4 py-3 text-xs text-brand-dark/80">
+            <span className="font-semibold text-brand-dark">Sample code:</span>{" "}
+            <span className="font-semibold text-brand-dark">{SAMPLE_COUPON_CODE}</span>
+            {SAMPLE_COUPON_HINT ? ` — ${SAMPLE_COUPON_HINT}` : ""}
+          </div>
+        )}
+        <div className="mt-3 flex flex-col gap-3">
+          <input
+            className={inputClassName}
+            name="couponCode"
+            value={form.couponCode}
+            onChange={handleChange}
+            placeholder="Enter code"
+          />
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleApplyCoupon}
+              disabled={isApplyingCoupon}
+            >
+              {isApplyingCoupon ? "Applying..." : "Apply coupon"}
+            </button>
+            {couponQuote && (
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClearCoupon}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {couponQuote?.message && (
+            <p className="text-sm text-success">{couponQuote.message}</p>
+          )}
+          {couponError && (
+            <p className="text-sm text-danger">{couponError}</p>
+          )}
         </div>
       </div>
     </aside>

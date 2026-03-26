@@ -1,5 +1,6 @@
 package com.candleora.controller;
 
+import com.candleora.dto.order.CancelOrderRequest;
 import com.candleora.dto.order.OrderResponse;
 import com.candleora.dto.order.PlaceOrderRequest;
 import com.candleora.entity.CustomerOrder;
@@ -52,6 +53,20 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public OrderResponse getOrder(Authentication authentication, @PathVariable Long orderId) {
         return orderService.getOrder(((UserPrincipal) authentication.getPrincipal()).getUser(), orderId);
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public OrderResponse cancelOrder(
+        Authentication authentication,
+        @PathVariable Long orderId,
+        @RequestBody(required = false) CancelOrderRequest request
+    ) {
+        String reason = request != null ? request.reason() : null;
+        return orderService.cancelOrder(
+            ((UserPrincipal) authentication.getPrincipal()).getUser(),
+            orderId,
+            reason
+        );
     }
 
     @GetMapping(value = "/{orderId}/invoice", produces = MediaType.APPLICATION_PDF_VALUE)

@@ -78,8 +78,14 @@ export const orderApi = {
   createOrder: (payload) => api.post("/orders", payload).then(unwrap),
   getOrders: () => api.get("/orders").then(unwrap),
   getOrder: (orderId) => api.get(`/orders/${orderId}`).then(unwrap),
+  cancelOrder: (orderId, payload = {}) =>
+    api.post(`/orders/${orderId}/cancel`, payload).then(unwrap),
   downloadInvoice: (orderId) =>
     api.get(`/orders/${orderId}/invoice`, { responseType: "blob" }).then(unwrap),
+};
+
+export const couponApi = {
+  validate: (payload) => api.post("/coupons/validate", payload).then(unwrap),
 };
 
 export const paymentApi = {

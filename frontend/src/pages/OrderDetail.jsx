@@ -6,6 +6,7 @@ import {
   formatApiError,
   formatCurrency,
   formatDate,
+  formatDateTime,
   formatDateRange,
   titleCase,
 } from "../utils/format";
@@ -25,6 +26,8 @@ function OrderDetail() {
   const [error, setError] = useState("");
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
   const [downloadError, setDownloadError] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -89,6 +92,33 @@ function OrderDetail() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!order?.canCancel || isCancelling) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Cancel this order now? We can only accept cancellations within the short window after checkout."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsCancelling(true);
+    setCancelError("");
+
+    try {
+      const response = await orderApi.cancelOrder(order.id, {
+        reason: "Customer requested cancellation",
+      });
+      setOrder(response);
+    } catch (cancelOrderError) {
+      setCancelError(formatApiError(cancelOrderError));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="container-shell py-16">
@@ -131,6 +161,11 @@ function OrderDetail() {
             {order.invoiceNumber && (
               <p className="mt-2 text-sm text-brand-dark/60">
                 Invoice {order.invoiceNumber}
+              </p>
+            )}
+            {order.canCancel && (
+              <p className="mt-2 text-sm text-brand-dark/70">
+                Cancellation available until {formatDateTime(order.cancelDeadline)}.
               </p>
             )}
           </div>
@@ -219,6 +254,26 @@ function OrderDetail() {
                 <span className="font-semibold text-brand-dark">Method:</span>{" "}
                 {order.paymentMethod}
               </p>
+              {order.couponCode && (
+                <p>
+                  <span className="font-semibold text-brand-dark">Coupon:</span>{" "}
+                  {order.couponCode}
+                </p>
+              )}
+              <p>
+                <span className="font-semibold text-brand-dark">Subtotal:</span>{" "}
+                {formatCurrency(order.subtotalAmount ?? order.totalAmount)}
+              </p>
+              {order.discountAmount ? (
+                <p>
+                  <span className="font-semibold text-brand-dark">Discount:</span>{" "}
+                  -{formatCurrency(order.discountAmount)}
+                </p>
+              ) : null}
+              <p>
+                <span className="font-semibold text-brand-dark">Total:</span>{" "}
+                {formatCurrency(order.totalAmount)}
+              </p>
               {order.gatewayOrderId && (
                 <p>
                   <span className="font-semibold text-brand-dark">Gateway order:</span>{" "}
@@ -244,6 +299,21 @@ function OrderDetail() {
                 </button>
                 {downloadError && (
                   <p className="mt-3 text-sm text-danger">{downloadError}</p>
+                )}
+              </div>
+            )}
+            {order.canCancel && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  className="btn btn-outline w-full"
+                  onClick={handleCancelOrder}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? "Cancelling..." : "Cancel order"}
+                </button>
+                {cancelError && (
+                  <p className="mt-3 text-sm text-danger">{cancelError}</p>
                 )}
               </div>
             )}

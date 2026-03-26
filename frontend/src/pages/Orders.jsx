@@ -32,6 +32,9 @@ function Orders() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelErrorOrderId, setCancelErrorOrderId] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,6 +73,33 @@ function Orders() {
       </section>
     );
   }
+
+  const handleCancelOrder = async (orderId) => {
+    const confirmed = window.confirm(
+      "Cancel this order now? We can only accept cancellations within the short window after checkout."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setCancellingOrderId(orderId);
+    setCancelError("");
+    setCancelErrorOrderId(null);
+
+    try {
+      const response = await orderApi.cancelOrder(orderId, {
+        reason: "Customer requested cancellation",
+      });
+      setOrders((current) =>
+        current.map((order) => (order.id === orderId ? response : order))
+      );
+    } catch (cancelOrderError) {
+      setCancelError(formatApiError(cancelOrderError));
+      setCancelErrorOrderId(orderId);
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
 
   return (
     <section className="container-shell py-10 sm:py-12">
@@ -198,16 +228,30 @@ function Orders() {
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                           Action
                         </p>
-                        <Link
-                          to="/shop"
-                          className="inline-flex items-center gap-2 text-sm font-semibold text-success hover:opacity-80"
-                        >
-                          Re-Order
-                          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
-                            <path d="M5 12H19" strokeLinecap="round" />
-                            <path d="M13 6L19 12L13 18" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </Link>
+                        {order.canCancel ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-danger hover:opacity-80"
+                            onClick={() => handleCancelOrder(order.id)}
+                            disabled={cancellingOrderId === order.id}
+                          >
+                            {cancellingOrderId === order.id ? "Cancelling..." : "Cancel order"}
+                          </button>
+                        ) : (
+                          <Link
+                            to="/shop"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-success hover:opacity-80"
+                          >
+                            Re-Order
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+                              <path d="M5 12H19" strokeLinecap="round" />
+                              <path d="M13 6L19 12L13 18" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </Link>
+                        )}
+                        {cancelError && order.id === cancelErrorOrderId && (
+                          <p className="text-xs text-danger">{cancelError}</p>
+                        )}
                       </div>
                     </div>
                   </article>

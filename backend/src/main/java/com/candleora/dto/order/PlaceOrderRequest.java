@@ -19,6 +19,7 @@ public record PlaceOrderRequest(
     String locationLabel,
     Double latitude,
     Double longitude,
+    String couponCode,
     @NotBlank String paymentMethod,
     @Valid List<OrderRequestItem> items
 ) {

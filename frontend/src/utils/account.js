@@ -55,6 +55,7 @@ export function createCheckoutForm(user = {}) {
     locationLabel: user?.locationLabel ?? "",
     latitude: normalizeNumberForForm(user?.latitude),
     longitude: normalizeNumberForForm(user?.longitude),
+    couponCode: "",
     paymentMethod: PHONEPE_ENABLED ? "PHONEPE" : "COD",
   };
 }
@@ -78,6 +79,7 @@ export function mergeCheckoutFormWithUser(draft = {}, user = {}) {
     locationLabel: draft?.locationLabel || base.locationLabel,
     latitude: draft?.latitude || base.latitude,
     longitude: draft?.longitude || base.longitude,
+    couponCode: draft?.couponCode || base.couponCode,
     paymentMethod: draft?.paymentMethod || base.paymentMethod,
   };
 }
@@ -131,6 +133,7 @@ export function buildCheckoutPayload(form, items) {
     locationLabel: form.locationLabel,
     latitude: normalizeNumber(form.latitude),
     longitude: normalizeNumber(form.longitude),
+    couponCode: form.couponCode || null,
     paymentMethod: form.paymentMethod,
     items,
   };

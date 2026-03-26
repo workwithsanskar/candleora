@@ -363,6 +363,7 @@ public class DataSeeder implements ApplicationRunner {
         ensureUserExists("CandleOra Admin", "admin@candleora.com", Role.ADMIN);
     }
 
+
     private void ensureUserExists(String name, String email, Role role) {
         if (appUserRepository.findByEmailIgnoreCase(email).isPresent()) {
             return;
@@ -456,4 +457,5 @@ public class DataSeeder implements ApplicationRunner {
         user.setPhoneVerified(false);
         return user;
     }
+
 }

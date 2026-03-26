@@ -6,6 +6,7 @@ import {
   formatApiError,
   formatCurrency,
   formatDateRange,
+  formatDateTime,
   titleCase,
 } from "../utils/format";
 
@@ -16,6 +17,8 @@ function OrderConfirmation() {
   const [error, setError] = useState("");
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
   const [downloadError, setDownloadError] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +71,33 @@ function OrderConfirmation() {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!order?.canCancel || isCancelling) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Cancel this order now? We can only accept cancellations within the short window after checkout."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsCancelling(true);
+    setCancelError("");
+
+    try {
+      const response = await orderApi.cancelOrder(order.id, {
+        reason: "Customer requested cancellation",
+      });
+      setOrder(response);
+    } catch (cancelOrderError) {
+      setCancelError(formatApiError(cancelOrderError));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="container-shell py-16">
@@ -110,6 +140,11 @@ function OrderConfirmation() {
               <p className="mt-3 text-lg font-semibold text-brand-dark">
                 {titleCase(order.paymentStatus)} via {titleCase(order.paymentProvider)}
               </p>
+              {order.couponCode && (
+                <p className="mt-2 text-sm text-brand-dark/70">
+                  Coupon {order.couponCode}
+                </p>
+              )}
               {order.invoiceNumber && (
                 <p className="mt-2 text-sm text-brand-dark/70">
                   Invoice {order.invoiceNumber}
@@ -152,6 +187,23 @@ function OrderConfirmation() {
               </div>
             ))}
           </div>
+
+          <div className="rounded-[20px] bg-white p-4 text-sm text-brand-dark/70">
+            <div className="flex items-center justify-between">
+              <span>Subtotal</span>
+              <span>{formatCurrency(order.subtotalAmount ?? order.totalAmount)}</span>
+            </div>
+            {order.discountAmount ? (
+              <div className="mt-2 flex items-center justify-between">
+                <span>Discount</span>
+                <span>-{formatCurrency(order.discountAmount)}</span>
+              </div>
+            ) : null}
+            <div className="mt-2 flex items-center justify-between border-t border-brand-primary/10 pt-2 font-semibold text-brand-dark">
+              <span>Total</span>
+              <span>{formatCurrency(order.totalAmount)}</span>
+            </div>
+          </div>
         </div>
 
         <aside className="panel h-fit space-y-4 p-6">
@@ -180,6 +232,25 @@ function OrderConfirmation() {
           >
             Continue shopping
           </Link>
+          {order.canCancel && (
+            <div className="rounded-[18px] bg-white p-4 text-sm text-brand-dark/70">
+              <p className="font-semibold text-brand-dark">Need to cancel?</p>
+              <p className="mt-2">
+                You can cancel this order until {formatDateTime(order.cancelDeadline)}.
+              </p>
+              <button
+                type="button"
+                className="btn btn-outline mt-4 w-full"
+                onClick={handleCancelOrder}
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancelling..." : "Cancel order"}
+              </button>
+              {cancelError && (
+                <p className="mt-3 text-sm text-danger">{cancelError}</p>
+              )}
+            </div>
+          )}
           {downloadError && (
             <p className="text-sm text-danger">{downloadError}</p>
           )}

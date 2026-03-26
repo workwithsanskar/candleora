@@ -218,6 +218,7 @@
 
     <div class="summary-card">
         <p class="summary-line">Subtotal: <span th:text="${subtotal}">Rs. 599.00</span></p>
+        <p class="summary-line" th:if="${hasDiscount}">Discount: -<span th:text="${discount}">Rs. 0.00</span></p>
         <p class="summary-line">Shipping: Included</p>
         <p class="summary-line">Taxes: Included</p>
         <p class="summary-total">Total: <span th:text="${grandTotal}">Rs. 599.00</span></p>

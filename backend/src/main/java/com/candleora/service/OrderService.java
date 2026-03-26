@@ -16,6 +16,8 @@ import com.candleora.repository.CartItemRepository;
 import com.candleora.repository.CustomerOrderRepository;
 import com.candleora.repository.ProductRepository;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +38,9 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final InvoiceService invoiceService;
     private final OrderNotificationService orderNotificationService;
+    private final CouponService couponService;
     private final boolean requirePhoneVerificationBeforeOrder;
+    private final long cancellationWindowMinutes;
 
     public OrderService(
         CustomerOrderRepository customerOrderRepository,
@@ -44,14 +48,18 @@ public class OrderService {
         ProductRepository productRepository,
         InvoiceService invoiceService,
         OrderNotificationService orderNotificationService,
-        @org.springframework.beans.factory.annotation.Value("${app.auth.require-phone-verification-before-order:false}") boolean requirePhoneVerificationBeforeOrder
+        CouponService couponService,
+        @org.springframework.beans.factory.annotation.Value("${app.auth.require-phone-verification-before-order:false}") boolean requirePhoneVerificationBeforeOrder,
+        @org.springframework.beans.factory.annotation.Value("${app.orders.cancellation-window-minutes:30}") long cancellationWindowMinutes
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
         this.invoiceService = invoiceService;
         this.orderNotificationService = orderNotificationService;
+        this.couponService = couponService;
         this.requirePhoneVerificationBeforeOrder = requirePhoneVerificationBeforeOrder;
+        this.cancellationWindowMinutes = cancellationWindowMinutes;
     }
 
     public OrderResponse placeOrder(AppUser user, PlaceOrderRequest request) {
@@ -73,6 +81,9 @@ public class OrderService {
         CustomerOrder savedOrder = customerOrderRepository.save(order);
         decrementStock(savedOrder);
         cartItemRepository.deleteByUser(user);
+        if (StringUtils.hasText(savedOrder.getCouponCode())) {
+            couponService.incrementUsage(savedOrder.getCouponCode());
+        }
         orderNotificationService.scheduleOrderConfirmation(savedOrder.getId());
         return toOrderResponse(savedOrder);
     }
@@ -134,6 +145,9 @@ public class OrderService {
         decrementStock(order);
         cartItemRepository.deleteByUser(user);
         CustomerOrder savedOrder = customerOrderRepository.save(order);
+        if (StringUtils.hasText(savedOrder.getCouponCode())) {
+            couponService.incrementUsage(savedOrder.getCouponCode());
+        }
         orderNotificationService.scheduleOrderConfirmation(savedOrder.getId());
         return toOrderResponse(savedOrder);
     }
@@ -149,6 +163,31 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponse getOrder(AppUser user, Long orderId) {
         return toOrderResponse(getOrderEntity(user, orderId));
+    }
+
+    public OrderResponse cancelOrder(AppUser user, Long orderId, String reason) {
+        CustomerOrder order = getOrderEntity(user, orderId);
+        if (!canCancel(order)) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Order can no longer be cancelled online"
+            );
+        }
+
+        OrderStatus previousStatus = order.getStatus();
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setPaymentStatus(PaymentStatus.FAILED);
+        order.setCancelledAt(Instant.now());
+        if (StringUtils.hasText(reason)) {
+            order.setCancellationReason(reason.trim());
+        }
+
+        if (previousStatus == OrderStatus.CONFIRMED) {
+            restock(order);
+        }
+
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        return toOrderResponse(savedOrder);
     }
 
     public CustomerOrder getOrderEntity(AppUser user, Long orderId) {
@@ -176,20 +215,21 @@ public class OrderService {
         order.setPaymentMethod(paymentMethod);
 
         List<OrderItem> orderItems = new ArrayList<>();
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal subtotalAmount = BigDecimal.ZERO;
 
         for (OrderLine orderLine : orderLines) {
             validateStock(orderLine.product(), orderLine.quantity());
             OrderItem item = createOrderItem(orderLine.product(), orderLine.quantity());
             item.setOrder(order);
             orderItems.add(item);
-            totalAmount = totalAmount.add(
+            subtotalAmount = subtotalAmount.add(
                 orderLine.product().getPrice().multiply(BigDecimal.valueOf(orderLine.quantity()))
             );
         }
 
         order.setItems(orderItems);
-        order.setTotalAmount(totalAmount);
+        order.setSubtotalAmount(subtotalAmount);
+        applyCoupon(order, request.couponCode());
         return order;
     }
 
@@ -219,6 +259,18 @@ public class OrderService {
         }
     }
 
+    private void restock(CustomerOrder order) {
+        for (OrderItem item : order.getItems()) {
+            Product product = findProduct(item.getProductId());
+            Integer currentStock = product.getStock();
+            if (currentStock == null) {
+                currentStock = 0;
+            }
+            product.setStock(currentStock + item.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
     private void validateStock(Product product, Integer quantity) {
         if (product.getStock() == null || product.getStock() < quantity) {
             throw new ResponseStatusException(
@@ -244,6 +296,16 @@ public class OrderService {
     }
 
     private OrderResponse toOrderResponse(CustomerOrder order) {
+        Instant cancelDeadline = getCancellationDeadline(order);
+        boolean canCancel = canCancel(order);
+
+        BigDecimal subtotalAmount = order.getSubtotalAmount() != null
+            ? order.getSubtotalAmount()
+            : order.getTotalAmount();
+        BigDecimal discountAmount = order.getDiscountAmount() != null
+            ? order.getDiscountAmount()
+            : BigDecimal.ZERO;
+
         return new OrderResponse(
             order.getId(),
             order.getStatus().name(),
@@ -251,6 +313,9 @@ public class OrderService {
             order.getPaymentStatus().name(),
             order.getPaymentMethod(),
             order.getTotalAmount(),
+            subtotalAmount,
+            discountAmount,
+            order.getCouponCode(),
             order.getCreatedAt(),
             order.getEstimatedDeliveryStart(),
             order.getEstimatedDeliveryEnd(),
@@ -270,6 +335,10 @@ public class OrderService {
             order.getLocationLabel(),
             order.getLatitude(),
             order.getLongitude(),
+            canCancel,
+            cancelDeadline,
+            order.getCancelledAt(),
+            order.getCancellationReason(),
             order.getItems().stream()
                 .map(item -> new OrderItemResponse(
                     item.getId(),
@@ -325,6 +394,51 @@ public class OrderService {
                 "Cash on delivery is available only for orders up to Rs. 3000"
             );
         }
+    }
+
+    private void applyCoupon(CustomerOrder order, String couponCode) {
+        if (!StringUtils.hasText(couponCode)) {
+            order.setCouponCode(null);
+            order.setDiscountAmount(BigDecimal.ZERO);
+            order.setTotalAmount(order.getSubtotalAmount());
+            return;
+        }
+
+        CouponService.CouponQuote quote = couponService.quoteCoupon(couponCode, order.getItems().stream()
+            .map(item -> new OrderRequestItem(item.getProductId(), item.getQuantity()))
+            .toList());
+        order.setCouponCode(quote.code());
+        order.setDiscountAmount(quote.discountAmount());
+        order.setTotalAmount(quote.totalAmount());
+    }
+
+    private boolean canCancel(CustomerOrder order) {
+        if (order == null || order.getCreatedAt() == null) {
+            return false;
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return false;
+        }
+
+        if (order.getStatus() != OrderStatus.CONFIRMED && order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            return false;
+        }
+
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            return false;
+        }
+
+        Instant deadline = getCancellationDeadline(order);
+        return deadline != null && Instant.now().isBefore(deadline);
+    }
+
+    private Instant getCancellationDeadline(CustomerOrder order) {
+        if (order == null || order.getCreatedAt() == null) {
+            return null;
+        }
+
+        return order.getCreatedAt().plus(Duration.ofMinutes(cancellationWindowMinutes));
     }
 
     private record OrderLine(Product product, Integer quantity) {
