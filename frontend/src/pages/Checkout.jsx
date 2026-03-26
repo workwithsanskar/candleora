@@ -415,20 +415,41 @@ function Checkout() {
       </div>
 
       <div className="rounded-[24px] bg-white p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
-          Coupon
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
+              Coupon
+            </p>
+            <p className="mt-2 text-sm leading-6 text-brand-dark/65">
+              Apply an owner-issued promo code before placing the order.
+            </p>
+          </div>
+          {couponQuote && (
+            <span className="rounded-full bg-success/12 px-3 py-1 text-xs font-semibold text-success">
+              Applied
+            </span>
+          )}
+        </div>
         {SAMPLE_COUPON_CODE && (
-          <div className="mt-3 rounded-[18px] bg-brand-primary/10 px-4 py-3 text-xs text-brand-dark/80">
+          <div className="mt-4 rounded-[18px] border border-brand-primary/15 bg-brand-primary/10 px-4 py-4 text-xs text-brand-dark/80">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <span className="font-semibold text-brand-dark">Sample code:</span>{" "}
-                <span className="font-semibold text-brand-dark">{SAMPLE_COUPON_CODE}</span>
+              <div className="min-w-0 text-[0px]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                  Launch coupon
+                </p>
+                <p className="mt-1 text-sm font-semibold text-brand-dark">
+                  {SAMPLE_COUPON_CODE}
+                </p>
+                {SAMPLE_COUPON_HINT && (
+                  <p className="mt-1 text-xs leading-6 text-brand-dark/70">
+                    {SAMPLE_COUPON_HINT}
+                  </p>
+                )}
                 {SAMPLE_COUPON_HINT ? ` — ${SAMPLE_COUPON_HINT}` : ""}
               </div>
               <button
                 type="button"
-                className="btn btn-outline whitespace-nowrap"
+                className="btn btn-outline shrink-0 whitespace-nowrap"
                 onClick={handleUseSampleCoupon}
                 disabled={isApplyingCoupon}
               >
@@ -437,40 +458,51 @@ function Checkout() {
             </div>
           </div>
         )}
-        <div className="mt-3 flex flex-col gap-3">
-          <input
-            ref={couponInputRef}
-            className={inputClassName}
-            name="couponCode"
-            value={form.couponCode}
-            onChange={handleChange}
-            placeholder="Enter code"
-          />
-          <div className="flex flex-wrap gap-3">
+        <div className="mt-4 space-y-3">
+          <label
+            htmlFor="couponCode"
+            className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted"
+          >
+            Promo code
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              id="couponCode"
+              ref={couponInputRef}
+              className={`${inputClassName} sm:flex-1`}
+              name="couponCode"
+              value={form.couponCode}
+              onChange={handleChange}
+              placeholder="Enter code"
+            />
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary shrink-0 sm:min-w-[148px]"
               onClick={handleApplyCoupon}
               disabled={isApplyingCoupon}
             >
-              {isApplyingCoupon ? "Applying..." : "Apply coupon"}
+              {isApplyingCoupon ? "Applying..." : "Apply"}
             </button>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-h-[24px]">
+              {couponQuote?.message && (
+                <p className="text-sm text-success">{couponQuote.message}</p>
+              )}
+              {couponError && (
+                <p className="text-sm text-danger">{couponError}</p>
+              )}
+            </div>
             {couponQuote && (
               <button
                 type="button"
-                className="btn btn-outline"
+                className="btn btn-outline shrink-0"
                 onClick={handleClearCoupon}
               >
-                Remove
+                Remove coupon
               </button>
             )}
           </div>
-          {couponQuote?.message && (
-            <p className="text-sm text-success">{couponQuote.message}</p>
-          )}
-          {couponError && (
-            <p className="text-sm text-danger">{couponError}</p>
-          )}
         </div>
       </div>
     </aside>
