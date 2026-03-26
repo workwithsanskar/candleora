@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
         @page {
             size: A4;
@@ -23,8 +24,7 @@
         }
 
         .brand-row,
-        .meta-grid,
-        .summary-row {
+        .meta-grid {
             width: 100%;
         }
 
@@ -146,6 +146,7 @@
 <body>
 <div class="invoice-shell">
     <table class="brand-row">
+        <tbody>
         <tr>
             <td>
                 <div class="brand-name" th:text="${companyName}">CandleOra</div>
@@ -159,6 +160,7 @@
                 </div>
             </td>
         </tr>
+        </tbody>
     </table>
 
     <div class="invoice-title">Invoice</div>
@@ -167,6 +169,7 @@
     </p>
 
     <table class="meta-grid" cellspacing="10">
+        <tbody>
         <tr>
             <td class="meta-card">
                 <div class="label">Customer</div>
@@ -191,6 +194,7 @@
                 </div>
             </td>
         </tr>
+        </tbody>
     </table>
 
     <table class="items-table">

@@ -13,6 +13,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import org.thymeleaf.context.Context;
 
 @Service("invoiceService")
 public class InvoiceService {
+
+    private static final Logger logger = LoggerFactory.getLogger(InvoiceService.class);
 
     private static final ZoneId INDIA_ZONE = ZoneId.of("Asia/Calcutta");
     private static final DateTimeFormatter INVOICE_DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy")
@@ -102,6 +106,7 @@ public class InvoiceService {
             builder.run();
             return output.toByteArray();
         } catch (Exception exception) {
+            logger.warn("Unable to generate invoice PDF for order {}", order.getId(), exception);
             throw new ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Unable to generate invoice PDF",
