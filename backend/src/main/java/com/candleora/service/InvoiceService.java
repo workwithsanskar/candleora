@@ -91,7 +91,15 @@ public class InvoiceService {
         context.setVariable("customerEmail", order.getContactEmail());
         context.setVariable("customerPhone", order.getPhone());
         context.setVariable("shippingAddress", formatAddress(order));
-        context.setVariable("items", order.getItems());
+        context.setVariable(
+            "items",
+            order.getItems().stream().map(item -> new InvoiceLine(
+                item.getProductName(),
+                item.getQuantity(),
+                formatMoney(item.getPrice()),
+                lineTotal(item)
+            )).toList()
+        );
         context.setVariable("subtotal", formatMoney(order.getTotalAmount()));
         context.setVariable("grandTotal", formatMoney(order.getTotalAmount()));
 
@@ -146,5 +154,13 @@ public class InvoiceService {
 
         String normalized = value.replace('_', ' ').toLowerCase(Locale.ENGLISH);
         return Character.toUpperCase(normalized.charAt(0)) + normalized.substring(1);
+    }
+
+    private record InvoiceLine(
+        String productName,
+        Integer quantity,
+        String unitPrice,
+        String lineTotal
+    ) {
     }
 }

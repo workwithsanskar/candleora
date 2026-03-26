@@ -210,8 +210,8 @@
         <tr th:each="item : ${items}">
             <td th:text="${item.productName}">Garden Bloom Trio</td>
             <td th:text="${item.quantity}">1</td>
-            <td class="amount" th:text="${@invoiceService.formatMoney(item.price)}">Rs. 599.00</td>
-            <td class="amount" th:text="${@invoiceService.lineTotal(item)}">Rs. 599.00</td>
+            <td class="amount" th:text="${item.unitPrice}">Rs. 599.00</td>
+            <td class="amount" th:text="${item.lineTotal}">Rs. 599.00</td>
         </tr>
         </tbody>
     </table>
