@@ -27,6 +27,7 @@ import StylingGuides from "./pages/StylingGuides";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import TrackOrder from "./pages/TrackOrder";
 import UnderConstruction from "./pages/UnderConstruction";
+import VerifyEmail from "./pages/VerifyEmail";
 import Wishlist from "./pages/Wishlist";
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route
               path="/checkout"
               element={

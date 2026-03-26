@@ -2,9 +2,11 @@ package com.candleora.controller;
 
 import com.candleora.dto.auth.AuthRequest;
 import com.candleora.dto.auth.AuthResponse;
+import com.candleora.dto.auth.EmailVerificationRequest;
 import com.candleora.dto.auth.GoogleAuthRequest;
 import com.candleora.dto.auth.PhoneAuthRequest;
 import com.candleora.dto.auth.SignupRequest;
+import com.candleora.dto.auth.UserResponse;
 import com.candleora.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,5 +47,10 @@ public class PublicAuthController {
     @PostMapping("/phone")
     public AuthResponse phone(@Valid @RequestBody PhoneAuthRequest request) {
         return authService.phoneAuth(request);
+    }
+
+    @PostMapping("/email-verification/verify")
+    public UserResponse verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
+        return authService.verifyEmail(request.token());
     }
 }

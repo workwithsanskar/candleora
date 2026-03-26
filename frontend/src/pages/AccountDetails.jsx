@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AccountProfileFields from "../components/AccountProfileFields";
 import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
+import { PHONE_AUTH_ENABLED, REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER } from "../utils/authFlow";
 import { buildProfilePayload, createAccountForm } from "../utils/account";
 import { formatApiError } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
@@ -91,7 +92,13 @@ function AccountDetails() {
       const updatedUser = await updateProfile(buildProfilePayload(form));
       setProfile(updatedUser);
       setForm(createAccountForm(updatedUser));
-      setSuccessMessage("Profile updated successfully.");
+      setSuccessMessage(
+        PHONE_AUTH_ENABLED && REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER && updatedUser.phoneVerified
+          ? "Profile updated successfully."
+          : PHONE_AUTH_ENABLED && REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER
+            ? "Profile updated. Verify this phone number during checkout before placing your next order."
+            : "Profile updated successfully.",
+      );
     } catch (profileError) {
       setError(formatApiError(profileError));
     } finally {
@@ -125,6 +132,32 @@ function AccountDetails() {
           <p className="max-w-[920px] text-body leading-8 text-black/62">
             Update your saved contact details and delivery information from one clear overview.
           </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span
+              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                profile?.emailVerified
+                  ? "border-green/20 bg-green/10 text-green-800"
+                  : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
+              }`}
+            >
+              {profile?.emailVerified ? "Email verified" : "Email verification pending"}
+            </span>
+            {PHONE_AUTH_ENABLED && (
+              <span
+                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                  profile?.phoneVerified
+                    ? "border-green/20 bg-green/10 text-green-800"
+                    : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
+                }`}
+              >
+                {profile?.phoneVerified
+                  ? "Phone verified"
+                  : REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER
+                    ? "Phone verification required before checkout"
+                    : "Phone verification coming soon"}
+              </span>
+            )}
+          </div>
         </div>
 
         <form className="space-y-8" onSubmit={handleSubmit}>

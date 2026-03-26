@@ -52,9 +52,23 @@ export function formatApiError(error) {
     typeof error?.code === "string" && error.code.startsWith("auth/")
       ? error.code
       : null;
+  const message = String(
+    error?.message ??
+      payload?.message ??
+      payload?.detail ??
+      "",
+  );
 
   if (firebaseCode) {
     return formatFirebaseError(firebaseCode);
+  }
+
+  if (/billing not enabled/i.test(message)) {
+    return "Firebase phone verification needs billing enabled on this project. Add a billing account in Firebase/Google Cloud, then try sending the OTP again.";
+  }
+
+  if (/origin is not allowed/i.test(message)) {
+    return "This Google sign-in origin is not authorized yet. Add http://localhost:5173 to the Google OAuth client's Authorized JavaScript origins.";
   }
 
   if (!error?.response) {

@@ -2,6 +2,7 @@ package com.candleora.service;
 
 import com.candleora.dto.auth.AuthRequest;
 import com.candleora.dto.auth.AuthResponse;
+import com.candleora.dto.auth.EmailVerificationResponse;
 import com.candleora.dto.auth.GoogleAuthRequest;
 import com.candleora.dto.auth.PhoneAuthRequest;
 import com.candleora.dto.auth.ProfileUpdateRequest;
@@ -13,9 +14,11 @@ import com.candleora.entity.Role;
 import com.candleora.repository.AppUserRepository;
 import com.candleora.security.JwtService;
 import com.candleora.security.UserPrincipal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,6 +36,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final FirebaseTokenVerifier firebaseTokenVerifier;
+    private final String frontendUrl;
 
     public AuthService(
         AppUserRepository appUserRepository,
@@ -40,7 +44,8 @@ public class AuthService {
         AuthenticationManager authenticationManager,
         JwtService jwtService,
         GoogleTokenVerifier googleTokenVerifier,
-        FirebaseTokenVerifier firebaseTokenVerifier
+        FirebaseTokenVerifier firebaseTokenVerifier,
+        @Value("${app.frontend-url}") String frontendUrl
     ) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
@@ -48,6 +53,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.googleTokenVerifier = googleTokenVerifier;
         this.firebaseTokenVerifier = firebaseTokenVerifier;
+        this.frontendUrl = frontendUrl;
     }
 
     public AuthResponse signup(SignupRequest request) {
@@ -61,7 +67,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(Role.USER);
         user.setAuthProvider(AuthProvider.LOCAL);
-        user.setEmailVerified(true);
+        user.setEmailVerified(false);
         user.setPhoneVerified(false);
         applyProfileFields(
             user,
@@ -151,7 +157,9 @@ public class AuthService {
         user.setFirebaseUid(identity.uid());
         user.setPhoneNumber(firstNonBlank(identity.phoneNumber(), request.phoneNumber(), user.getPhoneNumber()));
         user.setPhoneVerified(true);
-        user.setAuthProvider(AuthProvider.PHONE);
+        if (isNewUser || user.getAuthProvider() == null) {
+            user.setAuthProvider(AuthProvider.PHONE);
+        }
         user.setRole(user.getRole() == null ? Role.USER : user.getRole());
         user.setEmailVerified(identity.emailVerified() || user.isEmailVerified());
         user.setEmail(firstNonBlank(requestedEmail, user.getEmail(), placeholderEmail(identity.uid())));
@@ -182,6 +190,9 @@ public class AuthService {
 
     public UserResponse updateProfile(AppUser user, ProfileUpdateRequest request) {
         user.setName(firstNonBlank(request.name(), user.getName()));
+        if (hasPhoneNumberChanged(user.getPhoneNumber(), request.phoneNumber())) {
+            user.setPhoneVerified(false);
+        }
         applyProfileFields(
             user,
             request.phoneNumber(),
@@ -197,6 +208,55 @@ public class AuthService {
             request.latitude(),
             request.longitude()
         );
+        return toUserResponse(appUserRepository.save(user));
+    }
+
+    public EmailVerificationResponse sendEmailVerification(AppUser user) {
+        if (!StringUtils.hasText(user.getEmail()) || user.getEmail().endsWith("@auth.candleora.local")) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Add a real email address to your account before requesting email verification"
+            );
+        }
+
+        if (user.isEmailVerified()) {
+            return new EmailVerificationResponse(
+                "Your email is already verified.",
+                null,
+                null,
+                false
+            );
+        }
+
+        String token = UUID.randomUUID().toString();
+        Instant expiresAt = Instant.now().plusSeconds(30 * 60);
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationExpiresAt(expiresAt);
+        appUserRepository.save(user);
+
+        return new EmailVerificationResponse(
+            "Verification link generated. Open the preview link to verify this email while mail delivery is still being configured.",
+            buildEmailVerificationUrl(token),
+            expiresAt,
+            false
+        );
+    }
+
+    public UserResponse verifyEmail(String token) {
+        AppUser user = appUserRepository.findByEmailVerificationToken(token)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Verification link is invalid"));
+
+        if (user.isEmailVerified()) {
+            return toUserResponse(user);
+        }
+
+        if (user.getEmailVerificationExpiresAt() == null || user.getEmailVerificationExpiresAt().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Verification link has expired");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationExpiresAt(null);
         return toUserResponse(appUserRepository.save(user));
     }
 
@@ -328,5 +388,20 @@ public class AuthService {
 
     private String placeholderEmail(String uid) {
         return "phone-" + uid + "@auth.candleora.local";
+    }
+
+    private boolean hasPhoneNumberChanged(String currentPhoneNumber, String nextPhoneNumber) {
+        return !normalizePhone(currentPhoneNumber).equals(normalizePhone(nextPhoneNumber));
+    }
+
+    private String normalizePhone(String phoneNumber) {
+        String normalized = trimToNull(phoneNumber);
+        return normalized == null
+            ? ""
+            : normalized.replaceAll("\\s+", "");
+    }
+
+    private String buildEmailVerificationUrl(String token) {
+        return frontendUrl.replaceAll("/+$", "") + "/verify-email?token=" + token;
     }
 }

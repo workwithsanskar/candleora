@@ -1,7 +1,11 @@
 import { useState } from "react";
+import GoogleAuthButton from "../components/GoogleAuthButton";
+import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import heroImage from "../assets/designer/candle-login-img.jpg";
+import { PHONE_AUTH_ENABLED } from "../utils/authFlow";
+import { buildGooglePayload, buildPhonePayload } from "../utils/account";
 import { formatApiError } from "../utils/format";
 
 function EyeIcon({ visible }) {
@@ -21,7 +25,7 @@ function EyeIcon({ visible }) {
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading } = useAuth();
+  const { login, googleAuth, phoneAuth, isLoading } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +46,28 @@ function Login() {
       navigate(redirectTo, { replace: true });
     } catch (loginError) {
       setError(formatApiError(loginError));
+    }
+  };
+
+  const handleGoogleLogin = async (credential) => {
+    setError("");
+
+    try {
+      await googleAuth(buildGooglePayload({}, credential));
+      navigate(redirectTo, { replace: true });
+    } catch (googleError) {
+      setError(formatApiError(googleError));
+    }
+  };
+
+  const handlePhoneLogin = async ({ idToken, phoneNumber }) => {
+    setError("");
+
+    try {
+      await phoneAuth(buildPhonePayload({}, idToken, phoneNumber));
+      navigate(redirectTo, { replace: true });
+    } catch (phoneError) {
+      setError(formatApiError(phoneError));
     }
   };
 
@@ -122,6 +148,34 @@ function Login() {
                 </button>
               </div>
             </form>
+
+            <div className="mt-6 space-y-4 rounded-[20px] border border-black/10 bg-white p-4 sm:p-5">
+              <div className="space-y-1 text-center">
+                <p className="text-sm font-semibold text-black">Continue another way</p>
+                <p className="text-sm leading-6 text-black/60">
+                  {PHONE_AUTH_ENABLED
+                    ? "Use Google for one-click access or verify your phone with OTP."
+                    : "Use Google for one-click access while phone OTP stays hidden until launch."}
+                </p>
+              </div>
+
+              <GoogleAuthButton
+                onCredential={handleGoogleLogin}
+                text="signin_with"
+                disabled={isLoading}
+                width={420}
+              />
+
+              {PHONE_AUTH_ENABLED && (
+                <PhoneAuthPanel
+                  compact
+                  disabled={isLoading}
+                  title="Sign in with phone OTP"
+                  description="Verify your number and continue without a password."
+                  onVerified={handlePhoneLogin}
+                />
+              )}
+            </div>
           </div>
         </div>
 

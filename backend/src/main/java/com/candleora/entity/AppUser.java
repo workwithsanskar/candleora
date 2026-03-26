@@ -71,6 +71,12 @@ public class AppUser {
     private String postalCode;
 
     @Column
+    private String emailVerificationToken;
+
+    @Column
+    private Instant emailVerificationExpiresAt;
+
+    @Column
     private String gender;
 
     @Column
@@ -223,6 +229,22 @@ public class AppUser {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public Instant getEmailVerificationExpiresAt() {
+        return emailVerificationExpiresAt;
+    }
+
+    public void setEmailVerificationExpiresAt(Instant emailVerificationExpiresAt) {
+        this.emailVerificationExpiresAt = emailVerificationExpiresAt;
     }
 
     public String getGender() {

@@ -167,6 +167,7 @@ public class SecurityConfig {
             new AntPathRequestMatcher("/api/auth/login"),
             new AntPathRequestMatcher("/api/auth/google"),
             new AntPathRequestMatcher("/api/auth/phone"),
+            new AntPathRequestMatcher("/api/public/auth/email-verification/verify"),
             new AntPathRequestMatcher("/api/contact")
         };
     }

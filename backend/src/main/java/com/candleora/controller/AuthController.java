@@ -2,6 +2,7 @@ package com.candleora.controller;
 
 import com.candleora.dto.auth.AuthRequest;
 import com.candleora.dto.auth.AuthResponse;
+import com.candleora.dto.auth.EmailVerificationResponse;
 import com.candleora.dto.auth.GoogleAuthRequest;
 import com.candleora.dto.auth.PhoneAuthRequest;
 import com.candleora.dto.auth.ProfileUpdateRequest;
@@ -52,6 +53,12 @@ public class AuthController {
     @PostMapping("/phone")
     public AuthResponse phone(@Valid @RequestBody PhoneAuthRequest request) {
         return authService.phoneAuth(request);
+    }
+
+    @PostMapping("/email-verification/send")
+    public EmailVerificationResponse sendEmailVerification(Authentication authentication) {
+        AppUser user = ((UserPrincipal) authentication.getPrincipal()).getUser();
+        return authService.sendEmailVerification(user);
     }
 
     @GetMapping("/me")

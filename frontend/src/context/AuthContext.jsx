@@ -138,6 +138,17 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const sendEmailVerification = async () => {
+    try {
+      const response = await authApi.sendEmailVerification();
+      toast.success(response?.message ?? "Verification link prepared.");
+      return response;
+    } catch (error) {
+      toast.error(formatApiError(error));
+      throw error;
+    }
+  };
+
   const logout = () => {
     if (typeof window !== "undefined" && window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
@@ -160,6 +171,7 @@ export function AuthProvider({ children }) {
         phoneAuth,
         refreshProfile,
         updateProfile,
+        sendEmailVerification,
         logout,
       }}
     >

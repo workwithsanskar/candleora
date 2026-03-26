@@ -59,6 +59,9 @@ export const authApi = {
   signup: (payload) => api.post("/public/auth/register", payload, { skipAuth: true }).then(unwrap),
   googleAuth: (payload) => api.post("/public/auth/google", payload, { skipAuth: true }).then(unwrap),
   phoneAuth: (payload) => api.post("/public/auth/phone", payload, { skipAuth: true }).then(unwrap),
+  sendEmailVerification: () => api.post("/auth/email-verification/send").then(unwrap),
+  verifyEmail: (payload) =>
+    api.post("/public/auth/email-verification/verify", payload, { skipAuth: true }).then(unwrap),
   getProfile: () => api.get("/auth/me").then(unwrap),
   updateProfile: (payload) => api.put("/auth/me", payload).then(unwrap),
 };

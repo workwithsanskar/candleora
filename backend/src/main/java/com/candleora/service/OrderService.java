@@ -29,18 +29,23 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional
 public class OrderService {
 
+    private static final BigDecimal COD_LIMIT = BigDecimal.valueOf(3000);
+
     private final CustomerOrderRepository customerOrderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final boolean requirePhoneVerificationBeforeOrder;
 
     public OrderService(
         CustomerOrderRepository customerOrderRepository,
         CartItemRepository cartItemRepository,
-        ProductRepository productRepository
+        ProductRepository productRepository,
+        @org.springframework.beans.factory.annotation.Value("${app.auth.require-phone-verification-before-order:false}") boolean requirePhoneVerificationBeforeOrder
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.requirePhoneVerificationBeforeOrder = requirePhoneVerificationBeforeOrder;
     }
 
     public OrderResponse placeOrder(AppUser user, PlaceOrderRequest request) {
@@ -53,6 +58,7 @@ public class OrderService {
         }
 
         CustomerOrder order = buildOrder(user, request, paymentMethod);
+        validateOrderEligibility(user, order);
         order.setStatus(OrderStatus.CONFIRMED);
         order.setPaymentProvider(PaymentProvider.COD);
         order.setPaymentStatus(PaymentStatus.COD_PENDING);
@@ -74,6 +80,7 @@ public class OrderService {
         }
 
         CustomerOrder order = buildOrder(user, request, paymentMethod);
+        validateOrderEligibility(user, order);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentProvider(PaymentProvider.RAZORPAY);
         order.setPaymentStatus(PaymentStatus.PENDING);
@@ -282,6 +289,22 @@ public class OrderService {
             return "COD";
         }
         return paymentMethod.trim().toUpperCase();
+    }
+
+    private void validateOrderEligibility(AppUser user, CustomerOrder order) {
+        if (requirePhoneVerificationBeforeOrder && !user.isPhoneVerified()) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Verify your phone number before placing an order"
+            );
+        }
+
+        if ("COD".equals(order.getPaymentMethod()) && order.getTotalAmount().compareTo(COD_LIMIT) > 0) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Cash on delivery is available only for orders up to Rs. 3000"
+            );
+        }
     }
 
     private record OrderLine(Product product, Integer quantity) {

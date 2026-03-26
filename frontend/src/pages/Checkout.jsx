@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import CheckoutVerification from "../components/CheckoutVerification";
 import { Link, useNavigate } from "react-router-dom";
 import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { orderApi, paymentApi } from "../services/api";
 import { buildCheckoutPayload, createCheckoutForm } from "../utils/account";
+import {
+  canUseCashOnDelivery,
+  COD_LIMIT,
+  PHONE_AUTH_ENABLED,
+  requiresEmailVerification,
+  requiresPhoneVerification,
+} from "../utils/authFlow";
 import { formatApiError, formatCurrency } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
 import { loadRazorpayScript } from "../utils/razorpay";
@@ -31,12 +39,14 @@ const requiredShippingFields = [
 
 function Checkout() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, phoneAuth, refreshProfile, sendEmailVerification } = useAuth();
   const { items, grandTotal, clearCart } = useCart();
   const [form, setForm] = useState(() => createCheckoutForm(user));
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [isSendingEmailVerification, setIsSendingEmailVerification] = useState(false);
+  const [emailVerificationPreviewUrl, setEmailVerificationPreviewUrl] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -44,6 +54,16 @@ function Checkout() {
       setForm(createCheckoutForm(user));
     }
   }, [user]);
+
+  const phoneVerificationRequired = requiresPhoneVerification(user);
+  const emailVerificationRecommended = requiresEmailVerification(user);
+  const codEnabled = canUseCashOnDelivery(user, grandTotal);
+
+  useEffect(() => {
+    if (!codEnabled && form.paymentMethod === "COD") {
+      setForm((current) => ({ ...current, paymentMethod: "RAZORPAY" }));
+    }
+  }, [codEnabled, form.paymentMethod]);
 
   const checkoutItems = useMemo(
     () =>
@@ -57,6 +77,38 @@ function Checkout() {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handlePhoneVerified = async ({ idToken, phoneNumber }) => {
+    setError("");
+
+    const response = await phoneAuth({
+      idToken,
+      name: user?.name ?? form.shippingName,
+      email: user?.email ?? form.contactEmail,
+      phoneNumber,
+    });
+
+    const refreshedUser = await refreshProfile().catch(() => response?.user ?? null);
+    if (refreshedUser) {
+      setForm(createCheckoutForm(refreshedUser));
+    } else if (phoneNumber) {
+      setForm((current) => ({ ...current, phone: phoneNumber }));
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    setIsSendingEmailVerification(true);
+    setEmailVerificationPreviewUrl("");
+
+    try {
+      const response = await sendEmailVerification();
+      setEmailVerificationPreviewUrl(response?.previewUrl ?? "");
+    } catch {
+      // Errors are already surfaced through the shared auth context.
+    } finally {
+      setIsSendingEmailVerification(false);
+    }
   };
 
   const validateShippingStep = () => {
@@ -191,6 +243,73 @@ function Checkout() {
     );
   }
 
+  const orderSummary = (
+    <aside className="panel h-fit space-y-5 p-6">
+      <div>
+        <p className="eyebrow">Summary</p>
+        <h2 className="panel-title mt-3">
+          Your order
+        </h2>
+      </div>
+
+      <div className="space-y-3">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center justify-between gap-3 rounded-[20px] bg-white p-4"
+          >
+            <div>
+              <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
+              <p className="text-xs text-brand-muted">Qty {item.quantity}</p>
+            </div>
+            <span className="text-sm font-semibold text-brand-dark">
+              {formatCurrency(item.lineTotal)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-3 rounded-[24px] bg-white p-5">
+        <div className="flex items-center justify-between text-sm text-brand-dark/70">
+          <span>Subtotal</span>
+          <span>{formatCurrency(grandTotal)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm text-brand-dark/70">
+          <span>Shipping</span>
+          <span>Free</span>
+        </div>
+        <div className="flex items-center justify-between text-sm text-brand-dark/70">
+          <span>Payment mode</span>
+          <span>{form.paymentMethod === "COD" ? "COD" : "Razorpay"}</span>
+        </div>
+        <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3">
+          <span className="text-sm font-semibold text-brand-dark">Grand total</span>
+          <span className="text-2xl font-extrabold text-brand-dark">
+            {formatCurrency(grandTotal)}
+          </span>
+        </div>
+      </div>
+    </aside>
+  );
+
+  if (PHONE_AUTH_ENABLED && phoneVerificationRequired) {
+    return (
+      <section className="container-shell space-y-8 py-10 transition-colors duration-300">
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <CheckoutVerification
+            user={user}
+            defaultPhoneNumber={form.phone || user?.phoneNumber || ""}
+            isSendingEmailVerification={isSendingEmailVerification}
+            emailVerificationPreviewUrl={emailVerificationPreviewUrl}
+            onPhoneVerified={handlePhoneVerified}
+            onSendEmailVerification={handleSendEmailVerification}
+          />
+          {orderSummary}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="container-shell space-y-8 py-10 transition-colors duration-300">
       <div className="editorial-card p-6 sm:p-8">
@@ -231,6 +350,38 @@ function Checkout() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="panel space-y-6 p-6 sm:p-8">
+          {emailVerificationRecommended && (
+            <div className="rounded-[24px] border border-brand-primary/20 bg-brand-primary/10 p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-black">Verify your email</p>
+                  <p className="mt-1 text-sm leading-7 text-black/70">
+                    This is optional for checkout, but recommended for password recovery and order updates.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSendEmailVerification}
+                    disabled={isSendingEmailVerification}
+                    className="btn btn-outline disabled:opacity-60"
+                  >
+                    {isSendingEmailVerification ? "Preparing link..." : "Send verification link"}
+                  </button>
+
+                  {emailVerificationPreviewUrl && (
+                    <a
+                      href={emailVerificationPreviewUrl}
+                      className="text-sm font-semibold text-black underline underline-offset-4"
+                    >
+                      Open preview link
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {step === 1 && (
             <>
               <div>
@@ -409,7 +560,7 @@ function Checkout() {
               </div>
 
               <div className="grid gap-4">
-                {[
+                {[ 
                   {
                     value: "RAZORPAY",
                     title: "Razorpay Online",
@@ -418,7 +569,9 @@ function Checkout() {
                   {
                     value: "COD",
                     title: "Cash on Delivery",
-                    description: "Pay after the package reaches you.",
+                    description: codEnabled
+                      ? "Pay after the package reaches you."
+                      : `Available only for totals up to ${formatCurrency(COD_LIMIT)}.`,
                   },
                 ].map((method) => (
                   <button
@@ -427,11 +580,12 @@ function Checkout() {
                     onClick={() =>
                       setForm((current) => ({ ...current, paymentMethod: method.value }))
                     }
+                    disabled={method.value === "COD" && !codEnabled}
                     className={`rounded-[28px] border p-5 text-left transition ${
                       form.paymentMethod === method.value
                         ? "border-brand-primary bg-white shadow-float"
                         : "border-brand-primary/10 bg-white"
-                    }`}
+                    } ${method.value === "COD" && !codEnabled ? "cursor-not-allowed opacity-60" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -540,52 +694,7 @@ function Checkout() {
           </div>
         </div>
 
-        <aside className="panel h-fit space-y-5 p-6">
-          <div>
-            <p className="eyebrow">Summary</p>
-            <h2 className="panel-title mt-3">
-              Your order
-            </h2>
-          </div>
-
-          <div className="space-y-3">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3 rounded-[20px] bg-white p-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
-                  <p className="text-xs text-brand-muted">Qty {item.quantity}</p>
-                </div>
-                <span className="text-sm font-semibold text-brand-dark">
-                  {formatCurrency(item.lineTotal)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3 rounded-[24px] bg-white p-5">
-            <div className="flex items-center justify-between text-sm text-brand-dark/70">
-              <span>Subtotal</span>
-              <span>{formatCurrency(grandTotal)}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-brand-dark/70">
-              <span>Shipping</span>
-              <span>Free</span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-brand-dark/70">
-              <span>Payment mode</span>
-              <span>{form.paymentMethod === "COD" ? "COD" : "Razorpay"}</span>
-            </div>
-            <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3">
-              <span className="text-sm font-semibold text-brand-dark">Grand total</span>
-              <span className="text-2xl font-extrabold text-brand-dark">
-                {formatCurrency(grandTotal)}
-              </span>
-            </div>
-          </div>
-        </aside>
+        {orderSummary}
       </div>
     </section>
   );

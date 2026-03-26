@@ -1,8 +1,13 @@
 import { useState } from "react";
+import GoogleAuthButton from "../components/GoogleAuthButton";
+import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import signupImage from "../assets/designer/signup-candle-img.jpg";
+import { PHONE_AUTH_ENABLED } from "../utils/authFlow";
 import {
+  buildGooglePayload,
+  buildPhonePayload,
   buildSignupPayload,
   createAccountForm,
 } from "../utils/account";
@@ -24,7 +29,7 @@ function EyeIcon({ visible }) {
 
 function Signup() {
   const navigate = useNavigate();
-  const { signup, isLoading } = useAuth();
+  const { signup, googleAuth, phoneAuth, isLoading } = useAuth();
   const [form, setForm] = useState(() => ({
     ...createAccountForm(),
     confirmPassword: "",
@@ -80,6 +85,38 @@ function Signup() {
       navigate("/profile", { replace: true });
     } catch (signupError) {
       setError(formatApiError(signupError));
+    }
+  };
+
+  const handleGoogleSignup = async (credential) => {
+    setError("");
+
+    if (!form.acceptedTerms) {
+      setError("Please accept the terms and privacy policy to continue.");
+      return;
+    }
+
+    try {
+      await googleAuth(buildGooglePayload(form, credential));
+      navigate("/profile", { replace: true });
+    } catch (googleError) {
+      setError(formatApiError(googleError));
+    }
+  };
+
+  const handlePhoneSignup = async ({ idToken, phoneNumber }) => {
+    setError("");
+
+    if (!form.acceptedTerms) {
+      setError("Please accept the terms and privacy policy to continue.");
+      return;
+    }
+
+    try {
+      await phoneAuth(buildPhonePayload(form, idToken, phoneNumber));
+      navigate("/profile", { replace: true });
+    } catch (phoneError) {
+      setError(formatApiError(phoneError));
     }
   };
 
@@ -218,6 +255,35 @@ function Signup() {
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
+
+            <div className="mt-6 space-y-4 rounded-[20px] border border-black/10 bg-white p-4 sm:p-5">
+              <div className="space-y-1 text-center">
+                <p className="text-sm font-semibold text-black">Or start with a faster method</p>
+                <p className="text-sm leading-6 text-black/60">
+                  {PHONE_AUTH_ENABLED
+                    ? "Continue with Google or create your account with a verified phone number."
+                    : "Continue with Google now. Phone OTP is kept in the codebase and can be re-enabled later."}
+                </p>
+              </div>
+
+              <GoogleAuthButton
+                onCredential={handleGoogleSignup}
+                text="signup_with"
+                disabled={isLoading}
+                width={420}
+              />
+
+              {PHONE_AUTH_ENABLED && (
+                <PhoneAuthPanel
+                  compact
+                  disabled={isLoading}
+                  defaultPhoneNumber={form.phoneNumber}
+                  title="Sign up with phone OTP"
+                  description="We will verify your number now and you can complete the rest of your profile after signup."
+                  onVerified={handlePhoneSignup}
+                />
+              )}
+            </div>
           </div>
         </div>
 
