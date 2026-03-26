@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import CheckoutVerification from "../components/CheckoutVerification";
 import { Link, useNavigate } from "react-router-dom";
@@ -69,6 +69,7 @@ function Checkout() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [error, setError] = useState("");
+  const couponInputRef = useRef(null);
 
   useEffect(() => {
     setForm((current) => mergeCheckoutFormWithUser(current, user));
@@ -121,7 +122,29 @@ function Checkout() {
   };
 
   const handleApplyCoupon = async () => {
-    const code = String(form.couponCode ?? "").trim();
+    await applyCouponCode(form.couponCode);
+  };
+
+  const handleClearCoupon = () => {
+    setForm((current) => ({ ...current, couponCode: "" }));
+    setCouponQuote(null);
+    setCouponError("");
+  };
+
+  const handleUseSampleCoupon = () => {
+    if (!SAMPLE_COUPON_CODE) {
+      return;
+    }
+
+    setForm((current) => ({ ...current, couponCode: SAMPLE_COUPON_CODE }));
+    setCouponQuote(null);
+    setCouponError("");
+    couponInputRef.current?.focus();
+    void applyCouponCode(SAMPLE_COUPON_CODE);
+  };
+
+  const applyCouponCode = async (rawCode) => {
+    const code = String(rawCode ?? "").trim();
     if (!code) {
       setCouponError("Enter a coupon code to apply.");
       return;
@@ -143,12 +166,6 @@ function Checkout() {
     } finally {
       setIsApplyingCoupon(false);
     }
-  };
-
-  const handleClearCoupon = () => {
-    setForm((current) => ({ ...current, couponCode: "" }));
-    setCouponQuote(null);
-    setCouponError("");
   };
 
   const handlePhoneVerified = async ({ idToken, phoneNumber }) => {
@@ -403,13 +420,26 @@ function Checkout() {
         </p>
         {SAMPLE_COUPON_CODE && (
           <div className="mt-3 rounded-[18px] bg-brand-primary/10 px-4 py-3 text-xs text-brand-dark/80">
-            <span className="font-semibold text-brand-dark">Sample code:</span>{" "}
-            <span className="font-semibold text-brand-dark">{SAMPLE_COUPON_CODE}</span>
-            {SAMPLE_COUPON_HINT ? ` — ${SAMPLE_COUPON_HINT}` : ""}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span className="font-semibold text-brand-dark">Sample code:</span>{" "}
+                <span className="font-semibold text-brand-dark">{SAMPLE_COUPON_CODE}</span>
+                {SAMPLE_COUPON_HINT ? ` — ${SAMPLE_COUPON_HINT}` : ""}
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline whitespace-nowrap"
+                onClick={handleUseSampleCoupon}
+                disabled={isApplyingCoupon}
+              >
+                {isApplyingCoupon ? "Applying..." : "Use coupon"}
+              </button>
+            </div>
           </div>
         )}
         <div className="mt-3 flex flex-col gap-3">
           <input
+            ref={couponInputRef}
             className={inputClassName}
             name="couponCode"
             value={form.couponCode}
