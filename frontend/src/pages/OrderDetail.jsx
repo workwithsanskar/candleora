@@ -220,7 +220,14 @@ function OrderDetail() {
               </p>
               <p>
                 <span className="font-semibold text-brand-dark">Address:</span>{" "}
-                {[order.addressLine1, order.addressLine2, order.city, order.state, order.postalCode]
+                {[
+                  order.addressLine1,
+                  order.addressLine2,
+                  order.city,
+                  order.state,
+                  order.postalCode,
+                  order.country,
+                ]
                   .filter(Boolean)
                   .join(", ")}
               </p>

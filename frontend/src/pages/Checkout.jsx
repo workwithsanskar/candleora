@@ -192,11 +192,20 @@ function Checkout() {
       const location = await getCurrentLocation();
       setForm((current) => ({
         ...current,
-        locationLabel: current.locationLabel || location.locationLabel,
+        locationLabel: location.locationLabel || current.locationLabel,
         latitude: String(location.latitude),
         longitude: String(location.longitude),
+        addressLine1: location.addressLine1 || current.addressLine1,
+        city: location.city || current.city,
+        state: location.state || current.state,
+        postalCode: location.postalCode || current.postalCode,
+        country: location.country || current.country,
       }));
-      toast.success("Current location attached.");
+      toast.success(
+        location.addressLine1 || location.city || location.state || location.country
+          ? "Current location and address added."
+          : "Current location attached.",
+      );
     } catch (locationError) {
       setError(formatApiError(locationError));
     } finally {
@@ -546,6 +555,17 @@ function Checkout() {
                   />
                 </label>
 
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-brand-dark">Country</span>
+                  <input
+                    className={inputClassName}
+                    name="country"
+                    value={form.country}
+                    onChange={handleChange}
+                    autoComplete="country-name"
+                  />
+                </label>
+
                 <label className="space-y-2 sm:col-span-2">
                   <span className="text-sm font-semibold text-brand-dark">Location tag</span>
                   <input
@@ -566,6 +586,9 @@ function Checkout() {
                   >
                     {isLocating ? "Detecting location..." : "Use current location"}
                   </button>
+                  <p className="mt-2 text-xs leading-6 text-brand-dark/55">
+                    Address lookup helper powered by OpenStreetMap.
+                  </p>
                 </div>
 
                 <label className="space-y-2">
@@ -676,7 +699,14 @@ function Checkout() {
                     <p>{form.contactEmail}</p>
                     <p>{form.phone}</p>
                     <p>
-                      {[form.addressLine1, form.addressLine2, form.city, form.state, form.postalCode]
+                      {[
+                        form.addressLine1,
+                        form.addressLine2,
+                        form.city,
+                        form.state,
+                        form.postalCode,
+                        form.country,
+                      ]
                         .filter(Boolean)
                         .join(", ")}
                     </p>

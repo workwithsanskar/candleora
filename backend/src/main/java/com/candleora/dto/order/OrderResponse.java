@@ -26,6 +26,7 @@ public record OrderResponse(
     String city,
     String state,
     String postalCode,
+    String country,
     String locationLabel,
     Double latitude,
     Double longitude,

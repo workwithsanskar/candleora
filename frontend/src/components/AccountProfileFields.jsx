@@ -136,6 +136,17 @@ function AccountProfileFields({
       </label>
 
       <label className="space-y-2">
+        <span className="text-sm font-semibold text-brand-dark">Country</span>
+        <input
+          name="country"
+          value={form.country}
+          onChange={onChange}
+          className={inputClassName}
+          autoComplete="country-name"
+        />
+      </label>
+
+      <label className="space-y-2">
         <span className="text-sm font-semibold text-brand-dark">Gender</span>
         <select
           name="gender"
@@ -223,6 +234,7 @@ AccountProfileFields.propTypes = {
     city: PropTypes.string,
     state: PropTypes.string,
     postalCode: PropTypes.string,
+    country: PropTypes.string,
     gender: PropTypes.string,
     dateOfBirth: PropTypes.string,
     locationLabel: PropTypes.string,

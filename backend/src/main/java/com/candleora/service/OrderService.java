@@ -160,6 +160,7 @@ public class OrderService {
         order.setCity(request.city());
         order.setState(request.state());
         order.setPostalCode(request.postalCode());
+        order.setCountry(trimToNull(request.country()));
         order.setLocationLabel(trimToNull(request.locationLabel()));
         order.setLatitude(request.latitude());
         order.setLongitude(request.longitude());
@@ -255,6 +256,7 @@ public class OrderService {
             order.getCity(),
             order.getState(),
             order.getPostalCode(),
+            order.getCountry(),
             order.getLocationLabel(),
             order.getLatitude(),
             order.getLongitude(),

@@ -15,6 +15,7 @@ public record PlaceOrderRequest(
     @NotBlank String city,
     @NotBlank String state,
     @NotBlank String postalCode,
+    String country,
     String locationLabel,
     Double latitude,
     Double longitude,

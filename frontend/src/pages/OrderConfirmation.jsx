@@ -98,7 +98,8 @@ function OrderConfirmation() {
                 {formatDateRange(order.estimatedDeliveryStart, order.estimatedDeliveryEnd)}
               </p>
               <p className="mt-2 text-sm text-brand-dark/70">
-                Shipping to {order.shippingName}, {order.city}.
+                Shipping to{" "}
+                {[order.shippingName, order.city, order.country].filter(Boolean).join(", ")}.
               </p>
             </div>
           </div>

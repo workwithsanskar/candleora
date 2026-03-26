@@ -78,6 +78,7 @@ public class AuthService {
             request.city(),
             request.state(),
             request.postalCode(),
+            request.country(),
             request.gender(),
             request.dateOfBirth(),
             request.locationLabel(),
@@ -126,6 +127,7 @@ public class AuthService {
             request.city(),
             request.state(),
             request.postalCode(),
+            request.country(),
             request.gender(),
             request.dateOfBirth(),
             request.locationLabel(),
@@ -177,6 +179,7 @@ public class AuthService {
             request.city(),
             request.state(),
             request.postalCode(),
+            request.country(),
             request.gender(),
             request.dateOfBirth(),
             request.locationLabel(),
@@ -202,6 +205,7 @@ public class AuthService {
             request.city(),
             request.state(),
             request.postalCode(),
+            request.country(),
             request.gender(),
             request.dateOfBirth(),
             request.locationLabel(),
@@ -276,6 +280,7 @@ public class AuthService {
             user.getCity(),
             user.getState(),
             user.getPostalCode(),
+            user.getCountry(),
             user.getGender(),
             user.getDateOfBirth(),
             user.getLocationLabel(),
@@ -299,6 +304,7 @@ public class AuthService {
         String city,
         String state,
         String postalCode,
+        String country,
         String gender,
         LocalDate dateOfBirth,
         String locationLabel,
@@ -312,6 +318,7 @@ public class AuthService {
         user.setCity(trimToNull(city));
         user.setState(trimToNull(state));
         user.setPostalCode(trimToNull(postalCode));
+        user.setCountry(trimToNull(country));
         user.setGender(trimToNull(gender));
         user.setDateOfBirth(dateOfBirth);
         user.setLocationLabel(trimToNull(locationLabel));
@@ -328,6 +335,7 @@ public class AuthService {
         String city,
         String state,
         String postalCode,
+        String country,
         String gender,
         LocalDate dateOfBirth,
         String locationLabel,
@@ -354,6 +362,9 @@ public class AuthService {
         }
         if (postalCode != null) {
             user.setPostalCode(trimToNull(postalCode));
+        }
+        if (country != null) {
+            user.setCountry(trimToNull(country));
         }
         if (gender != null) {
             user.setGender(trimToNull(gender));

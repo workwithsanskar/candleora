@@ -11,6 +11,7 @@ public record ProfileUpdateRequest(
     String city,
     String state,
     String postalCode,
+    String country,
     String gender,
     LocalDate dateOfBirth,
     String locationLabel,

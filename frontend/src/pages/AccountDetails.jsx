@@ -74,7 +74,17 @@ function AccountDetails() {
         locationLabel: current.locationLabel || location.locationLabel,
         latitude: String(location.latitude),
         longitude: String(location.longitude),
+        addressLine1: location.addressLine1 || current.addressLine1,
+        city: location.city || current.city,
+        state: location.state || current.state,
+        postalCode: location.postalCode || current.postalCode,
+        country: location.country || current.country,
       }));
+      setSuccessMessage(
+        location.addressLine1 || location.city || location.state || location.country
+          ? "Current location and address added to your profile form."
+          : "Current location added to your profile form.",
+      );
     } catch (locationError) {
       setError(formatApiError(locationError));
     } finally {

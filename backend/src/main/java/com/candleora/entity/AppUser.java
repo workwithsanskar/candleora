@@ -71,6 +71,9 @@ public class AppUser {
     private String postalCode;
 
     @Column
+    private String country;
+
+    @Column
     private String emailVerificationToken;
 
     @Column
@@ -229,6 +232,14 @@ public class AppUser {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     public String getEmailVerificationToken() {
