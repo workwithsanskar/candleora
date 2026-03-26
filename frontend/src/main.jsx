@@ -1,4 +1,4 @@
-import React from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";
 import App from "./App";
@@ -9,7 +9,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+  <StrictMode>
     <ThemeProvider>
       <AuthProvider>
         <WishlistProvider>
@@ -30,5 +30,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </WishlistProvider>
       </AuthProvider>
     </ThemeProvider>
-  </React.StrictMode>,
+  </StrictMode>,
 );

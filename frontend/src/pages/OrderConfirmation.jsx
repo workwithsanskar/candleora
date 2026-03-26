@@ -14,6 +14,8 @@ function OrderConfirmation() {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -40,6 +42,31 @@ function OrderConfirmation() {
       isMounted = false;
     };
   }, [orderId]);
+
+  const handleDownloadInvoice = async () => {
+    if (!order?.invoiceNumber) {
+      return;
+    }
+
+    setIsDownloadingInvoice(true);
+    setDownloadError("");
+
+    try {
+      const blob = await orderApi.downloadInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${order.invoiceNumber}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (downloadInvoiceError) {
+      setDownloadError(formatApiError(downloadInvoiceError));
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -83,6 +110,11 @@ function OrderConfirmation() {
               <p className="mt-3 text-lg font-semibold text-brand-dark">
                 {titleCase(order.paymentStatus)} via {titleCase(order.paymentProvider)}
               </p>
+              {order.invoiceNumber && (
+                <p className="mt-2 text-sm text-brand-dark/70">
+                  Invoice {order.invoiceNumber}
+                </p>
+              )}
               {order.gatewayPaymentId && (
                 <p className="mt-2 text-sm text-brand-dark/70">
                   Transaction ID: {order.gatewayPaymentId}
@@ -126,6 +158,16 @@ function OrderConfirmation() {
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-muted">
             Next steps
           </p>
+          {order.invoiceNumber && (
+            <button
+              type="button"
+              className="btn btn-primary w-full text-center"
+              onClick={handleDownloadInvoice}
+              disabled={isDownloadingInvoice}
+            >
+              {isDownloadingInvoice ? "Preparing invoice..." : "Download invoice"}
+            </button>
+          )}
           <Link
             to={`/orders/${order.id}`}
             className="btn btn-secondary w-full text-center"
@@ -138,6 +180,9 @@ function OrderConfirmation() {
           >
             Continue shopping
           </Link>
+          {downloadError && (
+            <p className="text-sm text-danger">{downloadError}</p>
+          )}
         </aside>
       </div>
     </section>

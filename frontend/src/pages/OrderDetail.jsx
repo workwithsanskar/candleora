@@ -23,6 +23,8 @@ function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -61,6 +63,31 @@ function OrderDetail() {
 
     return orderFlow.indexOf(order.status);
   }, [order?.status]);
+
+  const handleDownloadInvoice = async () => {
+    if (!order?.invoiceNumber) {
+      return;
+    }
+
+    setIsDownloadingInvoice(true);
+    setDownloadError("");
+
+    try {
+      const blob = await orderApi.downloadInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${order.invoiceNumber}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (downloadInvoiceError) {
+      setDownloadError(formatApiError(downloadInvoiceError));
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -101,6 +128,11 @@ function OrderDetail() {
             <p className="mt-3 text-sm leading-7 text-brand-dark/70">
               Placed on {formatDate(order.createdAt)}. Current status: {titleCase(order.status)}.
             </p>
+            {order.invoiceNumber && (
+              <p className="mt-2 text-sm text-brand-dark/60">
+                Invoice {order.invoiceNumber}
+              </p>
+            )}
           </div>
           <div className="rounded-[24px] bg-white px-6 py-5 text-right">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-muted">
@@ -200,6 +232,21 @@ function OrderDetail() {
                 </p>
               )}
             </div>
+            {order.invoiceNumber && (
+              <div className="mt-5">
+                <button
+                  type="button"
+                  className="btn btn-secondary w-full"
+                  onClick={handleDownloadInvoice}
+                  disabled={isDownloadingInvoice}
+                >
+                  {isDownloadingInvoice ? "Preparing invoice..." : "Download invoice"}
+                </button>
+                {downloadError && (
+                  <p className="mt-3 text-sm text-danger">{downloadError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="panel p-6">

@@ -1,19 +1,12 @@
 import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
-
-function scrollWindowToTop() {
-  if (typeof window === "undefined" || typeof window.scrollTo !== "function") {
-    return;
-  }
-
-  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-}
+import { scrollToTopInstant } from "../utils/smoothScroll";
 
 function ScrollToTop() {
   const { pathname, search } = useLocation();
 
   useLayoutEffect(() => {
-    scrollWindowToTop();
+    scrollToTopInstant();
   }, [pathname, search]);
 
   useEffect(() => {
@@ -29,9 +22,9 @@ function ScrollToTop() {
     }
 
     const handlePageShow = () => {
-      scrollWindowToTop();
+      scrollToTopInstant();
       window.requestAnimationFrame(() => {
-        scrollWindowToTop();
+        scrollToTopInstant();
       });
     };
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Order confirmation</title>
+</head>
+<body style="background:#f8f3ed; color:#23170f; font-family:Helvetica, Arial, sans-serif; margin:0; padding:24px;">
+<div style="margin:0 auto; max-width:640px;">
+    <div style="background:#ffffff; border:1px solid #eadfd4; border-radius:24px; padding:32px;">
+        <p style="color:#8c5a16; font-family:Georgia, 'Times New Roman', serif; font-size:26px; font-weight:700; letter-spacing:0.08em; margin:0 0 18px; text-transform:uppercase;" th:text="${companyName}">
+            CandleOra
+        </p>
+        <p style="color:#7d6e62; font-size:12px; letter-spacing:0.08em; margin:0 0 22px; text-transform:uppercase;">
+            Order confirmation
+        </p>
+        <h1 style="font-family:Georgia, 'Times New Roman', serif; font-size:34px; line-height:1.2; margin:0 0 16px;">
+            Thank you for your order.
+        </h1>
+        <p style="font-size:15px; line-height:1.8; margin:0 0 14px;">
+            Hi <span th:text="${customerName}">there</span>, your CandleOra order has been confirmed.
+            We’ve attached your invoice so you have everything in one place.
+        </p>
+        <div style="background:#fbf7f2; border-radius:18px; margin:24px 0; padding:18px 20px;">
+            <p style="margin:0 0 10px;"><strong>Order ID:</strong> <span th:text="${orderId}">1</span></p>
+            <p style="margin:0 0 10px;"><strong>Invoice number:</strong> <span th:text="${invoiceNumber}">CNDL-20260326-000001</span></p>
+            <p style="margin:0;"><strong>Total:</strong> <span th:text="${totalAmount}">Rs. 599.00</span></p>
+        </div>
+        <p style="font-size:15px; line-height:1.8; margin:0 0 22px;">
+            Payment status: <span style="text-transform:capitalize;" th:text="${paymentStatus}">paid</span>.
+            You can review your order anytime from your account.
+        </p>
+        <a
+            th:href="${orderUrl}"
+            style="background:#f2b400; border-radius:999px; color:#23170f; display:inline-block; font-size:14px; font-weight:700; letter-spacing:0.02em; padding:14px 24px; text-decoration:none;"
+        >
+            View your order
+        </a>
+        <p style="color:#7d6e62; font-size:13px; line-height:1.8; margin:24px 0 0;">
+            Need help? Reach us at <span th:text="${supportEmail}">support@candleora.com</span>.
+        </p>
+    </div>
+</div>
+</body>
+</html>

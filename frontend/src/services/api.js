@@ -78,6 +78,8 @@ export const orderApi = {
   createOrder: (payload) => api.post("/orders", payload).then(unwrap),
   getOrders: () => api.get("/orders").then(unwrap),
   getOrder: (orderId) => api.get(`/orders/${orderId}`).then(unwrap),
+  downloadInvoice: (orderId) =>
+    api.get(`/orders/${orderId}/invoice`, { responseType: "blob" }).then(unwrap),
 };
 
 export const paymentApi = {

@@ -17,6 +17,7 @@ public record OrderResponse(
     LocalDate estimatedDeliveryEnd,
     String gatewayOrderId,
     String gatewayPaymentId,
+    String invoiceNumber,
     String shippingName,
     String contactEmail,
     String phone,

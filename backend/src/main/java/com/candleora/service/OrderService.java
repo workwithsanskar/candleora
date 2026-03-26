@@ -34,17 +34,23 @@ public class OrderService {
     private final CustomerOrderRepository customerOrderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final InvoiceService invoiceService;
+    private final OrderNotificationService orderNotificationService;
     private final boolean requirePhoneVerificationBeforeOrder;
 
     public OrderService(
         CustomerOrderRepository customerOrderRepository,
         CartItemRepository cartItemRepository,
         ProductRepository productRepository,
+        InvoiceService invoiceService,
+        OrderNotificationService orderNotificationService,
         @org.springframework.beans.factory.annotation.Value("${app.auth.require-phone-verification-before-order:false}") boolean requirePhoneVerificationBeforeOrder
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.invoiceService = invoiceService;
+        this.orderNotificationService = orderNotificationService;
         this.requirePhoneVerificationBeforeOrder = requirePhoneVerificationBeforeOrder;
     }
 
@@ -67,6 +73,7 @@ public class OrderService {
         CustomerOrder savedOrder = customerOrderRepository.save(order);
         decrementStock(savedOrder);
         cartItemRepository.deleteByUser(user);
+        orderNotificationService.scheduleOrderConfirmation(savedOrder.getId());
         return toOrderResponse(savedOrder);
     }
 
@@ -126,7 +133,9 @@ public class OrderService {
 
         decrementStock(order);
         cartItemRepository.deleteByUser(user);
-        return toOrderResponse(customerOrderRepository.save(order));
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        orderNotificationService.scheduleOrderConfirmation(savedOrder.getId());
+        return toOrderResponse(savedOrder);
     }
 
     @Transactional(readOnly = true)
@@ -247,6 +256,7 @@ public class OrderService {
             order.getEstimatedDeliveryEnd(),
             order.getGatewayOrderId(),
             order.getGatewayPaymentId(),
+            invoiceService.isInvoiceAvailable(order) ? invoiceService.buildInvoiceNumber(order) : null,
             order.getShippingName(),
             order.getContactEmail(),
             order.getPhone(),

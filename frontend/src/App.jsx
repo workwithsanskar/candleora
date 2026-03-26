@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Footer";
@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteLoader from "./components/RouteLoader";
 import ScrollToTop from "./components/ScrollToTop";
+import { destroySmoothScroll, initSmoothScroll, resizeSmoothScroll } from "./utils/smoothScroll";
 
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AccountDetails = lazy(() => import("./pages/AccountDetails"));
@@ -38,6 +39,15 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 function AppShell() {
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    initSmoothScroll();
+    return () => destroySmoothScroll();
+  }, []);
+
+  useEffect(() => {
+    resizeSmoothScroll();
+  }, [location.pathname, location.search]);
 
   const pageMotion = prefersReducedMotion
     ? {
