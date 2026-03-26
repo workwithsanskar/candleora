@@ -1,5 +1,4 @@
-const fallbackImage =
-  "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80";
+import fallbackImage from "../assets/designer/image-optimized.jpg";
 
 export function getProductPath(product) {
   const slug = String(product?.slug ?? "").trim();

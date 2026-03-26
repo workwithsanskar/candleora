@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
+import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
@@ -59,6 +60,10 @@ function ProductCard({ product, badgeLabel = null }) {
             alt={item.name}
             loading="lazy"
             decoding="async"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = fallbackProductImage;
+            }}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
           {activeBadge && (
