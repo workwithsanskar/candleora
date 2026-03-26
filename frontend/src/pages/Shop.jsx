@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import ProductCard from "../components/ProductCard";
+import LazyProductCard from "../components/LazyProductCard";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import StatusView from "../components/StatusView";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
@@ -196,8 +196,12 @@ function Shop() {
           ) : (
             <>
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {products.map((product, index) => (
+                  <LazyProductCard
+                    key={product.id}
+                    product={product}
+                    priority={page === 0 && index < initialSkeletonCount}
+                  />
                 ))}
                 {isLoading &&
                   page > 0 &&

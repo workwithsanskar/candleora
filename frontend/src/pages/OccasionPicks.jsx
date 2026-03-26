@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import ProductCard from "../components/ProductCard";
+import LazyProductCard from "../components/LazyProductCard";
 import StatusView from "../components/StatusView";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
 import { catalogApi } from "../services/api";
@@ -227,8 +227,8 @@ function OccasionPicks() {
           ) : (
             <>
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {visibleProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {visibleProducts.map((product, index) => (
+                  <LazyProductCard key={product.id} product={product} priority={index < 6} />
                 ))}
               </div>
 

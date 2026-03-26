@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
-import ProductCard from "./ProductCard";
+import LazyProductCard from "./LazyProductCard";
 
 function ProductGrid({ products }) {
   const visibleProducts = products.slice(0, 4);
@@ -19,7 +19,7 @@ function ProductGrid({ products }) {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.45, delay: index * 0.08, ease: "easeOut" }}
         >
-          <ProductCard product={product} variant="homepage" />
+          <LazyProductCard product={product} priority={index < 4} />
         </motion.div>
       ))}
     </div>

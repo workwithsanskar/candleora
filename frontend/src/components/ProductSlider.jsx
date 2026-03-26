@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
+import LazyProductCard from "./LazyProductCard";
 import ProductCard from "./ProductCard";
 
 function ArrowButton({ direction, onClick, disabled }) {
@@ -83,7 +84,7 @@ function ProductSlider({
       <div className="flex gap-4 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
         {products.map((product, index) => (
           <div key={product.id} className="w-[220px] shrink-0 sm:w-[245px]">
-            <ProductCard product={product} variant="compact" compactIndex={index} />
+            <LazyProductCard product={product} priority={index < 2} viewportMargin="160px 0px" />
           </div>
         ))}
       </div>
