@@ -30,10 +30,10 @@ function SearchIcon() {
 
 function FilterSection({ title, children }) {
   return (
-    <section className="rounded-[18px] border border-black/10 bg-white px-5 py-5 shadow-candle">
-      <div className="mb-4 flex items-center gap-3">
+    <section className="rounded-[18px] border border-black/10 bg-white px-4 py-4 shadow-candle">
+      <div className="mb-3 flex items-center gap-3">
         <span className="h-6 w-[2px] bg-black" />
-        <h2 className="text-[1.1rem] font-medium text-black">{title}</h2>
+        <h2 className="text-base font-semibold text-black">{title}</h2>
       </div>
       {children}
     </section>
@@ -153,7 +153,7 @@ function OccasionPicks() {
                   }`}
                 >
                   <span>{item.name}</span>
-                  <span className="text-xs">{selectedCategory === item.slug ? "•" : ""}</span>
+                  <span className="text-xs">{selectedCategory === item.slug ? "\u2022" : ""}</span>
                 </button>
               ))}
             </div>
@@ -256,3 +256,4 @@ function OccasionPicks() {
 }
 
 export default OccasionPicks;
+

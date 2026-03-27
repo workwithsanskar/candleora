@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CANONICAL_CATEGORIES } from "../constants/categories";
+import { FOOTER_CATEGORIES } from "../constants/categories";
 import whatsappFooterIcon from "../assets/whatsapp-footer.svg";
 import BrandLogo from "./BrandLogo";
 
@@ -76,13 +76,13 @@ function Footer() {
                 <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/52">
                   Categories
                 </p>
-                {CANONICAL_CATEGORIES.map((category) => (
+                {FOOTER_CATEGORIES.map((category) => (
                   <FooterLink
                     key={category.slug || "all"}
                     to={category.to}
                     onClick={handleFooterNavigation}
                   >
-                    {category.footerLabel === "All" ? "All Products" : category.footerLabel}
+                    {category.footerLabel}
                   </FooterLink>
                 ))}
               </div>
@@ -91,14 +91,6 @@ function Footer() {
                 <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/52">
                   Follow Us
                 </p>
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-[15px] leading-8 text-white/82 transition hover:text-white"
-                >
-                  Facebook
-                </a>
                 <a
                   href="https://instagram.com"
                   target="_blank"
@@ -114,6 +106,14 @@ function Footer() {
                   className="block text-[15px] leading-8 text-white/82 transition hover:text-white"
                 >
                   WhatsApp
+                </a>
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-[15px] leading-8 text-white/82 transition hover:text-white"
+                >
+                  Facebook
                 </a>
               </div>
             </div>

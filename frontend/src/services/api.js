@@ -74,6 +74,13 @@ export const cartApi = {
   removeItem: (itemId) => api.delete(`/cart/items/${itemId}`).then(unwrap),
 };
 
+export const addressApi = {
+  getAddresses: () => api.get("/addresses").then(unwrap),
+  createAddress: (payload) => api.post("/addresses", payload).then(unwrap),
+  updateAddress: (addressId, payload) => api.put(`/addresses/${addressId}`, payload).then(unwrap),
+  deleteAddress: (addressId) => api.delete(`/addresses/${addressId}`).then(unwrap),
+};
+
 export const orderApi = {
   createOrder: (payload) => api.post("/orders", payload).then(unwrap),
   getOrders: () => api.get("/orders").then(unwrap),

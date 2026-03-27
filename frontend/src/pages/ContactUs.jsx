@@ -106,30 +106,30 @@ function ContactUs() {
 
   return (
     <div className="bg-white">
-      <section className="container-shell py-12 sm:py-14 lg:py-16">
+      <section className="container-shell py-10 sm:py-12 lg:py-14">
         <div className="mx-auto max-w-[1240px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
-          <div className="bg-black px-6 py-6 sm:px-8 lg:px-12">
+          <div className="bg-black px-6 py-5 sm:px-8 lg:px-10">
             <h1 className="font-display text-heading-md font-semibold text-white">
               Get In Touch With Us
             </h1>
           </div>
 
-          <div className="grid gap-10 px-6 py-10 sm:px-8 lg:grid-cols-[0.78fr_1.22fr] lg:gap-12 lg:px-10 lg:py-12">
-            <div className="space-y-10 lg:space-y-12">
-              <div className="border-b border-black/10 pb-9">
+          <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-10 lg:py-10">
+            <div className="space-y-7 lg:space-y-8">
+              <div className="border-b border-black/10 pb-6">
                 <p className="text-base font-medium text-black">Phone Number</p>
-                <p className="mt-2 text-base leading-8 text-black/68">8999908639</p>
+                <p className="mt-2 text-base leading-7 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-9">
+              <div className="border-b border-black/10 pb-6">
                 <p className="text-base font-medium text-black">Email Address</p>
-                <p className="mt-2 text-base leading-8 text-black/68">candleora25@gmail.com</p>
+                <p className="mt-2 text-base leading-7 text-black/68">candleora25@gmail.com</p>
               </div>
 
               <div>
                 <p className="text-base font-medium text-black">Location</p>
-                <p className="mt-2 max-w-[360px] text-base leading-8 text-black/68">
-                  Online Store
+                <p className="mt-2 max-w-[360px] text-base leading-7 text-black/68">
+                  Nagpur, Maharashtra, India
                 </p>
               </div>
             </div>
@@ -139,12 +139,12 @@ function ContactUs() {
                 <h2 className="font-display text-heading-md font-semibold text-black">
                   Send us a message
                 </h2>
-                <p className="mt-3 max-w-[620px] text-sm leading-7 text-black/62">
+                <p className="mt-2 max-w-[620px] text-sm leading-7 text-black/62">
                   Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     type="text"
@@ -184,7 +184,7 @@ function ContactUs() {
                 </div>
 
                 <textarea
-                  rows="6"
+                  rows="5"
                   name="message"
                   value={form.message}
                   onChange={handleChange}

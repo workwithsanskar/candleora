@@ -8,6 +8,9 @@ export const CANONICAL_CATEGORIES = [
 ];
 
 export const FILTERABLE_CATEGORIES = CANONICAL_CATEGORIES;
+export const FOOTER_CATEGORIES = CANONICAL_CATEGORIES.filter((category) =>
+  ["", "candle-sets", "glass", "tea-light", "creation"].includes(category.slug),
+);
 
 export function getCategoryBySlug(slug) {
   return CANONICAL_CATEGORIES.find((category) => category.slug === slug) ?? CANONICAL_CATEGORIES[0];

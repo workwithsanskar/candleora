@@ -12,7 +12,7 @@ function HeartIcon({ filled = false }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-[18px] w-[18px]"
+      className="h-5 w-5"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth="1.7"
@@ -30,7 +30,7 @@ function StarRow() {
   return (
     <div className="flex items-center justify-center gap-0.5 text-[#f3b33d]">
       {Array.from({ length: 5 }).map((_, index) => (
-        <svg key={index} viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+        <svg key={index} viewBox="0 0 24 24" className="h-[21px] w-[21px] fill-current">
           <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
         </svg>
       ))}
@@ -39,14 +39,15 @@ function StarRow() {
 }
 
 function ProductCard({ product, badgeLabel = null }) {
-  const { addToCart, items: cartItems } = useCart();
+  const { addToCart, removeFromCart, items: cartItems } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const prefersReducedMotion = useReducedMotion();
   const item = normalizeProduct(product);
   const wishlisted = isWishlisted(item.id);
-  const isInCart = cartItems.some(
+  const cartEntry = cartItems.find(
     (cartItem) => Number(cartItem.productId ?? cartItem.id) === Number(item.id),
   );
+  const isInCart = Boolean(cartEntry);
   const activeBadge = badgeLabel ?? (item.discount > 0 ? `-${item.discount}%` : null);
   const isNewBadge = activeBadge?.toUpperCase() === "NEW";
   const productPath = getProductPath(item);
@@ -68,7 +69,7 @@ function ProductCard({ product, badgeLabel = null }) {
           />
           {activeBadge && (
             <span
-              className={`absolute left-3 top-3 inline-flex h-[27px] min-w-[52px] items-center justify-center rounded-[10px] px-3 text-sm font-semibold leading-none text-white ${
+              className={`absolute left-3 top-3 inline-flex min-h-[30px] min-w-[58px] items-center justify-center rounded-[10px] px-3 text-[15px] font-semibold leading-none text-white ${
                 isNewBadge ? "bg-[#ff0000]" : "bg-black"
               }`}
             >
@@ -82,14 +83,13 @@ function ProductCard({ product, badgeLabel = null }) {
             <m.button
               type="button"
               aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
               onClick={(event) => {
                 event.preventDefault();
                 toggleWishlist(item);
               }}
               whileTap={prefersReducedMotion ? undefined : { scale: 0.88 }}
-              className={`inline-flex h-[22px] w-[22px] items-center justify-center transition ${
-                wishlisted ? "text-danger" : "text-danger/90"
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition ${
+                wishlisted ? "text-danger" : "text-black hover:text-danger"
               }`}
             >
               <m.span
@@ -107,12 +107,12 @@ function ProductCard({ product, badgeLabel = null }) {
 
       <div className="space-y-1.5 pt-2.5 text-center">
         <Link to={productPath}>
-          <h3 className="line-clamp-2 min-h-[56px] font-heading text-heading-sm leading-[1.15] text-black">
+          <h3 className="line-clamp-2 min-h-[56px] font-heading text-[1.08rem] font-semibold leading-[1.2] text-black">
             {item.name}
           </h3>
         </Link>
 
-        <div className="flex items-center justify-center gap-2 text-[16px] leading-none">
+        <div className="flex items-center justify-center gap-2 text-[17px] leading-none">
           {item.originalPrice > item.price && (
             <span className="text-black/35 line-through">
               {formatCurrency(item.originalPrice)}
@@ -123,12 +123,12 @@ function ProductCard({ product, badgeLabel = null }) {
 
         <div className="flex items-center justify-center gap-1">
           <StarRow />
-          <span className="text-[11px] text-black/55">({Math.max(1, Math.round(item.rating))})</span>
+          <span className="text-xs text-black/55">({Math.max(1, Math.round(item.rating))})</span>
         </div>
 
         <m.button
           type="button"
-          className={`inline-flex h-[35px] w-full items-center justify-center rounded-[5px] px-4 text-[12px] font-semibold uppercase tracking-[0.04em] shadow-[0_4px_4px_rgba(0,0,0,0.25)] transition ${
+          className={`inline-flex h-[42px] w-full items-center justify-center rounded-[10px] px-4 text-sm font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
             item.stock <= 0
               ? "cursor-not-allowed bg-black/15 text-black/45"
               : isInCart
@@ -137,7 +137,14 @@ function ProductCard({ product, badgeLabel = null }) {
           }`}
           disabled={item.stock <= 0}
           whileTap={prefersReducedMotion || item.stock <= 0 ? undefined : { scale: 0.98 }}
-          onClick={() => addToCart(item, 1)}
+          onClick={() => {
+            if (isInCart && cartEntry) {
+              removeFromCart(cartEntry.id);
+              return;
+            }
+
+            addToCart(item, 1);
+          }}
         >
           <m.span
             key={isInCart ? "in-cart" : "not-in-cart"}
@@ -145,7 +152,7 @@ function ProductCard({ product, badgeLabel = null }) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.18 }}
           >
-            {item.stock > 0 ? (isInCart ? "Added" : "Add to Cart") : "Out of Stock"}
+            {item.stock > 0 ? (isInCart ? "Remove from cart" : "Add to Cart") : "Out of Stock"}
           </m.span>
         </m.button>
       </div>

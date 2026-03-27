@@ -124,7 +124,7 @@ function Orders() {
           />
         ) : (
           <div className="overflow-hidden rounded-[6px] border border-black/12 bg-white">
-            <div className="hidden grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_120px] items-center gap-6 bg-black/36 px-5 py-4 text-sm font-medium text-white lg:grid">
+            <div className="hidden grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_120px] items-center gap-6 bg-black/35 px-5 py-4 text-sm font-medium text-white lg:grid">
               <p>Order no</p>
               <p>Items</p>
               <p>Status</p>

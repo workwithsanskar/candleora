@@ -155,7 +155,7 @@ function ProductDetail() {
         <span className="text-black/62">{product.name}</span>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[96px_minmax(0,472px)_minmax(0,360px)] lg:items-start lg:gap-10">
+      <div className="grid gap-6 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:items-start lg:gap-12">
         <div className="order-2 grid grid-cols-3 gap-3 lg:order-1 lg:grid-cols-1 lg:gap-4">
           {product.imageUrls.map((imageUrl) => (
             <button
@@ -191,7 +191,7 @@ function ProductDetail() {
           </div>
         </div>
 
-        <div className="order-3 max-w-[360px] space-y-5 lg:pl-1">
+        <div className="order-3 max-w-[380px] space-y-6 lg:pl-1">
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
@@ -223,8 +223,8 @@ function ProductDetail() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-[2rem] font-semibold text-black">{formatCurrency(product.price)}</p>
-              <RatingRow rating={product.rating} />
+                <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
+                <RatingRow rating={product.rating} />
               {product.originalPrice > product.price && (
                 <p className="text-sm text-black/35 line-through">
                   {formatCurrency(product.originalPrice)}
@@ -302,7 +302,7 @@ function ProductDetail() {
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
               whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
-              className="inline-flex h-[42px] w-full items-center justify-center rounded-full border border-black/18 bg-white px-6 text-sm font-semibold text-black transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[46px] w-full items-center justify-center rounded-[12px] bg-brand-primary px-6 text-sm font-semibold text-black transition hover:bg-[#dfa129] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
             </m.button>
@@ -311,7 +311,7 @@ function ProductDetail() {
               onClick={handleBuyNow}
               disabled={product.stock <= 0}
               whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
-              className="inline-flex h-[42px] w-full items-center justify-center rounded-full bg-success px-6 text-sm font-semibold text-white transition hover:bg-[#25652a] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[46px] w-full items-center justify-center rounded-[12px] bg-black px-6 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Buy Now
             </m.button>

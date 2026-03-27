@@ -19,7 +19,7 @@ const desktopLinks = [
 
 function UserIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
       <path d="M12 12C14.4853 12 16.5 9.98528 16.5 7.5C16.5 5.01472 14.4853 3 12 3C9.51472 3 7.5 5.01472 7.5 7.5C7.5 9.98528 9.51472 12 12 12Z" />
       <path d="M4.5 20.2C5.8 16.9 8.5 15.3 12 15.3C15.5 15.3 18.2 16.9 19.5 20.2" strokeLinecap="round" />
     </svg>
@@ -28,7 +28,7 @@ function UserIcon() {
 
 function HeartIcon({ filled = false }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7">
       <path
         d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
         strokeLinecap="round"
@@ -42,7 +42,7 @@ function BagIcon({ filled = false }) {
   return (
     <svg
       viewBox="0 0 18 20"
-      className="h-[17px] w-[17px]"
+      className="h-5 w-5"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth="1.7"
@@ -69,7 +69,7 @@ function BagIcon({ filled = false }) {
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="11" cy="11" r="6.5" />
       <path d="M16 16L21 21" strokeLinecap="round" />
     </svg>
@@ -85,8 +85,7 @@ function IconButton({ onClick, label, children, badge, active = false, accent = 
         type="button"
         onClick={onClick}
         aria-label={label}
-        title={label}
-        className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
+        className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full transition ${
           accent
             ? "text-danger hover:bg-danger/10"
             : active
@@ -130,7 +129,7 @@ function DesktopNavLink({ to, children }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `inline-flex h-full items-center border-b-2 py-4 text-base font-medium transition ${
+        `inline-flex h-full items-center border-b-2 py-4 text-[1.05rem] font-semibold transition ${
           isActive
             ? "border-black text-black"
             : "border-transparent text-black/70 hover:border-black/30 hover:text-black"
@@ -480,7 +479,6 @@ function Navbar() {
               setActivePanel(null);
             }}
             aria-label="Toggle navigation"
-            title="Menu"
           >
             <span className="flex flex-col gap-1">
               <span className="h-0.5 w-5 bg-current" />

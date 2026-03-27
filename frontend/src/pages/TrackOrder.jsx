@@ -41,7 +41,7 @@ function TrackOrder() {
 
   return (
     <section className="container-shell py-10 sm:py-12">
-      <div className="space-y-10">
+      <div className="space-y-8">
         <header className="space-y-3">
           <h1 className="page-title uppercase">My Account</h1>
           <p className="max-w-[820px] text-sm leading-7 text-black/58 sm:text-body">
@@ -50,7 +50,7 @@ function TrackOrder() {
           </p>
         </header>
 
-        <div className="mx-auto max-w-[770px] rounded-[12px] border border-black/14 bg-white px-6 py-10 shadow-[0_18px_60px_rgba(0,0,0,0.08)] sm:px-10 sm:py-14">
+        <div className="mx-auto max-w-[980px] rounded-[16px] border border-black/14 bg-white px-6 py-12 shadow-[0_24px_70px_rgba(0,0,0,0.10)] sm:px-10 sm:py-16">
           <div className="mx-auto max-w-[560px] text-center">
             <h2 className="font-heading text-heading-lg leading-tight text-black">Track Your Order</h2>
             <p className="mt-3 text-sm leading-6 text-black/50 sm:text-body">

@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import CheckoutVerification from "../components/CheckoutVerification";
 import { Link, useNavigate } from "react-router-dom";
+import CheckoutVerification from "../components/CheckoutVerification";
 import StatusView from "../components/StatusView";
+import { useAddresses } from "../context/AddressContext";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { couponApi, orderApi, paymentApi } from "../services/api";
-import {
-  buildCheckoutPayload,
-  createCheckoutForm,
-  mergeCheckoutFormWithUser,
-} from "../utils/account";
+import { buildCheckoutPayload, mergeCheckoutFormWithUser } from "../utils/account";
 import {
   canUseCashOnDelivery,
   COD_LIMIT,
@@ -29,13 +26,7 @@ import {
 } from "../utils/storage";
 
 const inputClassName =
-  "w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-brand-dark outline-none transition focus:border-brand-primary/40 focus:bg-white";
-
-const steps = [
-  { id: 1, label: "Shipping" },
-  { id: 2, label: "Payment" },
-  { id: 3, label: "Review" },
-];
+  "w-full rounded-[12px] border border-black/12 bg-white px-4 py-3 text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/40 focus:bg-white";
 
 const requiredShippingFields = [
   "shippingName",
@@ -55,12 +46,16 @@ const SAMPLE_COUPON_HINT = String(import.meta.env.VITE_SAMPLE_COUPON_HINT ?? "")
 
 function Checkout() {
   const navigate = useNavigate();
-  const { user, phoneAuth, refreshProfile, sendEmailVerification } = useAuth();
+  const { user, isAuthenticated, phoneAuth, refreshProfile, sendEmailVerification } = useAuth();
+  const {
+    addresses: savedAddresses,
+    isLoading: isAddressesLoading,
+    createAddress,
+  } = useAddresses();
   const { items, grandTotal, clearCart } = useCart();
   const [form, setForm] = useState(() =>
     mergeCheckoutFormWithUser(readStoredJson(CHECKOUT_DRAFT_STORAGE_KEY, {}), user),
   );
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isSendingEmailVerification, setIsSendingEmailVerification] = useState(false);
@@ -68,6 +63,7 @@ function Checkout() {
   const [couponQuote, setCouponQuote] = useState(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [saveAddressForFuture, setSaveAddressForFuture] = useState(true);
   const [error, setError] = useState("");
   const couponInputRef = useRef(null);
 
@@ -206,7 +202,7 @@ function Checkout() {
     const missingField = requiredShippingFields.find((field) => !String(form[field] ?? "").trim());
 
     if (missingField) {
-      setError("Complete the shipping address before continuing.");
+      setError("Complete the billing details before placing the order.");
       return false;
     }
 
@@ -241,7 +237,7 @@ function Checkout() {
     if (!form.paymentMethod) {
       setError(
         PHONEPE_ENABLED
-          ? "Choose a payment method before continuing."
+          ? "Choose a payment method before placing the order."
           : `No payment method is available for this order right now. ${PHONEPE_COMING_SOON_MESSAGE}`,
       );
       return false;
@@ -284,29 +280,85 @@ function Checkout() {
     }
   };
 
-  const goToNextStep = () => {
-    setError("");
-
-    if (step === 1 && !validateShippingStep()) {
-      return;
-    }
-
-    if (step === 2 && !validatePaymentStep()) {
-      return;
-    }
-
-    setStep((currentStep) => Math.min(currentStep + 1, steps.length));
+  const handleUseSavedAddress = (address) => {
+    setForm((current) => ({
+      ...current,
+      shippingName: address.recipientName || current.shippingName,
+      phone: address.phoneNumber || current.phone,
+      addressLine1: address.addressLine1 || current.addressLine1,
+      addressLine2: address.addressLine2 || current.addressLine2,
+      city: address.city || current.city,
+      state: address.state || current.state,
+      postalCode: address.postalCode || current.postalCode,
+      country: address.country || current.country,
+      locationLabel: address.label || current.locationLabel,
+    }));
+    setSaveAddressForFuture(false);
+    toast.success("Saved address applied.");
   };
 
-  const goToPreviousStep = () => {
-    setError("");
-    setStep((currentStep) => Math.max(currentStep - 1, 1));
+  const hasMatchingSavedAddress = useMemo(() => {
+    const currentKey = [
+      form.locationLabel,
+      form.shippingName,
+      form.addressLine1,
+      form.addressLine2,
+      form.city,
+      form.state,
+      form.postalCode,
+      form.country,
+      form.phone,
+    ]
+      .map((value) => String(value ?? "").trim().toLowerCase())
+      .join("|");
+
+    return savedAddresses.some((address) => {
+      const addressKey = [
+        address.label,
+        address.recipientName,
+        address.addressLine1,
+        address.addressLine2,
+        address.city,
+        address.state,
+        address.postalCode,
+        address.country,
+        address.phoneNumber,
+      ]
+        .map((value) => String(value ?? "").trim().toLowerCase())
+        .join("|");
+
+      return addressKey === currentKey;
+    });
+  }, [form, savedAddresses]);
+
+  const persistCheckoutAddressIfNeeded = async () => {
+    if (!isAuthenticated || !saveAddressForFuture || hasMatchingSavedAddress) {
+      return;
+    }
+
+    await createAddress({
+      label: form.locationLabel || "Saved Address",
+      recipientName: form.shippingName,
+      phoneNumber: form.phone,
+      addressLine1: form.addressLine1,
+      addressLine2: form.addressLine2,
+      city: form.city,
+      state: form.state,
+      postalCode: form.postalCode,
+      country: form.country || "India",
+      isDefault: savedAddresses.length === 0,
+    });
   };
 
   const handlePlaceOrder = async () => {
     setError("");
+
+    if (!validateShippingStep() || !validatePaymentStep()) {
+      return;
+    }
+
     setIsSubmitting(true);
-      const payload = buildCheckoutPayload(form, checkoutItems);
+    const payload = buildCheckoutPayload(form, checkoutItems);
 
     try {
       if (!PHONEPE_ENABLED && form.paymentMethod === "PHONEPE") {
@@ -316,6 +368,8 @@ function Checkout() {
       if (!form.paymentMethod) {
         throw new Error("Select a payment method before placing the order.");
       }
+
+      await persistCheckoutAddressIfNeeded();
 
       if (form.paymentMethod === "COD") {
         const order = await orderApi.createOrder(payload);
@@ -343,10 +397,7 @@ function Checkout() {
           title="Checkout is waiting on cart items"
           message="Add products to the cart before placing an order."
           action={
-            <Link
-              to="/shop"
-              className="btn btn-primary mt-6"
-            >
+            <Link to="/shop" className="btn btn-primary mt-6">
               Continue shopping
             </Link>
           }
@@ -356,153 +407,133 @@ function Checkout() {
   }
 
   const orderSummary = (
-    <aside className="panel h-fit space-y-5 p-6">
-      <div>
-        <p className="eyebrow">Summary</p>
-        <h2 className="panel-title mt-3">
-          Your order
-        </h2>
+    <aside className="space-y-5">
+      <div className="flex items-start gap-3">
+        <input
+          id="couponCode"
+          ref={couponInputRef}
+          className={`${inputClassName} h-[48px] flex-1`}
+          name="couponCode"
+          value={form.couponCode}
+          onChange={handleChange}
+          placeholder="Discount Code"
+        />
+        <button
+          type="button"
+          className="btn btn-secondary h-[48px] shrink-0 rounded-full px-6"
+          onClick={handleApplyCoupon}
+          disabled={isApplyingCoupon}
+        >
+          {isApplyingCoupon ? "Applying..." : "Apply"}
+        </button>
       </div>
 
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between gap-3 rounded-[20px] bg-white p-4"
-          >
-            <div>
-              <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
-              <p className="text-xs text-brand-muted">Qty {item.quantity}</p>
+      {SAMPLE_COUPON_CODE && (
+        <div className="rounded-[16px] border border-brand-primary/20 bg-brand-primary/10 px-4 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                Launch coupon
+              </p>
+              <p className="mt-1 text-sm font-semibold text-black">{SAMPLE_COUPON_CODE}</p>
+              {SAMPLE_COUPON_HINT && (
+                <p className="mt-1 text-sm leading-6 text-black/65">{SAMPLE_COUPON_HINT}</p>
+              )}
             </div>
-            <span className="text-sm font-semibold text-brand-dark">
-              {formatCurrency(item.lineTotal)}
-            </span>
-          </div>
-        ))}
-      </div>
-
-        <div className="space-y-3 rounded-[24px] bg-white p-5">
-        <div className="flex items-center justify-between text-sm text-brand-dark/70">
-          <span>Subtotal</span>
-          <span>{formatCurrency(couponQuote?.subtotalAmount ?? grandTotal)}</span>
-        </div>
-        {couponQuote?.discountAmount ? (
-          <div className="flex items-center justify-between text-sm text-brand-dark/70">
-            <span>Discount</span>
-            <span>-{formatCurrency(couponQuote.discountAmount)}</span>
-          </div>
-        ) : null}
-        <div className="flex items-center justify-between text-sm text-brand-dark/70">
-          <span>Shipping</span>
-          <span>Free</span>
-        </div>
-        <div className="flex items-center justify-between text-sm text-brand-dark/70">
-          <span>Payment mode</span>
-          <span>
-            {form.paymentMethod === "COD"
-              ? "COD"
-              : form.paymentMethod === "PHONEPE"
-                ? "PhonePe"
-                : "Not available"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between border-t border-brand-primary/10 pt-3">
-          <span className="text-sm font-semibold text-brand-dark">Grand total</span>
-          <span className="text-2xl font-extrabold text-brand-dark">
-            {formatCurrency(effectiveTotal)}
-          </span>
-        </div>
-      </div>
-
-      <div className="rounded-[24px] bg-white p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
-              Coupon
-            </p>
-            <p className="mt-2 text-sm leading-6 text-brand-dark/65">
-              Apply an owner-issued promo code before placing the order.
-            </p>
-          </div>
-          {couponQuote && (
-            <span className="rounded-full bg-success/12 px-3 py-1 text-xs font-semibold text-success">
-              Applied
-            </span>
-          )}
-        </div>
-        {SAMPLE_COUPON_CODE && (
-          <div className="mt-4 rounded-[18px] border border-brand-primary/15 bg-brand-primary/10 px-4 py-4 text-xs text-brand-dark/80">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 text-[0px]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                  Launch coupon
-                </p>
-                <p className="mt-1 text-sm font-semibold text-brand-dark">
-                  {SAMPLE_COUPON_CODE}
-                </p>
-                {SAMPLE_COUPON_HINT && (
-                  <p className="mt-1 text-xs leading-6 text-brand-dark/70">
-                    {SAMPLE_COUPON_HINT}
-                  </p>
-                )}
-                {SAMPLE_COUPON_HINT ? ` — ${SAMPLE_COUPON_HINT}` : ""}
-              </div>
-              <button
-                type="button"
-                className="btn btn-outline shrink-0 whitespace-nowrap"
-                onClick={handleUseSampleCoupon}
-                disabled={isApplyingCoupon}
-              >
-                {isApplyingCoupon ? "Applying..." : "Use coupon"}
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="mt-4 space-y-3">
-          <label
-            htmlFor="couponCode"
-            className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted"
-          >
-            Promo code
-          </label>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <input
-              id="couponCode"
-              ref={couponInputRef}
-              className={`${inputClassName} sm:flex-1`}
-              name="couponCode"
-              value={form.couponCode}
-              onChange={handleChange}
-              placeholder="Enter code"
-            />
             <button
               type="button"
-              className="btn btn-secondary shrink-0 sm:min-w-[148px]"
-              onClick={handleApplyCoupon}
+              className="btn btn-outline shrink-0 whitespace-nowrap rounded-full"
+              onClick={handleUseSampleCoupon}
               disabled={isApplyingCoupon}
             >
-              {isApplyingCoupon ? "Applying..." : "Apply"}
+              {isApplyingCoupon ? "Applying..." : "Use coupon"}
             </button>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-h-[24px]">
-              {couponQuote?.message && (
-                <p className="text-sm text-success">{couponQuote.message}</p>
-              )}
-              {couponError && (
-                <p className="text-sm text-danger">{couponError}</p>
-              )}
-            </div>
-            {couponQuote && (
-              <button
-                type="button"
-                className="btn btn-outline shrink-0"
-                onClick={handleClearCoupon}
-              >
-                Remove coupon
-              </button>
+        </div>
+      )}
+
+      {(couponQuote?.message || couponError || couponQuote) && (
+        <div className="rounded-[16px] border border-black/10 bg-white px-4 py-4">
+          <div className="min-h-[22px]">
+            {couponQuote?.message && (
+              <p className="text-sm font-medium text-success">{couponQuote.message}</p>
             )}
+            {couponError && <p className="text-sm font-medium text-danger">{couponError}</p>}
           </div>
+          {couponQuote && (
+            <button
+              type="button"
+              className="mt-3 text-sm font-semibold text-black underline underline-offset-4"
+              onClick={handleClearCoupon}
+            >
+              Remove coupon
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-[18px] border border-black/12 bg-white shadow-md">
+        <div className="bg-black px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-white">
+          Cart Details
+        </div>
+
+        <div className="space-y-5 px-5 py-5">
+          <div className="grid grid-cols-[minmax(0,1fr)_62px_88px] gap-3 border-b border-black/8 pb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/45">
+            <span>Product</span>
+            <span className="text-center">Quantity</span>
+            <span className="text-right">Subtotal</span>
+          </div>
+
+          <div className="space-y-3">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[minmax(0,1fr)_62px_88px] gap-3 text-sm text-black/72"
+              >
+                <span className="truncate pr-2">{item.productName}</span>
+                <span className="text-center">{String(item.quantity).padStart(2, "0")}</span>
+                <span className="text-right font-medium text-black">
+                  {formatCurrency(item.lineTotal)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-3 border-t border-dashed border-black/10 pt-4 text-sm text-black/66">
+            <div className="flex items-center justify-between">
+              <span>Subtotal</span>
+              <span>{formatCurrency(couponQuote?.subtotalAmount ?? grandTotal)}</span>
+            </div>
+            {couponQuote?.discountAmount ? (
+              <div className="flex items-center justify-between">
+                <span>Discount</span>
+                <span>-{formatCurrency(couponQuote.discountAmount)}</span>
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between">
+              <span>Shipping</span>
+              <span>Free</span>
+            </div>
+            <div className="flex items-center justify-between pt-2 text-base font-semibold text-black">
+              <span>Total</span>
+              <span>{formatCurrency(effectiveTotal)}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handlePlaceOrder}
+            className="btn btn-success h-[52px] w-full rounded-[10px] text-base disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting
+              ? form.paymentMethod === "COD"
+                ? "Placing order..."
+                : "Redirecting to PhonePe..."
+              : form.paymentMethod === "PHONEPE"
+                ? "Pay Now"
+                : "Place Order"}
+          </button>
         </div>
       </div>
     </aside>
@@ -528,50 +559,17 @@ function Checkout() {
 
   return (
     <section className="container-shell space-y-8 py-10 transition-colors duration-300">
-      <div className="editorial-card p-6 sm:p-8">
-        <p className="eyebrow">Secure checkout</p>
-        <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="page-title">
-              Complete your CandleOra order.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-8 text-brand-dark/70">
-              Shipping, payment, and final review now live in a cleaner three-step checkout flow with COD and PhonePe hosted checkout support.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {steps.map((stepItem) => (
-              <button
-                key={stepItem.id}
-                type="button"
-                onClick={() => {
-                  const canAdvance =
-                    stepItem.id <= step ||
-                    (step === 1 ? validateShippingStep() : step === 2 ? validatePaymentStep() : true);
-
-                  if (canAdvance) {
-                    setStep(stepItem.id);
-                  }
-                }}
-                className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
-                  stepItem.id === step
-                    ? "bg-brand-dark text-white"
-                    : stepItem.id < step
-                      ? "bg-brand-primary text-white"
-                      : "bg-white text-brand-dark"
-                }`}
-              >
-                {stepItem.id}. {stepItem.label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="space-y-3">
+        <h1 className="page-title">Checkout</h1>
+        <p className="max-w-[860px] text-body leading-7 text-black/58">
+          Match your delivery details, apply a coupon if you have one, and review the cart before placing the order.
+        </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="panel space-y-6 p-6 sm:p-8">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_360px]">
+        <div className="space-y-6">
           {emailVerificationRecommended && (
-            <div className="rounded-[24px] border border-brand-primary/20 bg-brand-primary/10 p-5">
+            <div className="rounded-[16px] border border-brand-primary/20 bg-brand-primary/10 p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-black">Verify your email</p>
@@ -602,18 +600,75 @@ function Checkout() {
             </div>
           )}
 
-          {step === 1 && (
-            <>
-              <div>
-                <p className="eyebrow">Step 1</p>
-                <h2 className="panel-title mt-3">
-                  Shipping details
-                </h2>
+          {isAddressesLoading ? (
+            <div className="rounded-[16px] border border-black/10 bg-white p-5 text-sm text-black/58 shadow-sm">
+              Loading saved addresses...
+            </div>
+          ) : savedAddresses.length ? (
+            <div className="rounded-[16px] border border-black/10 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-black">Use a saved address</p>
+                  <p className="mt-1 text-sm leading-6 text-black/62">
+                    Pick a saved delivery address and fill the form in one tap.
+                  </p>
+                </div>
+                <Link
+                  to="/profile/details#addresses"
+                  className="text-sm font-semibold text-black underline underline-offset-4"
+                >
+                  Manage addresses
+                </Link>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="mt-4 grid gap-3">
+                {savedAddresses.slice(0, 2).map((address) => (
+                  <button
+                    key={address.id}
+                    type="button"
+                    onClick={() => handleUseSavedAddress(address)}
+                    className="rounded-[14px] border border-black/10 bg-white px-4 py-4 text-left transition hover:border-black/25 hover:shadow-[0_8px_18px_rgba(0,0,0,0.05)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-muted">
+                          {address.label || "Saved Address"}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-black">
+                          {address.recipientName}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-black/60">
+                          {[
+                            address.addressLine1,
+                            address.addressLine2,
+                            address.city,
+                            address.state,
+                            address.postalCode,
+                            address.country,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-brand-primary px-3 py-1 text-xs font-semibold text-black">
+                        Use
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="overflow-hidden rounded-[18px] border border-black/12 bg-white shadow-md">
+            <div className="bg-black px-6 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-white">
+              Billing Details
+            </div>
+
+            <div className="space-y-6 px-6 py-6 sm:px-7">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-sm font-semibold text-brand-dark">Full name</span>
+                  <span className="text-sm font-medium text-black/74">Full Name*</span>
                   <input
                     required
                     className={inputClassName}
@@ -625,9 +680,7 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-sm font-semibold text-brand-dark">
-                    Email for e-invoice and order confirmation
-                  </span>
+                  <span className="text-sm font-medium text-black/74">Email Address*</span>
                   <input
                     required
                     type="email"
@@ -639,33 +692,8 @@ function Checkout() {
                   />
                 </label>
 
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Phone</span>
-                  <input
-                    required
-                    className={inputClassName}
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    inputMode="tel"
-                    autoComplete="tel"
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Alternate phone</span>
-                  <input
-                    className={inputClassName}
-                    name="alternatePhoneNumber"
-                    value={form.alternatePhoneNumber}
-                    onChange={handleChange}
-                    inputMode="tel"
-                    autoComplete="tel-national"
-                  />
-                </label>
-
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-sm font-semibold text-brand-dark">Address line 1</span>
+                  <span className="text-sm font-medium text-black/74">Street Address*</span>
                   <input
                     required
                     className={inputClassName}
@@ -677,7 +705,7 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-sm font-semibold text-brand-dark">Address line 2</span>
+                  <span className="text-sm font-medium text-black/74">Address Line 2</span>
                   <input
                     className={inputClassName}
                     name="addressLine2"
@@ -688,7 +716,18 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">City</span>
+                  <span className="text-sm font-medium text-black/74">Country*</span>
+                  <input
+                    className={inputClassName}
+                    name="country"
+                    value={form.country}
+                    onChange={handleChange}
+                    autoComplete="country-name"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-black/74">Town / City*</span>
                   <input
                     required
                     className={inputClassName}
@@ -700,7 +739,7 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">State</span>
+                  <span className="text-sm font-medium text-black/74">State*</span>
                   <input
                     required
                     className={inputClassName}
@@ -712,7 +751,7 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Postal code</span>
+                  <span className="text-sm font-medium text-black/74">Postcode / Zip*</span>
                   <input
                     required
                     className={inputClassName}
@@ -725,233 +764,126 @@ function Checkout() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Country</span>
+                  <span className="text-sm font-medium text-black/74">Phone Number*</span>
                   <input
+                    required
                     className={inputClassName}
-                    name="country"
-                    value={form.country}
+                    name="phone"
+                    value={form.phone}
                     onChange={handleChange}
-                    autoComplete="country-name"
+                    inputMode="tel"
+                    autoComplete="tel"
                   />
                 </label>
 
-                <label className="space-y-2 sm:col-span-2">
-                  <span className="text-sm font-semibold text-brand-dark">Location tag</span>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-black/74">Alternate Phone</span>
+                  <input
+                    className={inputClassName}
+                    name="alternatePhoneNumber"
+                    value={form.alternatePhoneNumber}
+                    onChange={handleChange}
+                    inputMode="tel"
+                    autoComplete="tel-national"
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-black/74">Address Tag</span>
                   <input
                     className={inputClassName}
                     name="locationLabel"
                     value={form.locationLabel}
                     onChange={handleChange}
-                    placeholder="Home, studio, security desk..."
+                    placeholder="Home, Office, Studio"
                   />
                 </label>
+              </div>
 
-                <div className="sm:col-span-2">
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    disabled={isLocating}
-                    className="btn btn-outline disabled:opacity-60"
-                  >
-                    {isLocating ? "Detecting location..." : "Use current location"}
-                  </button>
-                  <p className="mt-2 text-xs leading-6 text-brand-dark/55">
-                    Address lookup helper powered by OpenStreetMap.
-                  </p>
+              <div className="flex flex-col gap-3 border-t border-black/8 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm leading-6 text-black/58">
+                  Choose whether this address should be saved to your account for future orders.
                 </div>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Latitude</span>
-                  <input
-                    type="number"
-                    step="any"
-                    className={inputClassName}
-                    name="latitude"
-                    value={form.latitude}
-                    onChange={handleChange}
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-brand-dark">Longitude</span>
-                  <input
-                    type="number"
-                    step="any"
-                    className={inputClassName}
-                    name="longitude"
-                    value={form.longitude}
-                    onChange={handleChange}
-                  />
-                </label>
-              </div>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <div>
-                <p className="eyebrow">Step 2</p>
-                <h2 className="panel-title mt-3">
-                  Choose payment
-                </h2>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  disabled={isLocating}
+                  className="btn btn-outline h-[46px] rounded-full px-5 text-sm disabled:opacity-60"
+                >
+                  {isLocating ? "Detecting..." : "Use current location"}
+                </button>
               </div>
 
-          <div className="grid gap-4">
-                {[
-                  {
-                    value: "PHONEPE",
-                    title: "PhonePe Online",
-                    description: PHONEPE_ENABLED
-                      ? "UPI, cards, netbanking, and wallets through PhonePe hosted checkout."
-                      : PHONEPE_COMING_SOON_MESSAGE,
-                    disabled: !PHONEPE_ENABLED,
-                  },
-                  {
-                    value: "COD",
-                    title: "Cash on Delivery",
-                    description: codEnabled
-                      ? "Pay after the package reaches you."
-                      : `Available only for totals up to ${formatCurrency(COD_LIMIT)}.`,
-                    disabled: !codEnabled,
-                  },
-                ].map((method) => (
-                  <button
-                    key={method.value}
-                    type="button"
-                    onClick={() =>
-                      setForm((current) => ({ ...current, paymentMethod: method.value }))
-                    }
-                    disabled={method.disabled}
-                    className={`rounded-[28px] border p-5 text-left transition ${
-                      form.paymentMethod === method.value
-                        ? "border-brand-primary bg-white shadow-float"
-                        : "border-brand-primary/10 bg-white"
-                    } ${method.disabled ? "cursor-not-allowed opacity-60" : ""}`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-lg font-semibold text-brand-dark">{method.title}</p>
-                        <p className="mt-2 text-sm leading-7 text-brand-dark/70">
-                          {method.description}
-                        </p>
-                      </div>
-                      <span
-                        className={`mt-1 inline-flex h-5 w-5 rounded-full border ${
-                          form.paymentMethod === method.value
-                            ? "border-brand-primary bg-brand-primary"
-                            : "border-brand-primary/30"
-                        }`}
-                      />
+              <label className="flex items-center gap-3 rounded-[14px] border border-black/8 px-4 py-3 text-sm text-black/72">
+                <input
+                  type="checkbox"
+                  checked={saveAddressForFuture}
+                  onChange={(event) => setSaveAddressForFuture(event.target.checked)}
+                  className="h-4 w-4 rounded border-black/20"
+                />
+                Save this address to my account for the next time
+              </label>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[18px] border border-black/12 bg-white shadow-md">
+            <div className="bg-black px-6 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-white">
+              Payment
+            </div>
+
+            <div className="grid gap-4 px-6 py-6 sm:px-7">
+              {[
+                {
+                  value: "COD",
+                  title: "Cash on Delivery",
+                  description: codEnabled
+                    ? "Your order will be confirmed immediately and paid on delivery."
+                    : `Available only for totals up to ${formatCurrency(COD_LIMIT)}.`,
+                  disabled: !codEnabled,
+                },
+                {
+                  value: "PHONEPE",
+                  title: "PhonePe Online",
+                  description: PHONEPE_ENABLED
+                    ? "UPI, cards, netbanking, and wallets through PhonePe hosted checkout."
+                    : PHONEPE_COMING_SOON_MESSAGE,
+                  disabled: !PHONEPE_ENABLED,
+                },
+              ].map((method) => (
+                <button
+                  key={method.value}
+                  type="button"
+                  onClick={() => setForm((current) => ({ ...current, paymentMethod: method.value }))}
+                  disabled={method.disabled}
+                  className={`rounded-[14px] border px-4 py-4 text-left transition ${
+                    form.paymentMethod === method.value
+                      ? "border-brand-primary bg-brand-primary/10"
+                      : "border-black/10 bg-white"
+                  } ${method.disabled ? "cursor-not-allowed opacity-55" : "hover:border-black/20"}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-black">{method.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-black/60">{method.description}</p>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <div>
-                <p className="eyebrow">Step 3</p>
-                <h2 className="panel-title mt-3">
-                  Review order
-                </h2>
-              </div>
-
-              <div className="grid gap-5 lg:grid-cols-2">
-                <div className="rounded-[28px] bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
-                    Shipping
-                  </p>
-                  <div className="mt-4 space-y-2 text-sm leading-7 text-brand-dark/80">
-                    <p>{form.shippingName}</p>
-                    <p>{form.contactEmail}</p>
-                    <p>{form.phone}</p>
-                    <p>
-                      {[
-                        form.addressLine1,
-                        form.addressLine2,
-                        form.city,
-                        form.state,
-                        form.postalCode,
-                        form.country,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </p>
-                    {form.locationLabel && <p>Tag: {form.locationLabel}</p>}
+                    <span
+                      className={`mt-0.5 inline-flex h-5 w-5 rounded-full border ${
+                        form.paymentMethod === method.value
+                          ? "border-brand-primary bg-brand-primary"
+                          : "border-black/20"
+                      }`}
+                    />
                   </div>
-                </div>
-
-                <div className="rounded-[28px] bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">
-                    Payment
-                  </p>
-                  <div className="mt-4 space-y-2 text-sm leading-7 text-brand-dark/80">
-                    <p className="font-semibold text-brand-dark">
-                      {form.paymentMethod === "COD"
-                        ? "Cash on Delivery"
-                        : form.paymentMethod === "PHONEPE"
-                          ? "PhonePe Online"
-                          : "Payment method unavailable"}
-                    </p>
-                    <p>
-                      {form.paymentMethod === "COD"
-                        ? "Your order will be confirmed immediately and paid on delivery."
-                        : form.paymentMethod === "PHONEPE"
-                          ? "You will be redirected to PhonePe to finish the payment securely."
-                          : PHONEPE_COMING_SOON_MESSAGE}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
 
           {!PHONEPE_ENABLED && (
-            <p className="text-sm text-brand-dark/65">
-              {PHONEPE_COMING_SOON_MESSAGE}
-            </p>
+            <p className="text-sm leading-6 text-brand-dark/62">{PHONEPE_COMING_SOON_MESSAGE}</p>
           )}
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={goToPreviousStep}
-                className="btn btn-outline"
-              >
-                Back
-              </button>
-            )}
-
-            {step < steps.length ? (
-              <button
-                type="button"
-                onClick={goToNextStep}
-                className="btn btn-secondary"
-              >
-                Continue
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handlePlaceOrder}
-                className="btn btn-secondary disabled:opacity-60"
-              >
-                {isSubmitting
-                  ? form.paymentMethod === "COD"
-                    ? "Placing order..."
-                    : "Redirecting to PhonePe..."
-                  : form.paymentMethod === "COD"
-                    ? "Place order"
-                    : "Pay with PhonePe"}
-              </button>
-            )}
-          </div>
         </div>
 
         {orderSummary}

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import heroImage from "../assets/designer/image-optimized.jpg";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
-import stylingGuideCard from "../assets/designer/styling-guides-card.png";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Reveal from "../components/Reveal";
@@ -18,12 +17,6 @@ const recommendationCards = [
     image: bookshelfImage,
     description: "Not sure which candle suits your celebration?",
     to: "/occasion-picks",
-  },
-  {
-    title: "Styling Guides",
-    image: stylingGuideCard,
-    description: "Wondering how to style your candles?",
-    to: "/styling-guides",
   },
   {
     title: "Candle Fixes",
@@ -73,13 +66,13 @@ function TestimonialCard({ story }) {
     <article className="rounded-[14px] border border-[#f0d5a0] bg-white px-5 py-4 shadow-[0_8px_18px_rgba(209,171,92,0.12)]">
       <div className="flex items-center gap-2">
         <span className="inline-flex h-4 w-4 rounded-full bg-black" />
-        <p className="text-sm font-semibold text-black">{story.name}</p>
+        <p className="text-base font-semibold text-black">{story.name}</p>
         <span className="text-sm text-black/45">{story.date}</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-black/72">{story.quote}</p>
+      <p className="mt-3 text-base leading-7 text-black/72">{story.quote}</p>
       <div className="mt-3 flex items-center gap-0.5 text-[#f3b33d]">
         {Array.from({ length: 5 }).map((_, index) => (
-          <svg key={index} viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+          <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
             <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
           </svg>
         ))}
@@ -154,19 +147,19 @@ function Home() {
           alt="CandleOra hero arrangement"
           loading="eager"
           fetchPriority="high"
-          className="h-[360px] w-full object-cover sm:h-[460px] lg:h-[620px]"
+          className="h-[320px] w-full object-cover sm:h-[410px] lg:h-[520px]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
         <div className="container-shell absolute inset-0 flex items-center">
-          <div className="max-w-[620px]">
-            <h1 className="font-display text-[2rem] font-semibold leading-[1.08] text-white sm:text-[2.5rem] lg:text-[3rem]">
+          <div className="max-w-[640px]">
+            <h1 className="font-display text-[1.85rem] font-semibold leading-[1.06] text-white sm:text-[2.35rem] lg:text-[2.95rem]">
               <span className="block">Crafting Comfort, Redefining</span>
               <span className="block">Spaces. Your Home, Your Signature</span>
               <span className="block">Style!</span>
             </h1>
             <Link
               to="/shop"
-              className="btn btn-primary mt-5"
+              className="btn btn-primary mt-6 min-w-[160px]"
             >
               Shop Now
             </Link>
@@ -220,22 +213,20 @@ function Home() {
       </section>
 
       <section className="bg-brand-primary py-4">
-        <p className="text-center text-sm font-semibold text-black sm:text-base">
+        <p className="text-center text-base font-semibold text-black sm:text-[1.1rem]">
           Free Delivery &amp; Free Gift when you spend over Rs. 1999/-
         </p>
       </section>
 
       <section id="recommendations" className="container-shell py-16 sm:py-20">
         <Reveal delay={0.08}>
-          <h2 className="section-title">
-            The Recommendations
-          </h2>
+          <h2 className="section-title">Recommendations</h2>
 
-          <div className="mt-12 grid gap-x-8 gap-y-10 lg:grid-cols-3">
+          <div className="mt-10 grid gap-8 lg:grid-cols-2">
             {recommendationCards.map((card) => (
               <article
                 key={card.title}
-                className="mx-auto flex h-full w-full max-w-[360px] flex-col items-center text-center"
+                className="mx-auto flex h-full w-full max-w-[380px] flex-col items-center text-center"
               >
                 <Link
                   to={card.to}
@@ -248,21 +239,25 @@ function Home() {
                     decoding="async"
                     className="aspect-square w-full object-cover"
                   />
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(232,195,158,0.42)] px-4 py-4 backdrop-blur-[1.5px]">
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(243,179,61,0.26)] px-4 py-3 backdrop-blur-[1.5px]">
                     <h3 className="text-[1.15rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.25rem]">
                       {card.title}
                     </h3>
                   </div>
                 </Link>
 
-                <div className="mt-5 flex min-h-[86px] w-full items-start justify-center px-3">
-                  <p className="max-w-[300px] text-[1rem] leading-8 text-black/72">{card.description}</p>
+                <div className="mt-4 flex min-h-[68px] w-full items-start justify-center px-2">
+                  <p className="max-w-[312px] text-base leading-7 text-black/72">{card.description}</p>
                 </div>
 
                 <Link
                   to={card.to}
-                  className="btn btn-secondary mt-auto h-[50px] w-[210px] tracking-[0.12em] uppercase hover:-translate-y-0.5"
+                  className="btn btn-secondary mt-auto flex h-[50px] w-full items-center justify-center gap-2 tracking-[0.08em] uppercase hover:-translate-y-0.5"
                 >
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M2.5 12C4.6 8.1 8 6.2 12 6.2C16 6.2 19.4 8.1 21.5 12C19.4 15.9 16 17.8 12 17.8C8 17.8 4.6 15.9 2.5 12Z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                  </svg>
                   View
                 </Link>
               </article>

@@ -75,7 +75,7 @@ function AppShell() {
   return (
     <>
       <ScrollToTop />
-      <div className={isAdminRoute ? "min-h-screen bg-[#f5efe3] text-brand-dark" : "flex min-h-screen flex-col bg-white text-brand-dark"}>
+      <div className={isAdminRoute ? "min-h-screen bg-white text-brand-dark" : "flex min-h-screen flex-col bg-white text-brand-dark"}>
         {!isAdminRoute ? <Navbar /> : null}
 
         <AnimatePresence mode="wait" initial={false}>
