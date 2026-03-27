@@ -11,6 +11,17 @@ function ProfileIcon({ src, alt }) {
   );
 }
 
+function AdminPanelIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-full w-full text-black/25" fill="none" aria-hidden="true">
+      <rect x="8" y="10" width="32" height="28" rx="6" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M16 19H32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M16 27H23" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M28 26L31 29L36 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function OverviewCard({ as: Component = Link, to, onClick, icon, title }) {
   const sharedClassName =
     "flex min-h-[146px] flex-col items-center justify-center rounded-[14px] border border-black/10 bg-white px-6 py-7 text-center transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]";
@@ -65,6 +76,13 @@ function Profile() {
           icon={<ProfileIcon src={accountIcon} alt="" />}
           title="Account Details"
         />
+        {user?.role === "ADMIN" ? (
+          <OverviewCard
+            to="/admin"
+            icon={<AdminPanelIcon />}
+            title="Admin Panel"
+          />
+        ) : null}
         <OverviewCard
           as="button"
           onClick={() => {

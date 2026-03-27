@@ -400,8 +400,10 @@ public class DataSeeder implements ApplicationRunner {
         product.setDescription(description);
         product.setPrice(BigDecimal.valueOf(price));
         product.setOriginalPrice(BigDecimal.valueOf(originalPrice));
+        product.setCostPrice(BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(0.58)));
         product.setDiscount(discount);
         product.setStock(stock);
+        product.setVisible(true);
         product.setOccasionTag(occasionTag);
         product.setRating(BigDecimal.valueOf(rating));
         product.setScentNotes(scentNotes);

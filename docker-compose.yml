@@ -1,0 +1,87 @@
+name: candleora
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: candleora/backend:${TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      PORT: ${PORT:-8080}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/candleora}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-candleora}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change-me}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_ORIGIN_PATTERNS: ${FRONTEND_ORIGIN_PATTERNS}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_BASE_URL: ${RESEND_BASE_URL:-https://api.resend.com}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:-true}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:-true}
+      APP_INVOICE_FROM_EMAIL: ${APP_INVOICE_FROM_EMAIL:-}
+      APP_INVOICE_SUPPORT_EMAIL: ${APP_INVOICE_SUPPORT_EMAIL:-support@candleora.com}
+      APP_INVOICE_COMPANY_NAME: ${APP_INVOICE_COMPANY_NAME:-CandleOra}
+      APP_REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER: ${APP_REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER:-false}
+      APP_ORDER_CANCELLATION_WINDOW_MINUTES: ${APP_ORDER_CANCELLATION_WINDOW_MINUTES:-30}
+      APP_SAMPLE_COUPON_ENABLED: ${APP_SAMPLE_COUPON_ENABLED:-false}
+      APP_SAMPLE_COUPON_CODE: ${APP_SAMPLE_COUPON_CODE:-WELCOME10}
+      APP_SAMPLE_COUPON_TYPE: ${APP_SAMPLE_COUPON_TYPE:-PERCENTAGE}
+      APP_SAMPLE_COUPON_VALUE: ${APP_SAMPLE_COUPON_VALUE:-10}
+      APP_SAMPLE_COUPON_MAX_DISCOUNT: ${APP_SAMPLE_COUPON_MAX_DISCOUNT:-300}
+      APP_SAMPLE_COUPON_MIN_ORDER_AMOUNT: ${APP_SAMPLE_COUPON_MIN_ORDER_AMOUNT:-499}
+      APP_SAMPLE_COUPON_USAGE_LIMIT: ${APP_SAMPLE_COUPON_USAGE_LIMIT:-1000}
+      PHONEPE_BASE_URL: ${PHONEPE_BASE_URL:-https://api-preprod.phonepe.com/apis/pg-sandbox}
+      PHONEPE_MERCHANT_ID: ${PHONEPE_MERCHANT_ID:-}
+      PHONEPE_SALT_KEY: ${PHONEPE_SALT_KEY:-}
+      PHONEPE_SALT_INDEX: ${PHONEPE_SALT_INDEX:-1}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8080}:8080"
+    volumes:
+      - candleora-backend-data:/app/data
+    networks:
+      - candleora
+
+  postgres:
+    image: postgres:16-alpine
+    profiles:
+      - local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-candleora}
+      POSTGRES_USER: ${POSTGRES_USER:-candleora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - candleora-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-candleora} -d ${POSTGRES_DB:-candleora}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - candleora
+
+networks:
+  candleora:
+    driver: bridge
+
+volumes:
+  candleora-backend-data:
+  candleora-postgres-data:

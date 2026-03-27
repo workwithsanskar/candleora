@@ -1,0 +1,116 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: candleora-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_ENABLE_PHONE_AUTH: ${{ secrets.VITE_ENABLE_PHONE_AUTH }}
+          VITE_REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER: ${{ secrets.VITE_REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER }}
+          VITE_PHONEPE_ENABLED: ${{ secrets.VITE_PHONEPE_ENABLED }}
+          VITE_SAMPLE_COUPON_CODE: ${{ secrets.VITE_SAMPLE_COUPON_CODE }}
+          VITE_SAMPLE_COUPON_HINT: ${{ secrets.VITE_SAMPLE_COUPON_HINT }}
+        run: npm run build
+
+      - name: Build backend artifact
+        working-directory: backend
+        run: mvn -ntp -DskipTests clean package
+
+      - name: Configure AWS credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync frontend build to S3
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.AWS_S3_BUCKET != '' }}
+        run: aws s3 sync frontend/dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront cache
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' && secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
+      - name: Create deployment bundle
+        run: |
+          mkdir -p deploy-bundle
+          cp docker-compose.yml deploy-bundle/
+          cp docker-compose.fullstack.yml deploy-bundle/
+          cp .env.production.example deploy-bundle/
+          cp -R deploy deploy-bundle/deploy
+          cp -R backend deploy-bundle/backend
+          cp -R frontend deploy-bundle/frontend
+          rm -rf deploy-bundle/backend/target
+          rm -rf deploy-bundle/frontend/node_modules
+          rm -rf deploy-bundle/frontend/dist
+          tar -czf candleora-deploy.tar.gz -C deploy-bundle .
+
+      - name: Copy bundle to EC2
+        if: ${{ secrets.EC2_HOST != '' && secrets.EC2_USERNAME != '' && secrets.EC2_SSH_KEY != '' && secrets.EC2_DEPLOY_PATH != '' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: candleora-deploy.tar.gz
+          target: ${{ secrets.EC2_DEPLOY_PATH }}
+
+      - name: Deploy backend on EC2
+        if: ${{ secrets.EC2_HOST != '' && secrets.EC2_USERNAME != '' && secrets.EC2_SSH_KEY != '' && secrets.EC2_DEPLOY_PATH != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            DEPLOY_PATH="${{ secrets.EC2_DEPLOY_PATH }}"
+            mkdir -p "$DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+            tar -xzf candleora-deploy.tar.gz
+            rm -f candleora-deploy.tar.gz
+            test -f .env.production || (echo ".env.production is missing on the EC2 host" >&2 && exit 1)
+            docker compose --env-file .env.production up -d --build --remove-orphans backend

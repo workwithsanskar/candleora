@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.95.2",
     "axios": "^1.13.6",
     "firebase": "^10.14.1",
     "framer-motion": "^12.38.0",
@@ -23,6 +24,7 @@
     "react-hook-form": "^7.53.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.1",
     "tslib": "^2.8.1"
   },
   "devDependencies": {

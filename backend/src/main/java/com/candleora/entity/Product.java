@@ -40,11 +40,17 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal originalPrice;
 
+    @Column(nullable = false, precision = 10, scale = 2, columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private BigDecimal costPrice = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private Integer discount;
 
     @Column(nullable = false)
     private Integer stock;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean visible = true;
 
     @Column(nullable = false)
     private String occasionTag;
@@ -119,6 +125,14 @@ public class Product {
         this.originalPrice = originalPrice;
     }
 
+    public BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(BigDecimal costPrice) {
+        this.costPrice = costPrice;
+    }
+
     public Integer getDiscount() {
         return discount;
     }
@@ -133,6 +147,14 @@ public class Product {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 
     public String getOccasionTag() {

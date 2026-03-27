@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import AdminRoute from "./admin/components/AdminRoute";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -10,6 +11,13 @@ import { destroySmoothScroll, initSmoothScroll, resizeSmoothScroll } from "./uti
 
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AccountDetails = lazy(() => import("./pages/AccountDetails"));
+const AdminLayout = lazy(() => import("./admin/layout/AdminLayout"));
+const AdminAnalytics = lazy(() => import("./admin/pages/Analytics"));
+const AdminCustomers = lazy(() => import("./admin/pages/Customers"));
+const AdminDashboard = lazy(() => import("./admin/pages/Dashboard"));
+const AdminOrders = lazy(() => import("./admin/pages/Orders"));
+const AdminProducts = lazy(() => import("./admin/pages/Products"));
+const AdminSettings = lazy(() => import("./admin/pages/Settings"));
 const CandleFixes = lazy(() => import("./pages/CandleFixes"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
@@ -39,6 +47,7 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 function AppShell() {
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
     initSmoothScroll();
@@ -66,13 +75,28 @@ function AppShell() {
   return (
     <>
       <ScrollToTop />
-      <div className="flex min-h-screen flex-col bg-white text-brand-dark">
-        <Navbar />
+      <div className={isAdminRoute ? "min-h-screen bg-[#f5efe3] text-brand-dark" : "flex min-h-screen flex-col bg-white text-brand-dark"}>
+        {!isAdminRoute ? <Navbar /> : null}
 
         <AnimatePresence mode="wait" initial={false}>
-          <m.main key={location.pathname} className="flex-1" {...pageMotion}>
+          <m.main key={location.pathname} className={isAdminRoute ? "min-h-screen" : "flex-1"} {...pageMotion}>
             <Suspense fallback={<RouteLoader />}>
               <Routes location={location}>
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="customers" element={<AdminCustomers />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/about-us" element={<AboutUs />} />
@@ -163,7 +187,7 @@ function AppShell() {
           </m.main>
         </AnimatePresence>
 
-        <Footer />
+        {!isAdminRoute ? <Footer /> : null}
       </div>
     </>
   );

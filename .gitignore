@@ -8,6 +8,10 @@
 /backend/target/
 /backend/.env
 /backend/data/
+/.env.production
+/.env.production.local
+/deploy-bundle/
+/candleora-deploy.tar.gz
 /.m2/
 /tmp_py/
 /.idea/

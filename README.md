@@ -65,6 +65,26 @@ candleora-frontend/
   - `https://candleora.onrender.com/api/products`
   - `https://candleora.onrender.com/api/categories`
 
+## AWS production deployment
+
+- Production deployment assets now live at:
+  - `docker-compose.yml`
+  - `docker-compose.fullstack.yml`
+  - `frontend/Dockerfile`
+  - `backend/Dockerfile`
+  - `deploy/nginx/api.candleora.conf`
+  - `deploy/nginx/www.candleora.conf`
+  - `.github/workflows/deploy.yml`
+  - `docs/production-deployment.md`
+  - `docs/admin-access.md`
+- The recommended AWS topology is:
+  - frontend static build on S3 + CloudFront
+  - backend container on EC2 behind Nginx
+  - PostgreSQL on RDS
+  - invoices and uploads on S3
+- Copy `.env.production.example` to `.env.production` before running Docker Compose.
+- Follow the step-by-step runbook in [docs/production-deployment.md](docs/production-deployment.md).
+
 ## Render Postgres setup
 
 If you want accounts, carts, and orders to survive redeploys, do not keep the backend on the H2 fallback. Create a persistent PostgreSQL database in Render and wire the backend to it.
@@ -135,9 +155,11 @@ Notes:
 - Seeded demo accounts:
   - `demo@candleora.com` / `Password123!`
   - `admin@candleora.com` / `Password123!`
+- Admin access lives inside the same frontend deployment at `/admin`, not a separate app by default.
+- Production admin access guidance lives in [docs/admin-access.md](docs/admin-access.md).
 - Frontend cart persists for guests and syncs into the backend cart after login.
 - Checkout now supports multi-step shipping, payment selection, order review, and order confirmation pages.
-- Admin CRUD is intentionally deferred.
+- Admin dashboard routes are protected by the frontend admin route and backend `/api/admin/*` role checks.
 - Google auth is intentionally hidden on the local login and signup screens until the OAuth client allows `http://localhost:5173` as an authorized JavaScript origin.
 - This environment did not have Node.js or Maven available, so dependency installation and runtime verification were not executed here.
 - Run `npm install` inside `frontend/` before starting the storefront because `package.json` was updated for Axios and Tailwind.

@@ -40,7 +40,9 @@ public class CatalogService {
         int page,
         int size
     ) {
-        Specification<Product> specification = Specification.where(null);
+        Specification<Product> specification = Specification.where((root, query, criteriaBuilder) ->
+            criteriaBuilder.isTrue(root.get("visible"))
+        );
 
         if (search != null && !search.isBlank()) {
             String keyword = "%" + search.toLowerCase(Locale.ROOT) + "%";
@@ -93,7 +95,10 @@ public class CatalogService {
     public List<ProductResponse> getRelatedProducts(String identifier) {
         Product product = findProduct(identifier);
 
-        return productRepository.findTop4ByCategoryAndIdNotOrderByCreatedAtDesc(product.getCategory(), product.getId())
+        return productRepository.findTop4ByCategoryAndVisibleTrueAndIdNotOrderByCreatedAtDesc(
+                product.getCategory(),
+                product.getId()
+            )
             .stream()
             .map(this::toProductResponse)
             .toList();
@@ -126,11 +131,19 @@ public class CatalogService {
 
         try {
             Long numericId = Long.parseLong(identifier);
-            return productRepository.findById(numericId)
+            Product product = productRepository.findById(numericId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+            if (!product.isVisible()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+            }
+            return product;
         } catch (NumberFormatException ignored) {
-            return productRepository.findBySlugIgnoreCase(identifier)
+            Product product = productRepository.findBySlugIgnoreCase(identifier)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+            if (!product.isVisible()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+            }
+            return product;
         }
     }
 
