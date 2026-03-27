@@ -24,7 +24,9 @@ public class SchemaRepairRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         addProductColumnsIfNeeded();
+        addOrderColumnsIfNeeded();
         backfillProductColumns();
+        backfillOrderColumns();
     }
 
     private void addProductColumnsIfNeeded() {
@@ -32,9 +34,29 @@ public class SchemaRepairRunner implements ApplicationRunner {
         executeSchemaUpdate("ALTER TABLE products ADD COLUMN IF NOT EXISTS visible BOOLEAN DEFAULT TRUE NOT NULL");
     }
 
+    private void addOrderColumnsIfNeeded() {
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS subtotal_amount DECIMAL(10,2)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0.00");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(64)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS alternate_phone_number VARCHAR(255)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS country VARCHAR(255)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS location_label VARCHAR(255)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(255)");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP WITH TIME ZONE");
+        executeSchemaUpdate("ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR(512)");
+    }
+
     private void backfillProductColumns() {
         executeSchemaUpdate("UPDATE products SET cost_price = CAST(price * 0.58 AS DECIMAL(10,2)) WHERE cost_price IS NULL OR cost_price = 0");
         executeSchemaUpdate("UPDATE products SET visible = TRUE WHERE visible IS NULL");
+    }
+
+    private void backfillOrderColumns() {
+        executeSchemaUpdate("UPDATE orders SET subtotal_amount = total_amount WHERE subtotal_amount IS NULL");
+        executeSchemaUpdate("UPDATE orders SET discount_amount = 0.00 WHERE discount_amount IS NULL");
+        executeSchemaUpdate("UPDATE orders SET payment_method = CASE WHEN payment_provider = 'COD' THEN 'COD' ELSE 'PHONEPE' END WHERE payment_method IS NULL");
     }
 
     private void executeSchemaUpdate(String sql) {
