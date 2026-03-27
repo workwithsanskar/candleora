@@ -106,29 +106,29 @@ function ContactUs() {
 
   return (
     <div className="bg-white">
-      <section className="container-shell py-10 sm:py-12 lg:py-14">
-        <div className="mx-auto max-w-[1240px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
-          <div className="bg-black px-6 py-5 sm:px-8 lg:px-10">
+      <section className="container-shell py-8 sm:py-10">
+        <div className="mx-auto max-w-[1180px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
+          <div className="bg-black px-6 py-4 sm:px-8 lg:px-10">
             <h1 className="font-display text-heading-md font-semibold text-white">
               Get In Touch With Us
             </h1>
           </div>
 
-          <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-10 lg:py-10">
-            <div className="space-y-7 lg:space-y-8">
-              <div className="border-b border-black/10 pb-6">
+          <div className="grid gap-6 px-6 py-6 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-8 lg:px-10 lg:py-8">
+            <div className="space-y-5">
+              <div className="border-b border-black/10 pb-4">
                 <p className="text-base font-medium text-black">Phone Number</p>
-                <p className="mt-2 text-base leading-7 text-black/68">8999908639</p>
+                <p className="mt-1.5 text-[0.98rem] leading-6 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-6">
+              <div className="border-b border-black/10 pb-4">
                 <p className="text-base font-medium text-black">Email Address</p>
-                <p className="mt-2 text-base leading-7 text-black/68">candleora25@gmail.com</p>
+                <p className="mt-1.5 text-[0.98rem] leading-6 text-black/68">candleora25@gmail.com</p>
               </div>
 
               <div>
                 <p className="text-base font-medium text-black">Location</p>
-                <p className="mt-2 max-w-[360px] text-base leading-7 text-black/68">
+                <p className="mt-1.5 max-w-[360px] text-[0.98rem] leading-6 text-black/68">
                   Nagpur, Maharashtra, India
                 </p>
               </div>
@@ -139,12 +139,12 @@ function ContactUs() {
                 <h2 className="font-display text-heading-md font-semibold text-black">
                   Send us a message
                 </h2>
-                <p className="mt-2 max-w-[620px] text-sm leading-7 text-black/62">
+                <p className="mt-2 max-w-[620px] text-sm leading-6 text-black/62">
                   Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
                     type="text"
@@ -184,12 +184,12 @@ function ContactUs() {
                 </div>
 
                 <textarea
-                  rows="5"
+                  rows="4"
                   name="message"
                   value={form.message}
                   onChange={handleChange}
                   placeholder="Message"
-                  className="min-h-[160px] w-full rounded-[24px] border border-black/15 px-5 py-4 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black"
+                  className="min-h-[132px] w-full rounded-[24px] border border-black/15 px-5 py-4 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black"
                 />
 
                 {error && <p className="text-sm font-semibold text-danger">{error}</p>}

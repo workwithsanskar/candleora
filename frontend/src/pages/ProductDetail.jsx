@@ -1,27 +1,75 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ProductDetailSkeleton from "../components/ProductDetailSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { catalogApi } from "../services/api";
-import { formatApiError, formatCurrency } from "../utils/format";
+import { formatApiError, formatCurrency, formatDate } from "../utils/format";
 import { normalizeProduct } from "../utils/normalize";
 
-function RatingRow({ rating }) {
+function StarIcon({ active = false, className = "h-[18px] w-[18px]" }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill={active ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.7"
+    >
+      <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
+    </svg>
+  );
+}
+
+function RatingRow({ rating, reviewCount = null }) {
+  const normalizedRating = Math.max(0, Math.min(5, Number(rating ?? 0)));
+  const filledStars = Math.round(normalizedRating);
+
+  return (
+    <div className="flex items-center gap-2">
       <div className="flex items-center gap-0.5 text-[#f3b33d]">
         {Array.from({ length: 5 }).map((_, index) => (
-          <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
-            <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
-          </svg>
+          <StarIcon
+            key={index}
+            active={index < filledStars}
+            className="h-[18px] w-[18px]"
+          />
         ))}
       </div>
-      <span className="text-sm text-black/55">({Math.max(1, Math.round(rating * 7))} review)</span>
+      {reviewCount !== null ? (
+        <span className="text-sm text-black/55">
+          ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function RatingSelector({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-1 text-[#f3b33d]">
+      {Array.from({ length: 5 }).map((_, index) => {
+        const nextRating = index + 1;
+        const active = nextRating <= value;
+
+        return (
+          <button
+            key={nextRating}
+            type="button"
+            onClick={() => onChange(nextRating)}
+            className={`transition ${active ? "scale-100" : "scale-[0.96] text-black/25 hover:text-[#f3b33d]"}`}
+            aria-label={`Rate ${nextRating} star${nextRating === 1 ? "" : "s"}`}
+          >
+            <StarIcon active={active} className="h-5 w-5" />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -44,42 +92,66 @@ function HeartIcon({ filled = false }) {
   );
 }
 
-const reviewCards = [
-  {
-    id: 1,
-    name: "Aditi Sharma",
-    text: "Loved the finish and the fragrance balance. It feels premium on a shelf and burns cleanly through the evening.",
-  },
-  {
-    id: 2,
-    name: "Riya Mehta",
-    text: "The detailing is beautiful and it arrived well packed. It works really well as a gifting candle too.",
-  },
-];
+function normalizeReviewSummary(payload, fallbackRating) {
+  return {
+    averageRating: Number(payload?.averageRating ?? fallbackRating ?? 0),
+    reviewCount: Number(payload?.reviewCount ?? 0),
+    reviews: Array.isArray(payload?.reviews) ? payload.reviews : [],
+  };
+}
 
 const packOptions = [4, 6, 8];
+
+function createInitialReviewForm(user = null) {
+  return {
+    reviewerName: user?.name ?? "",
+    reviewerEmail: user?.email ?? "",
+    rating: 0,
+    message: "",
+  };
+}
 
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState("description");
   const [selectedPack, setSelectedPack] = useState(4);
+  const [reviewSummary, setReviewSummary] = useState(() => normalizeReviewSummary(null, 4.8));
+  const [reviewForm, setReviewForm] = useState(() => createInitialReviewForm(user));
+  const [reviewError, setReviewError] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    setReviewForm((current) => ({
+      ...current,
+      reviewerName: current.reviewerName || user?.name || "",
+      reviewerEmail: current.reviewerEmail || user?.email || "",
+    }));
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
+    setIsReviewsLoading(true);
+    setError("");
+    setReviewError("");
 
-    Promise.all([catalogApi.getProduct(id), catalogApi.getRelatedProducts(id)])
-      .then(([productResponse, relatedResponse]) => {
+    Promise.all([
+      catalogApi.getProduct(id),
+      catalogApi.getRelatedProducts(id),
+      catalogApi.getProductReviews(id),
+    ])
+      .then(([productResponse, relatedResponse, reviewResponse]) => {
         if (!isMounted) {
           return;
         }
@@ -90,6 +162,7 @@ function ProductDetail() {
         setQuantity(1);
         setSelectedPack(4);
         setRelatedProducts(relatedResponse ?? []);
+        setReviewSummary(normalizeReviewSummary(reviewResponse, normalized.rating));
       })
       .catch((productError) => {
         if (isMounted) {
@@ -99,6 +172,7 @@ function ProductDetail() {
       .finally(() => {
         if (isMounted) {
           setIsLoading(false);
+          setIsReviewsLoading(false);
         }
       });
 
@@ -115,6 +189,56 @@ function ProductDetail() {
   const handleBuyNow = async () => {
     await addToCart(product, quantity);
     navigate("/checkout");
+  };
+
+  const handleReviewChange = (event) => {
+    const { name, value } = event.target;
+    setReviewForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+    setReviewError("");
+  };
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+
+    const payload = {
+      reviewerName: reviewForm.reviewerName.trim(),
+      reviewerEmail: reviewForm.reviewerEmail.trim(),
+      rating: reviewForm.rating,
+      message: reviewForm.message.trim(),
+    };
+
+    if (!payload.reviewerName || !payload.reviewerEmail || !payload.message) {
+      setReviewError("Please complete your name, email, and review before submitting.");
+      return;
+    }
+
+    if (!payload.rating) {
+      setReviewError("Please select a star rating before posting your review.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    setReviewError("");
+
+    try {
+      const nextSummary = await catalogApi.createProductReview(id, payload);
+      setReviewSummary(normalizeReviewSummary(nextSummary, product?.rating ?? 0));
+      setReviewForm((current) => ({
+        ...current,
+        rating: 0,
+        message: "",
+      }));
+      toast.success("Review posted successfully.");
+    } catch (reviewSubmitError) {
+      const message = formatApiError(reviewSubmitError);
+      setReviewError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   if (isLoading) {
@@ -137,7 +261,8 @@ function ProductDetail() {
     );
   }
 
-  const totalPrice = product.price * quantity;
+  const displayedRating =
+    reviewSummary.reviewCount > 0 ? reviewSummary.averageRating : product.rating;
   const wishlisted = isWishlisted(product.id);
   const detailBullets = [
     `${product.category?.name ?? "Candle collection"} finish suitable for styling shelves and tables.`,
@@ -223,21 +348,21 @@ function ProductDetail() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-                <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
-                <RatingRow rating={product.rating} />
-              {product.originalPrice > product.price && (
+              <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
+              <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
+              {product.originalPrice > product.price ? (
                 <p className="text-sm text-black/35 line-through">
                   {formatCurrency(product.originalPrice)}
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
 
-          <div className="border-t border-black/10 pt-4">
-            <p className="text-sm leading-8 text-black/72">{product.description}</p>
+          <div className="rounded-[18px] border border-black/10 bg-white px-4 py-4">
+            <p className="text-sm leading-7 text-black/72">{product.description}</p>
           </div>
 
-          <ul className="space-y-1 text-sm leading-6 text-black/70">
+          <ul className="space-y-2 text-sm leading-6 text-black/70">
             {detailBullets.map((detail) => (
               <li key={detail} className="flex items-start gap-2">
                 <span className="mt-[8px] inline-flex h-1.5 w-1.5 rounded-full bg-black/45" />
@@ -346,95 +471,147 @@ function ProductDetail() {
       </div>
 
       <Reveal className="mt-14 border-t border-black/10 pt-12" delay={0.06}>
-        <div className="flex items-center gap-4 text-heading-sm font-medium text-black/58">
-          <button
-            type="button"
-            onClick={() => setActiveTab("description")}
-            className={`transition ${
-              activeTab === "description"
-                ? "text-black"
-                : "text-black/48 hover:text-black"
-            }`}
-          >
-            Description
-          </button>
-          <span className="text-black/28">|</span>
-          <button
-            type="button"
-            onClick={() => setActiveTab("reviews")}
-            className={`transition ${
-              activeTab === "reviews"
-                ? "text-black"
-                : "text-black/48 hover:text-black"
-            }`}
-          >
-            Reviews
-          </button>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-heading-sm font-semibold text-black">Reviews</h2>
+            <p className="mt-2 text-sm leading-6 text-black/58">
+              Read genuine customer feedback and add your own experience after trying this product.
+            </p>
+          </div>
+          <div className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black">
+            {reviewSummary.reviewCount} {reviewSummary.reviewCount === 1 ? "review" : "reviews"}
+          </div>
         </div>
 
-        {activeTab === "description" ? (
-          <div className="space-y-5 pt-8 text-sm leading-8 text-black/72">
-            <p>{product.description}</p>
-            <ul className="list-disc space-y-2 pl-5">
-              {detailBullets.map((detail) => (
-                <li key={detail}>{detail}</li>
-              ))}
-            </ul>
+        {isReviewsLoading ? (
+          <div className="mt-8 rounded-[20px] border border-dashed border-black/12 px-6 py-10 text-sm leading-7 text-black/58">
+            Loading reviews...
           </div>
         ) : (
-          <div className="space-y-6 pt-8">
-            <div className="space-y-5">
-              {reviewCards.map((review) => (
-                <article key={review.id} className="rounded-[12px] border border-black/10 bg-white px-5 py-4">
-                  <div className="flex items-start gap-4">
-                    <span className="mt-1 inline-flex h-9 w-9 shrink-0 rounded-full bg-black/10" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-black">{review.name}</p>
-                        <div className="shrink-0">
-                          <RatingRow rating={4.8} />
-                        </div>
+          <div className="mt-8 grid gap-6 lg:grid-cols-[0.96fr_1.04fr]">
+            <div className="space-y-4">
+              <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45">
+                  Customer Rating
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <p className="font-display text-[2.2rem] font-semibold text-black">
+                    {displayedRating.toFixed(1)}
+                  </p>
+                  <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
+                </div>
+              </div>
+
+              {reviewSummary.reviews.length ? (
+                reviewSummary.reviews.map((review) => (
+                  <article
+                    key={review.id}
+                    className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-black">{review.reviewerName}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/42">
+                          {formatDate(review.createdAt)}
+                        </p>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-black/68">{review.text}</p>
-                      <p className="mt-3 text-sm text-black/52">Like &nbsp; Reply &nbsp; 5m</p>
+                      <RatingRow rating={review.rating} />
                     </div>
-                  </div>
-                </article>
-              ))}
+                    <p className="mt-4 text-sm leading-6 text-black/68">{review.message}</p>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[20px] border border-dashed border-black/12 px-5 py-8 text-sm leading-7 text-black/58">
+                  No reviews yet. Be the first to share how this candle looked, smelled, and burned in your space.
+                </div>
+              )}
             </div>
 
-            <form className="rounded-[12px] border border-black/10 bg-white p-5">
-              <div className="grid gap-4 md:grid-cols-2">
+            <form
+              onSubmit={handleReviewSubmit}
+              className="rounded-[22px] border border-black/10 bg-white p-5 shadow-[0_12px_28px_rgba(0,0,0,0.05)] sm:p-6"
+            >
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-black">Write a Review</h3>
+                <p className="text-sm leading-6 text-black/58">
+                  Tell us what stood out, how the fragrance felt, and whether the candle matched your expectations.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-black">Your Name:</span>
-                  <input className="input-pill h-[44px] rounded-full" placeholder="John Doe" />
+                  <span className="text-sm font-semibold text-black">
+                    Your Name<span className="ml-1 text-[#d63d3d]">*</span>
+                  </span>
+                  <input
+                    name="reviewerName"
+                    value={reviewForm.reviewerName}
+                    onChange={handleReviewChange}
+                    className="input-pill h-[50px] rounded-[18px]"
+                    placeholder="John Doe"
+                  />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-black">Your Email:</span>
-                  <input className="input-pill h-[44px] rounded-full" placeholder="person@gmail.com" />
+                  <span className="text-sm font-semibold text-black">
+                    Your Email<span className="ml-1 text-[#d63d3d]">*</span>
+                  </span>
+                  <input
+                    type="email"
+                    name="reviewerEmail"
+                    value={reviewForm.reviewerEmail}
+                    onChange={handleReviewChange}
+                    className="input-pill h-[50px] rounded-[18px]"
+                    placeholder="you@example.com"
+                  />
                 </label>
               </div>
-              <label className="mt-4 block space-y-2">
-                <span className="text-sm font-medium text-black">Your Message:</span>
+
+              <div className="mt-5 space-y-2">
+                <span className="text-sm font-semibold text-black">
+                  Your Rating<span className="ml-1 text-[#d63d3d]">*</span>
+                </span>
+                <RatingSelector
+                  value={reviewForm.rating}
+                  onChange={(rating) => {
+                    setReviewForm((current) => ({
+                      ...current,
+                      rating,
+                    }));
+                    setReviewError("");
+                  }}
+                />
+              </div>
+
+              <label className="mt-5 block space-y-2">
+                <span className="text-sm font-semibold text-black">
+                  Your Review<span className="ml-1 text-[#d63d3d]">*</span>
+                </span>
                 <textarea
-                  rows="4"
-                  className="w-full rounded-[16px] border border-black/15 bg-white px-4 py-3 text-sm text-black outline-none transition focus:border-black"
-                  placeholder="Write your review..."
+                  rows="5"
+                  name="message"
+                  value={reviewForm.message}
+                  onChange={handleReviewChange}
+                  className="min-h-[150px] w-full rounded-[18px] border border-black/15 bg-white px-4 py-3 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-[#f3b33d]/20"
+                  placeholder="Share your experience with the fragrance, finish, packaging, and burn quality..."
                 />
               </label>
-              <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3 text-sm text-black/62">
-                  <span>Your Ratings:</span>
-                  <div className="flex items-center gap-0.5 text-black/38">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <svg key={index} viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                        <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
-                      </svg>
-                    ))}
-                  </div>
-                </div>
-                <button type="button" className="btn btn-secondary rounded-full px-7">
-                  Post Review
+
+              {reviewError ? (
+                <p className="mt-4 text-sm font-semibold text-danger">{reviewError}</p>
+              ) : null}
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm leading-6 text-black/52">
+                  {user
+                    ? "Posting as your signed-in CandleOra account."
+                    : "You can submit a review without signing in."}
+                </p>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview}
+                  className="btn btn-secondary rounded-full px-7 disabled:opacity-60"
+                >
+                  {isSubmittingReview ? "Posting..." : "Post Review"}
                 </button>
               </div>
             </form>

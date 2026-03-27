@@ -30,8 +30,8 @@ function SearchIcon() {
 
 function FilterSection({ title, children }) {
   return (
-    <section className="rounded-[18px] border border-black/10 bg-white px-4 py-4 shadow-candle">
-      <div className="mb-3 flex items-center gap-3">
+    <section className="rounded-[22px] border border-black/10 bg-white px-5 py-5 shadow-[0_12px_26px_rgba(0,0,0,0.05)]">
+      <div className="mb-4 flex items-center gap-3">
         <span className="h-6 w-[2px] bg-black" />
         <h2 className="text-base font-semibold text-black">{title}</h2>
       </div>
@@ -140,29 +140,29 @@ function OccasionPicks() {
       <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
         <aside className="space-y-4">
           <FilterSection title="Categories">
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {FILTERABLE_CATEGORIES.map((item) => (
                 <button
                   key={item.slug || "all"}
                   type="button"
                   onClick={() => setSelectedCategory(item.slug)}
-                  className={`flex w-full items-center justify-between rounded-full px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-[0.98rem] leading-none transition ${
                     selectedCategory === item.slug
                       ? "bg-brand-primary text-black"
                       : "text-black/82 hover:bg-black/5 hover:text-black"
                   }`}
                 >
                   <span>{item.name}</span>
-                  <span className="text-xs">{selectedCategory === item.slug ? "\u2022" : ""}</span>
+                  <span className="text-sm">{selectedCategory === item.slug ? "\u2022" : ""}</span>
                 </button>
               ))}
             </div>
           </FilterSection>
 
           <FilterSection title="Price Range">
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {priceRanges.map((range) => (
-                <label key={range.id} className="flex items-center gap-3 text-sm text-black/82">
+                <label key={range.id} className="flex items-center gap-3 text-[0.95rem] leading-none text-black/82">
                   <input
                     type="checkbox"
                     checked={selectedPriceRange === range.id}

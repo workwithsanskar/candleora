@@ -151,15 +151,16 @@ function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
         <div className="container-shell absolute inset-0 flex items-center">
-          <div className="max-w-[640px]">
-            <h1 className="font-display text-[1.85rem] font-semibold leading-[1.06] text-white sm:text-[2.35rem] lg:text-[2.95rem]">
+          <div className="max-w-[560px]">
+            <h1 className="font-display text-[2rem] font-semibold leading-[0.98] text-white sm:text-[2.75rem] lg:text-[4rem]">
               <span className="block">Crafting Comfort, Redefining</span>
-              <span className="block">Spaces. Your Home, Your Signature</span>
+              <span className="block">Spaces. Your Home, Your</span>
+              <span className="block">Signature</span>
               <span className="block">Style!</span>
             </h1>
             <Link
               to="/shop"
-              className="btn btn-primary mt-6 min-w-[160px]"
+              className="btn btn-primary mt-8 min-w-[160px]"
             >
               Shop Now
             </Link>

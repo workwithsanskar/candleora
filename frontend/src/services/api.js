@@ -51,6 +51,8 @@ export const catalogApi = {
   getProducts: (params = {}) => api.get("/products", { params }).then(unwrap),
   getProduct: (id) => api.get(`/products/${id}`).then(unwrap),
   getRelatedProducts: (id) => api.get(`/products/${id}/related`).then(unwrap),
+  getProductReviews: (id) => api.get(`/products/${id}/reviews`).then(unwrap),
+  createProductReview: (id, payload) => api.post(`/products/${id}/reviews`, payload).then(unwrap),
   getCategories: () => api.get("/categories").then(unwrap),
 };
 

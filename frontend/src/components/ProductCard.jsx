@@ -69,7 +69,7 @@ function ProductCard({ product, badgeLabel = null }) {
           />
           {activeBadge && (
             <span
-              className={`absolute left-3 top-3 inline-flex min-h-[30px] min-w-[58px] items-center justify-center rounded-[10px] px-3 text-[15px] font-semibold leading-none text-white ${
+              className={`absolute left-2.5 top-2.5 inline-flex min-h-[24px] min-w-[46px] items-center justify-center rounded-[8px] px-2.5 text-[12px] font-semibold leading-none text-white ${
                 isNewBadge ? "bg-[#ff0000]" : "bg-black"
               }`}
             >
@@ -78,7 +78,7 @@ function ProductCard({ product, badgeLabel = null }) {
           )}
           <Tooltip
             content={wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-            className="absolute right-3 top-3"
+            className="absolute right-2.5 top-2.5 z-10"
           >
             <m.button
               type="button"
@@ -88,7 +88,7 @@ function ProductCard({ product, badgeLabel = null }) {
                 toggleWishlist(item);
               }}
               whileTap={prefersReducedMotion ? undefined : { scale: 0.88 }}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition ${
                 wishlisted ? "text-danger" : "text-black hover:text-danger"
               }`}
             >
@@ -105,14 +105,14 @@ function ProductCard({ product, badgeLabel = null }) {
         </div>
       </Link>
 
-      <div className="space-y-1.5 pt-2.5 text-center">
+      <div className="space-y-1 pt-1.5 text-center">
         <Link to={productPath}>
-          <h3 className="line-clamp-2 min-h-[56px] font-heading text-[1.08rem] font-semibold leading-[1.2] text-black">
+          <h3 className="line-clamp-2 min-h-[48px] font-heading text-[1.02rem] font-semibold leading-[1.18] text-black">
             {item.name}
           </h3>
         </Link>
 
-        <div className="flex items-center justify-center gap-2 text-[17px] leading-none">
+        <div className="flex items-center justify-center gap-2 text-[16px] leading-none">
           {item.originalPrice > item.price && (
             <span className="text-black/35 line-through">
               {formatCurrency(item.originalPrice)}
@@ -128,11 +128,11 @@ function ProductCard({ product, badgeLabel = null }) {
 
         <m.button
           type="button"
-          className={`inline-flex h-[42px] w-full items-center justify-center rounded-[10px] px-4 text-sm font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
+          className={`inline-flex h-[40px] w-full items-center justify-center rounded-[10px] px-4 text-sm font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
             item.stock <= 0
               ? "cursor-not-allowed bg-black/15 text-black/45"
               : isInCart
-                ? "bg-success text-white hover:bg-[#25652a]"
+                ? "bg-[#d63d3d] text-white hover:bg-[#be3131]"
                 : "bg-brand-primary text-black hover:bg-[#dfa129]"
           }`}
           disabled={item.stock <= 0}

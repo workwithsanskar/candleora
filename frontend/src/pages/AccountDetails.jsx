@@ -11,7 +11,7 @@ import { formatApiError } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
 
 const sectionButtonClass =
-  "rounded-full px-5 py-3 text-sm font-semibold transition";
+  "rounded-full px-6 py-3 text-sm font-semibold transition";
 
 function buildAddressDraft(source = {}) {
   return {
@@ -40,6 +40,15 @@ function formatAddressLines(address) {
   ]
     .filter(Boolean)
     .join(", ");
+}
+
+function RequiredLabel({ text, required = false }) {
+  return (
+    <span className="text-sm font-semibold text-black">
+      {text}
+      {required ? <span className="ml-1 text-[#d63d3d]">*</span> : null}
+    </span>
+  );
 }
 
 function AccountDetails() {
@@ -308,13 +317,13 @@ function AccountDetails() {
 
   return (
     <section className="container-shell py-12 sm:py-14">
-      <div className="mx-auto max-w-[1100px] space-y-8">
+      <div className="mx-auto max-w-[1160px] space-y-8">
         <div className="space-y-4">
           <h1 className="text-heading-lg font-semibold uppercase tracking-[-0.02em] text-black">
             Account Details
           </h1>
-          <p className="max-w-[920px] text-body leading-8 text-black/62">
-            Keep your profile information current and manage multiple saved addresses from a dedicated section.
+          <p className="max-w-[860px] text-body leading-7 text-black/62">
+            Keep your profile information current, save multiple delivery addresses, and make future checkouts much faster from one polished account workspace.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -364,22 +373,50 @@ function AccountDetails() {
               </span>
             )}
           </div>
+          <p className="text-sm font-medium text-black/55">
+            Fields marked <span className="text-[#d63d3d]">*</span> are required.
+          </p>
         </div>
 
         {activeSection === "details" ? (
           <form
-            className="space-y-8 rounded-[22px] border border-black/10 bg-white p-6 shadow-candle sm:p-8"
+            className="space-y-8 rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8 lg:p-10"
             onSubmit={handleSubmit}
           >
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-black">Profile Information</h2>
-              <AccountProfileFields
-                form={form}
-                onChange={handleChange}
-                onUseCurrentLocation={handleUseCurrentLocation}
-                isLocating={isLocating}
-                emailReadOnly
-              />
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_270px]">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-black">Profile Information</h2>
+                  <p className="text-sm leading-6 text-black/58">
+                    Update your core profile, primary address, and delivery preferences in a cleaner, easier-to-scan form.
+                  </p>
+                </div>
+                <AccountProfileFields
+                  form={form}
+                  onChange={handleChange}
+                  onUseCurrentLocation={handleUseCurrentLocation}
+                  isLocating={isLocating}
+                  emailReadOnly
+                />
+              </div>
+
+              <aside className="rounded-[22px] border border-black/10 bg-[#fff9ee] p-5">
+                <h3 className="text-base font-semibold text-black">Profile checklist</h3>
+                <ul className="mt-4 space-y-3 text-sm leading-6 text-black/66">
+                  <li className="flex gap-3">
+                    <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
+                    Keep your mobile number current for smoother delivery updates.
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
+                    Add your location label so checkout can identify home vs work instantly.
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
+                    Use the saved addresses section when you need multiple delivery destinations.
+                  </li>
+                </ul>
+              </aside>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -400,12 +437,12 @@ function AccountDetails() {
             {successMessage && <p className="text-sm font-semibold text-green-700">{successMessage}</p>}
           </form>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <section className="rounded-[22px] border border-black/10 bg-white p-6 shadow-candle sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.94fr_1.06fr]">
+            <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-black">Saved Addresses</h2>
-                  <p className="mt-2 text-sm leading-7 text-black/62">
+                  <h2 className="text-xl font-semibold text-black">Saved Addresses</h2>
+                  <p className="mt-2 text-sm leading-6 text-black/62">
                     Your addresses are now synced with your CandleOra account and available across devices.
                   </p>
                 </div>
@@ -420,14 +457,14 @@ function AccountDetails() {
 
               <div className="mt-6 space-y-4">
                 {isAddressesLoading ? (
-                  <div className="rounded-[18px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
+                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
                     Loading saved addresses...
                   </div>
                 ) : savedAddresses.length ? (
                   savedAddresses.map((address) => (
                     <article
                       key={address.id}
-                      className="rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_8px_22px_rgba(0,0,0,0.04)]"
+                      className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.05)]"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -469,24 +506,24 @@ function AccountDetails() {
                         </div>
                       </div>
 
-                      <p className="mt-4 text-sm leading-7 text-black/68">{formatAddressLines(address)}</p>
+                      <p className="mt-4 text-sm leading-6 text-black/68">{formatAddressLines(address)}</p>
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-[18px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
+                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
                     No saved addresses yet. Add your first address from the panel on the right.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[22px] border border-black/10 bg-white p-6 shadow-candle sm:p-8">
+            <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-black">
+                  <h2 className="text-xl font-semibold text-black">
                     {editingAddressId ? "Edit Address" : "Add New Address"}
                   </h2>
-                  <p className="mt-2 text-sm leading-7 text-black/62">
+                  <p className="mt-2 text-sm leading-6 text-black/62">
                     Saved addresses are backed by your account now, not only the browser.
                   </p>
                 </div>
@@ -502,7 +539,7 @@ function AccountDetails() {
               <form className="mt-6 space-y-4" onSubmit={handleSaveAddress}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">Address label</span>
+                    <RequiredLabel text="Address label" />
                     <input
                       name="label"
                       value={addressDraft.label}
@@ -512,7 +549,7 @@ function AccountDetails() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">Recipient name</span>
+                    <RequiredLabel text="Recipient name" required />
                     <input
                       name="recipientName"
                       value={addressDraft.recipientName}
@@ -524,7 +561,7 @@ function AccountDetails() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">Phone number</span>
+                    <RequiredLabel text="Phone number" required />
                     <input
                       name="phoneNumber"
                       value={addressDraft.phoneNumber}
@@ -533,7 +570,7 @@ function AccountDetails() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">Country</span>
+                    <RequiredLabel text="Country" />
                     <input
                       name="country"
                       value={addressDraft.country}
@@ -544,7 +581,7 @@ function AccountDetails() {
                 </div>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-black">Address line 1</span>
+                  <RequiredLabel text="Address line 1" required />
                   <input
                     name="addressLine1"
                     value={addressDraft.addressLine1}
@@ -554,7 +591,7 @@ function AccountDetails() {
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-black">Address line 2</span>
+                  <RequiredLabel text="Address line 2" />
                   <input
                     name="addressLine2"
                     value={addressDraft.addressLine2}
@@ -565,7 +602,7 @@ function AccountDetails() {
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">City</span>
+                    <RequiredLabel text="City" required />
                     <input
                       name="city"
                       value={addressDraft.city}
@@ -574,7 +611,7 @@ function AccountDetails() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">State</span>
+                    <RequiredLabel text="State" required />
                     <input
                       name="state"
                       value={addressDraft.state}
@@ -583,7 +620,7 @@ function AccountDetails() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-semibold text-black">Postal code</span>
+                    <RequiredLabel text="Postal code" required />
                     <input
                       name="postalCode"
                       value={addressDraft.postalCode}

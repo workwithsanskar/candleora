@@ -1,14 +1,14 @@
 function AboutUs() {
   return (
     <div className="bg-white">
-      <section className="container-shell py-12 sm:py-14 lg:py-16">
+      <section className="container-shell py-10 sm:py-12 lg:py-14">
         <div className="mx-auto max-w-[1220px]">
           <h1 className="page-title text-center tracking-[-0.04em]">
             Who We Are &amp; What We Do
           </h1>
 
-          <div className="mt-10 grid gap-10 lg:mt-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-14">
-            <div className="max-w-[560px] space-y-6 text-base leading-8 text-brand-dark/72">
+          <div className="mt-10 grid gap-8 lg:mt-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-12">
+            <div className="max-w-[560px] space-y-5 text-[0.98rem] leading-7 text-brand-dark/72">
               <p>
                 We are passionate <span className="font-semibold text-brand-dark">artists and designers</span> who think about
                 innovation and possibilities, and also think about your needs and mood. Here, we bring{" "}
