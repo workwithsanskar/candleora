@@ -6,6 +6,7 @@ import StatusView from "../components/StatusView";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath } from "../utils/normalize";
 
 function HeartIcon({ filled = false }) {
@@ -183,12 +184,15 @@ function Wishlist() {
                     <div className="relative overflow-hidden rounded-[22px] bg-[#f5f1e8]">
                       <Link to={getProductPath(item)} className="block h-full">
                         <img
-                          src={item.imageUrl}
+                          {...getResponsiveImageProps(item.imageUrl, {
+                            widths: [192, 288, 384],
+                            quality: 68,
+                            sizes: "190px",
+                          })}
                           alt={item.name}
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = fallbackProductImage;
-                          }}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(event) => applyImageFallback(event, fallbackProductImage)}
                           className="aspect-[0.92] h-full w-full object-cover transition duration-500 hover:scale-[1.02]"
                         />
                       </Link>

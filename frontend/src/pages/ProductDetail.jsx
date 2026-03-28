@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import ProductDetailSkeleton from "../components/ProductDetailSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Reveal from "../components/Reveal";
@@ -11,6 +12,7 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { catalogApi } from "../services/api";
 import { formatApiError, formatCurrency, formatDate } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { normalizeProduct } from "../utils/normalize";
 
 function StarIcon({ active = false, className = "h-[18px] w-[18px]" }) {
@@ -264,6 +266,11 @@ function ProductDetail() {
   const displayedRating =
     reviewSummary.reviewCount > 0 ? reviewSummary.averageRating : product.rating;
   const wishlisted = isWishlisted(product.id);
+  const heroImage = getResponsiveImageProps(selectedImage, {
+    widths: [480, 720, 960, 1200],
+    quality: 74,
+    sizes: "(min-width: 1024px) 500px, 100vw",
+  });
   const detailBullets = [
     `${product.category?.name ?? "Candle collection"} finish suitable for styling shelves and tables.`,
     `Scent notes: ${product.scentNotes}.`,
@@ -294,10 +301,15 @@ function ProductDetail() {
               }`}
             >
               <img
-                src={imageUrl}
+                {...getResponsiveImageProps(imageUrl, {
+                  widths: [120, 180, 240],
+                  quality: 64,
+                  sizes: "104px",
+                })}
                 alt={product.name}
                 loading="lazy"
                 decoding="async"
+                onError={(event) => applyImageFallback(event, fallbackProductImage)}
                 className="aspect-[0.76] w-full object-cover"
               />
             </button>
@@ -307,10 +319,14 @@ function ProductDetail() {
         <div className="order-1 lg:order-2">
           <div className="overflow-hidden rounded-[4px] border border-black/10 bg-white">
             <img
-              src={selectedImage}
+              src={heroImage.src}
+              srcSet={heroImage.srcSet}
+              sizes={heroImage.sizes}
               alt={product.name}
               loading="eager"
               decoding="async"
+              fetchPriority="high"
+              onError={(event) => applyImageFallback(event, fallbackProductImage)}
               className="aspect-[0.8] w-full object-cover"
             />
           </div>

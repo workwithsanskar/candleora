@@ -7,6 +7,8 @@ import com.candleora.dto.common.PagedResponse;
 import com.candleora.service.CatalogService;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class CatalogController {
 
+    private static final String PRODUCT_LIST_CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=300";
+
     private final CatalogService catalogService;
 
     public CatalogController(CatalogService catalogService) {
@@ -24,7 +28,7 @@ public class CatalogController {
     }
 
     @GetMapping("/products")
-    public PagedResponse<ProductSummaryResponse> getProducts(
+    public ResponseEntity<PagedResponse<ProductSummaryResponse>> getProducts(
         @RequestParam(required = false) String search,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) BigDecimal minPrice,
@@ -35,17 +39,21 @@ public class CatalogController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "8") int size
     ) {
-        return catalogService.getProducts(
-            search,
-            category,
-            minPrice,
-            maxPrice,
-            occasion,
-            occasions,
-            sort,
-            page,
-            size
-        );
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CACHE_CONTROL, PRODUCT_LIST_CACHE_CONTROL)
+            .body(
+                catalogService.getProducts(
+                    search,
+                    category,
+                    minPrice,
+                    maxPrice,
+                    occasion,
+                    occasions,
+                    sort,
+                    page,
+                    size
+                )
+            );
     }
 
     @GetMapping("/products/{identifier}")

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath } from "../utils/normalize";
 import BrandLogo from "./BrandLogo";
 import Tooltip from "./Tooltip";
@@ -363,8 +365,15 @@ function Navbar() {
                           <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-start gap-3">
                             <Link to={getProductPath(item)} onClick={closeMenus}>
                               <img
-                                src={item.imageUrl}
+                                {...getResponsiveImageProps(item.imageUrl, {
+                                  widths: [128, 192, 256],
+                                  quality: 64,
+                                  sizes: "64px",
+                                })}
                                 alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(event) => applyImageFallback(event, fallbackProductImage)}
                                 className="h-16 w-16 rounded-[14px] object-cover"
                               />
                             </Link>
@@ -442,8 +451,15 @@ function Navbar() {
                           <article key={item.id} className="grid grid-cols-[64px_1fr] gap-3">
                             <Link to="/cart" onClick={closeMenus}>
                               <img
-                                src={item.imageUrl}
+                                {...getResponsiveImageProps(item.imageUrl, {
+                                  widths: [128, 192, 256],
+                                  quality: 64,
+                                  sizes: "64px",
+                                })}
                                 alt={item.productName}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(event) => applyImageFallback(event, fallbackProductImage)}
                                 className="h-16 w-16 rounded-[14px] object-cover"
                               />
                             </Link>

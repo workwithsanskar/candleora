@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import heroImage from "../assets/designer/image-optimized.jpg";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
@@ -85,12 +86,27 @@ function TestimonialCard({ story }) {
 }
 
 function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [faqs, setFaqs] = useState([]);
-  const [error, setError] = useState("");
   const [expandedFaq, setExpandedFaq] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const testimonialCarouselRef = useRef(null);
+  const featuredProductsQuery = useQuery({
+    queryKey: ["catalog", "products", { size: 8, sort: "popular" }],
+    queryFn: () => catalogApi.getProducts({ size: 8, sort: "popular" }),
+    select: (response) => response?.content ?? [],
+  });
+  const faqsQuery = useQuery({
+    queryKey: ["content", "faqs"],
+    queryFn: () => contentApi.getFaqs(),
+    select: (response) => (response ?? []).slice(0, 4),
+  });
+
+  const featuredProducts = featuredProductsQuery.data ?? [];
+  const faqs = faqsQuery.data ?? [];
+  const productError = featuredProductsQuery.error
+    ? formatApiError(featuredProductsQuery.error)
+    : "";
+  const faqError = faqsQuery.error ? formatApiError(faqsQuery.error) : "";
+  const isProductsLoading = featuredProductsQuery.isPending;
+  const isFaqsLoading = faqsQuery.isPending;
 
   const scrollTestimonials = (direction) => {
     const container = testimonialCarouselRef.current;
@@ -108,55 +124,16 @@ function Home() {
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadHomeData = async () => {
-      try {
-        const [productResponse, faqResponse] = await Promise.all([
-          catalogApi.getProducts({ size: 8, sort: "popular" }),
-          contentApi.getFaqs(),
-        ]);
-
-        if (!isMounted) {
-          return;
-        }
-
-        setFeaturedProducts(productResponse.content ?? []);
-        setFaqs((faqResponse ?? []).slice(0, 4));
-        setExpandedFaq(faqResponse?.[0]?.id ?? null);
-      } catch (homeError) {
-        if (isMounted) {
-          setError(formatApiError(homeError));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    setExpandedFaq((currentExpandedFaq) => {
+      if (!faqs.length) {
+        return null;
       }
-    };
 
-    loadHomeData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  if (error) {
-    return (
-      <section className="container-shell py-16">
-        <StatusView
-          title="The storefront could not load"
-          message={error}
-          action={
-            <Link to="/shop" className="btn btn-primary mt-6">
-              Browse the shop
-            </Link>
-          }
-        />
-      </section>
-    );
-  }
+      return faqs.some((faq) => faq.id === currentExpandedFaq)
+        ? currentExpandedFaq
+        : (faqs[0]?.id ?? null);
+    });
+  }, [faqs]);
 
   return (
     <div className="bg-white pb-8">
@@ -193,12 +170,22 @@ function Home() {
           <h2 className="section-title text-center">Our Best Selling Products</h2>
 
           <div className="mt-10 px-2 lg:px-10 xl:px-14">
-            {isLoading ? (
+            {isProductsLoading ? (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <ProductCardSkeleton key={index} />
                 ))}
               </div>
+            ) : productError ? (
+              <StatusView
+                title="Best sellers unavailable"
+                message={productError}
+                action={
+                  <Link to="/shop" className="btn btn-primary mt-6">
+                    Browse the shop
+                  </Link>
+                }
+              />
             ) : (
               <ProductSlider
                 products={featuredProducts}
@@ -337,35 +324,52 @@ function Home() {
           </div>
 
           <div className="space-y-3">
-            {faqs.map((faq) => {
-              const isOpen = expandedFaq === faq.id;
-
-              return (
-                <article key={faq.id} className="rounded-[14px] border border-black/12 bg-white px-5 py-4">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
-                    className="flex w-full items-start justify-between gap-4 text-left"
-                  >
-                    <span className="text-base font-medium text-black">{faq.question}</span>
-                    <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
-                  </button>
-                  {isOpen && (
-                    <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
-                  )}
+            {isFaqsLoading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <article
+                  key={`faq-loading-${index}`}
+                  className="rounded-[14px] border border-black/12 bg-white px-5 py-4"
+                >
+                  <div className="h-5 w-3/4 animate-pulse rounded bg-black/8" />
+                  <div className="mt-3 h-4 w-full animate-pulse rounded bg-black/6" />
+                  <div className="mt-2 h-4 w-5/6 animate-pulse rounded bg-black/6" />
                 </article>
-              );
-            })}
+              ))
+            ) : faqError ? (
+              <StatusView title="FAQ unavailable" message={faqError} />
+            ) : (
+              <>
+                {faqs.map((faq) => {
+                  const isOpen = expandedFaq === faq.id;
 
-            <div className="flex justify-end pt-2">
-              <Link
-                to="/faq"
-                className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
-              >
-                View More
-                <span className="text-base leading-none">+</span>
-              </Link>
-            </div>
+                  return (
+                    <article key={faq.id} className="rounded-[14px] border border-black/12 bg-white px-5 py-4">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedFaq((current) => (current === faq.id ? null : faq.id))}
+                        className="flex w-full items-start justify-between gap-4 text-left"
+                      >
+                        <span className="text-base font-medium text-black">{faq.question}</span>
+                        <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
+                      </button>
+                      {isOpen && (
+                        <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
+                      )}
+                    </article>
+                  );
+                })}
+
+                <div className="flex justify-end pt-2">
+                  <Link
+                    to="/faq"
+                    className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
+                  >
+                    View More
+                    <span className="text-base leading-none">+</span>
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </Reveal>
       </section>

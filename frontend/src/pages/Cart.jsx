@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { catalogApi } from "../services/api";
 import { formatCurrency } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath } from "../utils/normalize";
 
 function RemoveIcon() {
@@ -131,12 +132,15 @@ function Cart() {
 
                       <Link to={getProductPath({ id: item.productId, name: item.productName })} className="shrink-0">
                         <img
-                          src={item.imageUrl}
+                          {...getResponsiveImageProps(item.imageUrl, {
+                            widths: [136, 204, 272],
+                            quality: 64,
+                            sizes: "68px",
+                          })}
                           alt={item.productName}
-                          onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = fallbackImage;
-                          }}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(event) => applyImageFallback(event, fallbackImage)}
                           className="h-[88px] w-[68px] rounded-[10px] bg-black/5 object-cover"
                         />
                       </Link>

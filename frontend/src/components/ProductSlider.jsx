@@ -115,6 +115,7 @@ function ProductSlider({
               <ProductCard
                 key={product.id}
                 product={product}
+                priority={page === 0 && index < cardsPerPage}
                 variant="compact"
                 compactIndex={page * cardsPerPage + index}
               />

@@ -20,7 +20,7 @@ function LazyProductCard({ product, priority = false, viewportMargin = "260px 0p
 
   return (
     <div ref={cardRef}>
-      {shouldRenderCard ? <ProductCard product={product} /> : <ProductCardSkeleton />}
+      {shouldRenderCard ? <ProductCard product={product} priority={priority} /> : <ProductCardSkeleton />}
     </div>
   );
 }

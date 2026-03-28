@@ -3,6 +3,9 @@ package com.candleora;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,6 +15,9 @@ class CatalogControllerIntegrationTest extends IntegrationTestSupport {
     void getProductsReturnsPagedCatalogResults() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/products"))
             .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", "public, max-age=60, stale-while-revalidate=300"))
+            .andExpect(header().string("Server-Timing", containsString("catalog-products;dur=")))
+            .andExpect(header().string("X-Response-Time", matchesPattern("\\d+ms")))
             .andExpect(jsonPath("$.content[0].id").exists())
             .andExpect(jsonPath("$.content[0].category.slug").exists())
             .andExpect(jsonPath("$.content[0].imageUrl").exists())

@@ -5,6 +5,7 @@ import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath, normalizeProduct } from "../utils/normalize";
 
 function HeartIcon({ filled = false }) {
@@ -37,7 +38,7 @@ function StarRow() {
   );
 }
 
-function ProductCard({ product, badgeLabel = null }) {
+function ProductCard({ product, badgeLabel = null, priority = false }) {
   const { addToCart, removeFromCart, items: cartItems } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const prefersReducedMotion = useReducedMotion();
@@ -50,20 +51,25 @@ function ProductCard({ product, badgeLabel = null }) {
   const activeBadge = badgeLabel ?? (item.discount > 0 ? `-${item.discount}%` : null);
   const isNewBadge = activeBadge?.toUpperCase() === "NEW";
   const productPath = getProductPath(item);
+  const cardImage = getResponsiveImageProps(item.imageUrls[0], {
+    widths: [240, 320, 480],
+    quality: 68,
+    sizes: "(min-width: 1280px) 250px, (min-width: 768px) 50vw, 100vw",
+  });
 
   return (
     <article className="group mx-auto w-full max-w-[250px] transition duration-300 hover:-translate-y-1">
       <div className="relative h-[314px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
         <Link to={productPath} className="block h-full w-full">
           <img
-            src={item.imageUrls[0]}
+            src={cardImage.src}
+            srcSet={cardImage.srcSet}
+            sizes={cardImage.sizes}
             alt={item.name}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
             decoding="async"
-            onError={(event) => {
-              event.currentTarget.onerror = null;
-              event.currentTarget.src = fallbackProductImage;
-            }}
+            fetchPriority={priority ? "high" : undefined}
+            onError={(event) => applyImageFallback(event, fallbackProductImage)}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
           />
           {activeBadge && (
@@ -161,6 +167,7 @@ function ProductCard({ product, badgeLabel = null }) {
 
 ProductCard.propTypes = {
   badgeLabel: PropTypes.string,
+  priority: PropTypes.bool,
   product: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     name: PropTypes.string.isRequired,
