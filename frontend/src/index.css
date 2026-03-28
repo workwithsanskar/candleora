@@ -23,7 +23,14 @@
   }
 
   html {
-    scroll-behavior: auto;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
   }
 
   html.dark {
@@ -37,6 +44,9 @@
   body {
     @apply m-0 min-h-screen bg-white text-brand-dark antialiased;
     font-family: "Poppins", "Segoe UI", sans-serif;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   img {
@@ -152,5 +162,28 @@
 
   .theme-surface-card {
     @apply border-black/10 bg-white;
+  }
+
+  .mini-cart-scroll-host {
+    border-radius: 18px;
+  }
+
+  .mini-cart-scroll-view {
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
+
+  .stealth-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .stealth-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mini-cart-scroll-track,
+  .mini-cart-scroll-thumb {
+    display: none;
   }
 }

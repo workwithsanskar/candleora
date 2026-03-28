@@ -26,7 +26,7 @@ public class Coupon {
     @Column(nullable = false)
     private CouponType type;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "`value`", nullable = false, precision = 10, scale = 2)
     private BigDecimal value;
 
     @Column(precision = 10, scale = 2)

@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 
 const inputClassName =
-  "w-full rounded-[18px] border border-black/12 bg-white px-4 py-3.5 text-black outline-none transition placeholder:text-black/35 focus:border-black/35 focus:ring-2 focus:ring-[#f3b33d]/20";
+  "h-[52px] w-full rounded-[16px] border border-black/12 bg-white px-4 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/35 focus:ring-2 focus:ring-[#f3b33d]/20";
 
 function LabelText({ label, required = false }) {
   return (
@@ -14,7 +14,7 @@ function LabelText({ label, required = false }) {
 
 function Field({ label, required = false, children, className = "" }) {
   return (
-    <label className={`space-y-2.5 ${className}`.trim()}>
+    <label className={`space-y-2 ${className}`.trim()}>
       <LabelText label={label} required={required} />
       {children}
     </label>
@@ -23,10 +23,24 @@ function Field({ label, required = false, children, className = "" }) {
 
 function Section({ title, children }) {
   return (
-    <div className="space-y-5 rounded-[22px] border border-black/8 bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.04)] sm:p-6">
-      <h3 className="border-b border-black/8 pb-3 text-base font-semibold text-black">{title}</h3>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    <div className="space-y-4 rounded-[20px] border border-black/8 bg-white p-4 shadow-[0_8px_18px_rgba(0,0,0,0.04)] sm:p-5">
+      <h3 className="border-b border-black/8 pb-2.5 text-[15px] font-semibold text-black">{title}</h3>
+      <div className="grid gap-3.5 sm:grid-cols-2">{children}</div>
     </div>
+  );
+}
+
+function SelectChevron() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 text-black/45"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M6 9L12 15L18 9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -40,7 +54,7 @@ function AccountProfileFields({
   includePassword,
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Section title="Profile Information">
         <Field label="Full name" required className="sm:col-span-2">
           <input
@@ -68,8 +82,9 @@ function AccountProfileFields({
           </Field>
         )}
 
-        <Field label="Phone number">
+        <Field label="Phone number" required>
           <input
+            required
             name="phoneNumber"
             value={form.phoneNumber}
             onChange={onChange}
@@ -89,28 +104,38 @@ function AccountProfileFields({
         </Field>
 
         <Field label="Gender">
-          <select
-            name="gender"
-            value={form.gender}
-            onChange={onChange}
-            className={inputClassName}
-          >
-            <option value="">Select gender</option>
-            <option value="Female">Female</option>
-            <option value="Male">Male</option>
-            <option value="Non-binary">Non-binary</option>
-            <option value="Prefer not to say">Prefer not to say</option>
-          </select>
+          <div className="relative">
+            <select
+              name="gender"
+              value={form.gender}
+              onChange={onChange}
+              className={`${inputClassName} appearance-none pr-11`}
+            >
+              <option value="">Select gender</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+              <SelectChevron />
+            </div>
+          </div>
         </Field>
 
         <Field label="Date of birth">
-          <input
-            type="date"
-            name="dateOfBirth"
-            value={form.dateOfBirth}
-            onChange={onChange}
-            className={inputClassName}
-          />
+          <div className="space-y-1.5">
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={form.dateOfBirth}
+              onChange={onChange}
+              className={inputClassName}
+            />
+            <p className="pl-1 text-[11px] font-medium uppercase tracking-[0.12em] text-black/42">
+              mm/dd/yyyy
+            </p>
+          </div>
         </Field>
 
         {includePassword && (
@@ -130,8 +155,9 @@ function AccountProfileFields({
       </Section>
 
       <Section title="Address">
-        <Field label="Address line 1" className="sm:col-span-2">
+        <Field label="Address line 1" required className="sm:col-span-2">
           <input
+            required
             name="addressLine1"
             value={form.addressLine1}
             onChange={onChange}
@@ -150,8 +176,9 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="City">
+        <Field label="City" required>
           <input
+            required
             name="city"
             value={form.city}
             onChange={onChange}
@@ -160,8 +187,9 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="State">
+        <Field label="State" required>
           <input
+            required
             name="state"
             value={form.state}
             onChange={onChange}
@@ -170,8 +198,9 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="Postal code">
+        <Field label="Postal code" required>
           <input
+            required
             name="postalCode"
             value={form.postalCode}
             onChange={onChange}
@@ -180,8 +209,9 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="Country">
+        <Field label="Country" required>
           <input
+            required
             name="country"
             value={form.country}
             onChange={onChange}
@@ -192,8 +222,9 @@ function AccountProfileFields({
       </Section>
 
       <Section title="Delivery Preferences">
-        <Field label="Delivery location / address tag" className="sm:col-span-2">
+        <Field label="Current location / address tag" required className="sm:col-span-2">
           <input
+            required
             name="locationLabel"
             value={form.locationLabel}
             onChange={onChange}
@@ -207,16 +238,17 @@ function AccountProfileFields({
             type="button"
             onClick={onUseCurrentLocation}
             disabled={isLocating}
-            className="rounded-full border border-black/15 px-5 py-3 text-sm font-semibold text-black transition hover:border-black hover:bg-black/5 disabled:opacity-60"
+            className="rounded-full border border-black/15 px-5 py-2.5 text-sm font-semibold text-black transition hover:border-black hover:bg-black/5 disabled:opacity-60"
           >
             {isLocating ? "Detecting location..." : "Use current location"}
           </button>
         </div>
 
-        <Field label="Latitude">
+        <Field label="Latitude" required>
           <input
             type="number"
             step="any"
+            required
             name="latitude"
             value={form.latitude}
             onChange={onChange}
@@ -224,10 +256,11 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="Longitude">
+        <Field label="Longitude" required>
           <input
             type="number"
             step="any"
+            required
             name="longitude"
             value={form.longitude}
             onChange={onChange}

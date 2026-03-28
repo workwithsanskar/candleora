@@ -15,6 +15,12 @@ const emptyForm = {
   message: "",
 };
 
+const fieldLabelClassName = "text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-black/68";
+const fieldInputClassName =
+  "h-[56px] w-full rounded-[22px] border border-black/15 bg-white px-5 text-[0.98rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+const fieldTextareaClassName =
+  "min-h-[108px] w-full rounded-[22px] border border-black/15 bg-white px-5 py-4 text-[0.98rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+
 function buildInitialForm(user) {
   return {
     ...emptyForm,
@@ -106,29 +112,29 @@ function ContactUs() {
 
   return (
     <div className="bg-white">
-      <section className="container-shell py-8 sm:py-10">
-        <div className="mx-auto max-w-[1180px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
-          <div className="bg-black px-6 py-4 sm:px-8 lg:px-10">
+      <section className="container-shell py-6 sm:py-8">
+        <div className="mx-auto max-w-[1140px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
+          <div className="bg-black px-6 py-3.5 sm:px-8 lg:px-9">
             <h1 className="font-display text-heading-md font-semibold text-white">
               Get In Touch With Us
             </h1>
           </div>
 
-          <div className="grid gap-6 px-6 py-6 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-8 lg:px-10 lg:py-8">
-            <div className="space-y-5">
-              <div className="border-b border-black/10 pb-4">
+          <div className="grid gap-5 px-6 py-5 sm:px-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-7 lg:px-9 lg:py-6">
+            <div className="space-y-4">
+              <div className="border-b border-black/10 pb-3">
                 <p className="text-base font-medium text-black">Phone Number</p>
-                <p className="mt-1.5 text-[0.98rem] leading-6 text-black/68">8999908639</p>
+                <p className="mt-1 text-[0.98rem] leading-6 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-4">
+              <div className="border-b border-black/10 pb-3">
                 <p className="text-base font-medium text-black">Email Address</p>
-                <p className="mt-1.5 text-[0.98rem] leading-6 text-black/68">candleora25@gmail.com</p>
+                <p className="mt-1 text-[0.98rem] leading-6 text-black/68">candleora25@gmail.com</p>
               </div>
 
               <div>
                 <p className="text-base font-medium text-black">Location</p>
-                <p className="mt-1.5 max-w-[360px] text-[0.98rem] leading-6 text-black/68">
+                <p className="mt-1 max-w-[340px] text-[0.98rem] leading-6 text-black/68">
                   Nagpur, Maharashtra, India
                 </p>
               </div>
@@ -139,63 +145,81 @@ function ContactUs() {
                 <h2 className="font-display text-heading-md font-semibold text-black">
                   Send us a message
                 </h2>
-                <p className="mt-2 max-w-[620px] text-sm leading-6 text-black/62">
+                <p className="mt-1.5 max-w-[620px] text-sm leading-6 text-black/62">
                   Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
+                </p>
+                <p className="mt-2 text-[0.82rem] font-medium tracking-[0.02em] text-black/48">
+                  All fields below are required so we can reach you properly.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Your Name"
-                    className="input-pill"
-                  />
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="Your E-mail"
-                    className="input-pill"
-                  />
+              <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1.5">
+                    <span className={fieldLabelClassName}>Your name *</span>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                      className={fieldInputClassName}
+                    />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className={fieldLabelClassName}>Email address *</span>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="Enter your email address"
+                      className={fieldInputClassName}
+                    />
+                  </label>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="Phone Number"
-                    className="input-pill"
-                  />
-                  <input
-                    type="text"
-                    name="subject"
-                    value={form.subject}
-                    onChange={handleChange}
-                    placeholder="Subject"
-                    className="input-pill"
-                  />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1.5">
+                    <span className={fieldLabelClassName}>Phone number *</span>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                      placeholder="Enter your mobile number"
+                      className={fieldInputClassName}
+                    />
+                  </label>
+                  <label className="space-y-1.5">
+                    <span className={fieldLabelClassName}>Subject *</span>
+                    <input
+                      type="text"
+                      name="subject"
+                      value={form.subject}
+                      onChange={handleChange}
+                      placeholder="What do you need help with?"
+                      className={fieldInputClassName}
+                    />
+                  </label>
                 </div>
 
-                <textarea
-                  rows="4"
-                  name="message"
-                  value={form.message}
-                  onChange={handleChange}
-                  placeholder="Message"
-                  className="min-h-[132px] w-full rounded-[24px] border border-black/15 px-5 py-4 text-sm text-black outline-none transition placeholder:text-black/35 focus:border-black"
-                />
+                <label className="space-y-1.5">
+                  <span className={fieldLabelClassName}>Message *</span>
+                  <textarea
+                    rows="3"
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
+                    placeholder="Tell us about your order, gifting request, custom requirement, or question."
+                    className={fieldTextareaClassName}
+                  />
+                </label>
 
                 {error && <p className="text-sm font-semibold text-danger">{error}</p>}
                 {statusMessage && <p className="text-sm font-semibold text-success">{statusMessage}</p>}
 
-                <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-60">
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary rounded-[12px] disabled:opacity-60">
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
               </form>

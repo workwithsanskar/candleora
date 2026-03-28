@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import AccountProfileFields from "../components/AccountProfileFields";
 import StatusView from "../components/StatusView";
+import Tooltip from "../components/Tooltip";
 import { useAddresses } from "../context/AddressContext";
 import { useAuth } from "../context/AuthContext";
 import { PHONE_AUTH_ENABLED, REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER } from "../utils/authFlow";
@@ -11,7 +12,11 @@ import { formatApiError } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
 
 const sectionButtonClass =
-  "rounded-full px-6 py-3 text-sm font-semibold transition";
+  "inline-flex min-h-[54px] items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition";
+const statusPillClass =
+  "inline-flex min-h-[54px] items-center justify-center rounded-full border px-4 text-sm font-semibold leading-none transition";
+const addressInputClass =
+  "h-[54px] w-full rounded-[16px] border border-black/12 bg-white px-5 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/28 focus:ring-2 focus:ring-[#f3b33d]/18";
 
 function buildAddressDraft(source = {}) {
   return {
@@ -48,6 +53,27 @@ function RequiredLabel({ text, required = false }) {
       {text}
       {required ? <span className="ml-1 text-[#d63d3d]">*</span> : null}
     </span>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 20L8.2 18.9L18.4 8.7L15.3 5.6L5.1 15.8L4 20Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13.9 7L17 10.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4.5 7H19.5" strokeLinecap="round" />
+      <path d="M9.5 3.8H14.5" strokeLinecap="round" />
+      <path d="M7.5 7L8.2 18.2C8.3 19.2 9.1 20 10.1 20H13.9C14.9 20 15.7 19.2 15.8 18.2L16.5 7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 10.5V16" strokeLinecap="round" />
+      <path d="M14 10.5V16" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -177,20 +203,11 @@ function AccountDetails() {
       const location = await getCurrentLocation();
       setForm((current) => ({
         ...current,
-        locationLabel: current.locationLabel || location.locationLabel,
+        locationLabel: location.locationLabel || current.locationLabel,
         latitude: String(location.latitude),
         longitude: String(location.longitude),
-        addressLine1: location.addressLine1 || current.addressLine1,
-        city: location.city || current.city,
-        state: location.state || current.state,
-        postalCode: location.postalCode || current.postalCode,
-        country: location.country || current.country,
       }));
-      setSuccessMessage(
-        location.addressLine1 || location.city || location.state || location.country
-          ? "Current location and address added to your profile form."
-          : "Current location added to your profile form.",
-      );
+      setSuccessMessage("Current location tag added. Address details stay under your control.");
     } catch (locationError) {
       setError(formatApiError(locationError));
     } finally {
@@ -202,6 +219,34 @@ function AccountDetails() {
     event.preventDefault();
     setError("");
     setSuccessMessage("");
+
+    if (!String(form.name ?? "").trim()) {
+      setError("Full name is required.");
+      return;
+    }
+    if (!String(form.phoneNumber ?? "").trim()) {
+      setError("Phone number is required.");
+      return;
+    }
+    if (
+      !String(form.addressLine1 ?? "").trim() ||
+      !String(form.city ?? "").trim() ||
+      !String(form.state ?? "").trim() ||
+      !String(form.postalCode ?? "").trim() ||
+      !String(form.country ?? "").trim()
+    ) {
+      setError("Complete your address details before saving the profile.");
+      return;
+    }
+    if (!String(form.locationLabel ?? "").trim()) {
+      setError("Current location / address tag is required.");
+      return;
+    }
+    if (form.latitude === "" || form.longitude === "") {
+      setError("Use current location or enter latitude and longitude before saving.");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -244,9 +289,10 @@ function AccountDetails() {
       !payload.addressLine1 ||
       !payload.city ||
       !payload.state ||
-      !payload.postalCode
+      !payload.postalCode ||
+      !payload.country
     ) {
-      toast.error("Complete the recipient, phone, and postal details before saving.");
+      toast.error("Complete the recipient, phone, country, and postal details before saving.");
       return;
     }
 
@@ -271,6 +317,10 @@ function AccountDetails() {
   };
 
   const handleDeleteAddress = async (addressId) => {
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete this address?")) {
+      return;
+    }
+
     try {
       await deleteAddress(addressId);
       if (editingAddressId === addressId) {
@@ -325,7 +375,7 @@ function AccountDetails() {
           <p className="max-w-[860px] text-body leading-7 text-black/62">
             Keep your profile information current, save multiple delivery addresses, and make future checkouts much faster from one polished account workspace.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => setSection("details")}
@@ -349,7 +399,7 @@ function AccountDetails() {
               Saved Addresses
             </button>
             <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+              className={`${statusPillClass} ${
                 profile?.emailVerified
                   ? "border-green/20 bg-green/10 text-green-800"
                   : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
@@ -359,7 +409,7 @@ function AccountDetails() {
             </span>
             {PHONE_AUTH_ENABLED && (
               <span
-                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                className={`${statusPillClass} px-5 text-center leading-5 ${
                   profile?.phoneVerified
                     ? "border-green/20 bg-green/10 text-green-800"
                     : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
@@ -380,12 +430,12 @@ function AccountDetails() {
 
         {activeSection === "details" ? (
           <form
-            className="space-y-8 rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8 lg:p-10"
+            className="space-y-6 rounded-[26px] border border-black/10 bg-white p-5 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-6 lg:p-7"
             onSubmit={handleSubmit}
           >
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_270px]">
-              <div className="space-y-6">
-                <div className="space-y-2">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_250px]">
+              <div className="space-y-5">
+                <div className="space-y-1.5">
                   <h2 className="text-xl font-semibold text-black">Profile Information</h2>
                   <p className="text-sm leading-6 text-black/58">
                     Update your core profile, primary address, and delivery preferences in a cleaner, easier-to-scan form.
@@ -400,9 +450,9 @@ function AccountDetails() {
                 />
               </div>
 
-              <aside className="rounded-[22px] border border-black/10 bg-[#fff9ee] p-5">
-                <h3 className="text-base font-semibold text-black">Profile checklist</h3>
-                <ul className="mt-4 space-y-3 text-sm leading-6 text-black/66">
+              <aside className="h-fit self-start rounded-[20px] border border-black/10 bg-[#fff9ee] p-4">
+                <h3 className="text-[15px] font-semibold text-black">Profile checklist</h3>
+                <ul className="mt-3 space-y-2.5 text-sm leading-6 text-black/66">
                   <li className="flex gap-3">
                     <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
                     Keep your mobile number current for smoother delivery updates.
@@ -419,7 +469,7 @@ function AccountDetails() {
               </aside>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="submit"
                 disabled={isSaving}
@@ -437,16 +487,16 @@ function AccountDetails() {
             {successMessage && <p className="text-sm font-semibold text-green-700">{successMessage}</p>}
           </form>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[0.94fr_1.06fr]">
-            <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
+          <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-[26px] border border-black/8 bg-[#fffdfa] p-6 shadow-[0_18px_34px_rgba(0,0,0,0.045)] sm:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-[420px] space-y-2">
                   <h2 className="text-xl font-semibold text-black">Saved Addresses</h2>
-                  <p className="mt-2 text-sm leading-6 text-black/62">
+                  <p className="text-sm leading-6 text-black/62">
                     Your addresses are now synced with your CandleOra account and available across devices.
                   </p>
                 </div>
-                <span className="rounded-full bg-brand-primary/12 px-3 py-1 text-xs font-semibold text-black">
+                <span className="inline-flex h-[34px] items-center rounded-full border border-brand-primary/20 bg-brand-primary/12 px-3.5 text-xs font-semibold text-black">
                   {savedAddresses.length} saved
                 </span>
               </div>
@@ -457,14 +507,14 @@ function AccountDetails() {
 
               <div className="mt-6 space-y-4">
                 {isAddressesLoading ? (
-                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
+                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-7 text-sm leading-7 text-black/58">
                     Loading saved addresses...
                   </div>
                 ) : savedAddresses.length ? (
                   savedAddresses.map((address) => (
                     <article
                       key={address.id}
-                      className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.05)]"
+                      className="rounded-[20px] border border-black/8 bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -481,45 +531,61 @@ function AccountDetails() {
                           <h3 className="mt-2 text-lg font-semibold text-black">{address.recipientName}</h3>
                           <p className="mt-1 text-sm text-black/62">{address.phoneNumber}</p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleUseAddressForProfile(address)}
-                            className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-black transition hover:border-black/25"
-                          >
-                            Use in profile
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditAddress(address)}
-                            className="rounded-full border border-brand-primary/20 bg-brand-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-black transition hover:bg-brand-primary/20"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAddress(address.id)}
-                            className="rounded-full border border-danger/20 bg-danger/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-danger transition hover:bg-danger/15"
-                          >
-                            Delete
-                          </button>
+                        <div className="flex items-center gap-2">
+                          <Tooltip content="Edit address">
+                            <button
+                              type="button"
+                              aria-label="Edit address"
+                              onClick={() => handleEditAddress(address)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-black transition hover:border-black/25 hover:bg-black/5"
+                            >
+                              <EditIcon />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Delete address">
+                            <button
+                              type="button"
+                              aria-label="Delete address"
+                              onClick={() => handleDeleteAddress(address.id)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-danger/20 text-danger transition hover:bg-danger/10"
+                            >
+                              <DeleteIcon />
+                            </button>
+                          </Tooltip>
                         </div>
                       </div>
 
                       <p className="mt-4 text-sm leading-6 text-black/68">{formatAddressLines(address)}</p>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleUseAddressForProfile(address)}
+                          className="inline-flex h-[38px] items-center rounded-full border border-black/10 px-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/62 transition hover:border-black/20 hover:text-black"
+                        >
+                          Use in profile
+                        </button>
+                      </div>
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-8 text-sm leading-7 text-black/58">
-                    No saved addresses yet. Add your first address from the panel on the right.
+                  <div className="rounded-[22px] border border-dashed border-black/14 bg-white px-6 py-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+                    <div className="mx-auto max-w-[320px] space-y-3">
+                      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/12 text-lg text-black">
+                        +
+                      </span>
+                      <p className="text-base font-medium text-black">No saved addresses yet</p>
+                      <p className="text-sm leading-6 text-black/58">
+                        Add your first address from the panel on the right and it will be ready across checkout and your account.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_20px_40px_rgba(0,0,0,0.05)] sm:p-8">
+            <section className="rounded-[26px] border border-black/8 bg-white p-6 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-7">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
+                <div className="max-w-[420px]">
                   <h2 className="text-xl font-semibold text-black">
                     {editingAddressId ? "Edit Address" : "Add New Address"}
                   </h2>
@@ -530,14 +596,14 @@ function AccountDetails() {
                 <button
                   type="button"
                   onClick={() => resetAddressDraft()}
-                  className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-black transition hover:border-black/25"
+                  className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black transition hover:border-black/25"
                 >
                   Reset
                 </button>
               </div>
 
-              <form className="mt-6 space-y-4" onSubmit={handleSaveAddress}>
-                <div className="grid gap-4 sm:grid-cols-2">
+              <form className="mt-6 space-y-5" onSubmit={handleSaveAddress}>
+                <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
                     <RequiredLabel text="Address label" />
                     <input
@@ -545,92 +611,101 @@ function AccountDetails() {
                       value={addressDraft.label}
                       onChange={handleAddressDraftChange}
                       placeholder="Home, Office, Studio... (optional)"
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                   <label className="space-y-2">
                     <RequiredLabel text="Recipient name" required />
                     <input
+                      required
                       name="recipientName"
                       value={addressDraft.recipientName}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
                     <RequiredLabel text="Phone number" required />
                     <input
+                      required
                       name="phoneNumber"
                       value={addressDraft.phoneNumber}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                   <label className="space-y-2">
-                    <RequiredLabel text="Country" />
+                    <RequiredLabel text="Country" required />
                     <input
+                      required
                       name="country"
                       value={addressDraft.country}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                 </div>
 
-                <label className="space-y-2">
-                  <RequiredLabel text="Address line 1" required />
-                  <input
-                    name="addressLine1"
-                    value={addressDraft.addressLine1}
-                    onChange={handleAddressDraftChange}
-                    className="input-pill rounded-2xl"
-                  />
-                </label>
+                <div className="grid gap-4">
+                  <label className="space-y-2">
+                    <RequiredLabel text="Address line 1" required />
+                    <input
+                      required
+                      name="addressLine1"
+                      value={addressDraft.addressLine1}
+                      onChange={handleAddressDraftChange}
+                      className={addressInputClass}
+                    />
+                  </label>
 
-                <label className="space-y-2">
-                  <RequiredLabel text="Address line 2" />
-                  <input
-                    name="addressLine2"
-                    value={addressDraft.addressLine2}
-                    onChange={handleAddressDraftChange}
-                    className="input-pill rounded-2xl"
-                  />
-                </label>
+                  <label className="space-y-2">
+                    <RequiredLabel text="Address line 2" />
+                    <input
+                      name="addressLine2"
+                      value={addressDraft.addressLine2}
+                      onChange={handleAddressDraftChange}
+                      className={addressInputClass}
+                    />
+                  </label>
+                </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   <label className="space-y-2">
                     <RequiredLabel text="City" required />
                     <input
+                      required
                       name="city"
                       value={addressDraft.city}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                   <label className="space-y-2">
                     <RequiredLabel text="State" required />
                     <input
+                      required
                       name="state"
                       value={addressDraft.state}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                   <label className="space-y-2">
                     <RequiredLabel text="Postal code" required />
                     <input
+                      required
                       name="postalCode"
                       value={addressDraft.postalCode}
                       onChange={handleAddressDraftChange}
-                      className="input-pill rounded-2xl"
+                      className={addressInputClass}
                     />
                   </label>
                 </div>
 
-                <label className="flex items-center gap-3 rounded-[14px] border border-black/8 px-4 py-3 text-sm text-black/72">
+                <label className="flex items-center gap-3 rounded-[16px] border border-black/8 bg-[#fffdfa] px-4 py-3.5 text-sm text-black/72">
                   <input
                     type="checkbox"
                     name="isDefault"
@@ -641,11 +716,11 @@ function AccountDetails() {
                   Set as default address
                 </label>
 
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap gap-3 pt-1">
                   <button
                     type="submit"
                     disabled={isAddressMutating}
-                    className="btn btn-primary rounded-[12px] disabled:opacity-60"
+                    className="btn btn-primary min-w-[190px] rounded-[14px] disabled:opacity-60"
                   >
                     {isAddressMutating
                       ? editingAddressId
@@ -658,7 +733,7 @@ function AccountDetails() {
                   <button
                     type="button"
                     onClick={() => resetAddressDraft()}
-                    className="btn btn-outline rounded-[12px]"
+                    className="btn btn-outline min-w-[118px] rounded-[14px]"
                   >
                     Clear
                   </button>

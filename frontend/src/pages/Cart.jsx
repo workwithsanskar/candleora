@@ -1,22 +1,43 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import LazyProductCard from "../components/LazyProductCard";
+import fallbackImage from "../assets/designer/image-optimized.jpg";
+import ProductSlider from "../components/ProductSlider";
 import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { catalogApi } from "../services/api";
 import { formatCurrency } from "../utils/format";
+import { getProductPath } from "../utils/normalize";
+
+function RemoveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 6L18 18" strokeLinecap="round" />
+      <path d="M18 6L6 18" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function Cart() {
   const { isAuthenticated } = useAuth();
   const { items, grandTotal, updateQuantity, removeFromCart, isLoading, error } = useCart();
   const [recommendations, setRecommendations] = useState([]);
 
+  const visibleRecommendations = useMemo(() => {
+    const cartProductIds = new Set(
+      items.map((item) => Number(item.productId ?? item.id)),
+    );
+
+    return recommendations.filter(
+      (product) => !cartProductIds.has(Number(product.id ?? product.productId)),
+    );
+  }, [items, recommendations]);
+
   useEffect(() => {
     let isMounted = true;
 
     catalogApi
-      .getProducts({ size: 4, sort: "popular" })
+      .getProducts({ size: 8, sort: "popular" })
       .then((response) => {
         if (isMounted) {
           setRecommendations(response.content ?? []);
@@ -37,9 +58,14 @@ function Cart() {
     <section className="container-shell py-10 sm:py-12">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
         <div className="space-y-6">
-          <div>
+          <div className="space-y-3">
             <p className="eyebrow">Cart</p>
-            <h1 className="page-title mt-3">Your candle selection</h1>
+            <h1 className="page-title">Your candle selection</h1>
+            {!isLoading && !error && items.length ? (
+              <p className="max-w-[760px] text-sm leading-7 text-black/60">
+                Review your picks, update quantities, and remove anything you do not need before moving to checkout.
+              </p>
+            ) : null}
           </div>
 
           {isLoading ? (
@@ -60,8 +86,25 @@ function Cart() {
               }
             />
           ) : (
-            <div className="overflow-hidden rounded-[12px] border border-black/12 bg-white shadow-candle">
-              <div className="hidden grid-cols-[minmax(0,1.8fr)_110px_130px_110px] items-center gap-6 bg-black/82 px-6 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-white lg:grid">
+            <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/8 bg-[#fffdfa] px-5 py-4 lg:px-6">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-black">
+                    {items.length} {items.length === 1 ? "item" : "items"} in your cart
+                  </p>
+                  <p className="text-sm leading-6 text-black/58">
+                    Need something else too? You can continue shopping and come right back here.
+                  </p>
+                </div>
+                <Link
+                  to="/shop"
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-black/12 px-5 text-sm font-semibold text-black transition hover:border-black/24 hover:bg-black/4"
+                >
+                  Continue shopping
+                </Link>
+              </div>
+
+              <div className="hidden grid-cols-[minmax(0,1.9fr)_110px_150px_120px] items-center gap-6 bg-black/82 px-6 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-white lg:grid">
                 <p>Product</p>
                 <p>Price</p>
                 <p>Quantity</p>
@@ -72,7 +115,7 @@ function Cart() {
                 {items.map((item, index) => (
                   <article
                     key={item.id}
-                    className={`grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1.8fr)_110px_130px_110px] lg:items-center lg:gap-6 lg:px-6 ${
+                    className={`grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1.9fr)_110px_150px_120px] lg:items-center lg:gap-6 lg:px-6 ${
                       index !== items.length - 1 ? "border-b border-black/8" : ""
                     }`}
                   >
@@ -80,23 +123,44 @@ function Cart() {
                       <button
                         type="button"
                         onClick={() => removeFromCart(item.id)}
-                        className="mt-2 text-sm text-black/40 transition hover:text-danger"
+                        className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-black/45 transition hover:bg-black/5 hover:text-danger"
                         aria-label={`Remove ${item.productName} from cart`}
                       >
-                        ×
+                        <RemoveIcon />
                       </button>
-                      <img
-                        src={item.imageUrl}
-                        alt={item.productName}
-                        className="h-[72px] w-[52px] rounded-[6px] bg-black/5 object-cover"
-                      />
-                      <div className="min-w-0">
-                        <h2 className="text-sm font-medium leading-5 text-black">
+
+                      <Link to={getProductPath({ id: item.productId, name: item.productName })} className="shrink-0">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = fallbackImage;
+                          }}
+                          className="h-[88px] w-[68px] rounded-[10px] bg-black/5 object-cover"
+                        />
+                      </Link>
+
+                      <div className="min-w-0 space-y-2">
+                        <Link
+                          to={getProductPath({ id: item.productId, name: item.productName })}
+                          className="block text-[15px] font-semibold leading-6 text-black transition hover:text-brand-primary"
+                        >
                           {item.productName}
-                        </h2>
-                        <p className="mt-2 text-xs text-black/48 lg:hidden">
+                        </Link>
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/42">
+                          Handpicked for your cart
+                        </p>
+                        <p className="text-xs text-black/48 lg:hidden">
                           {formatCurrency(item.unitPrice)} each
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-xs font-semibold uppercase tracking-[0.12em] text-danger transition hover:opacity-80 lg:hidden"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
 
@@ -111,11 +175,11 @@ function Cart() {
                       <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                         Quantity
                       </p>
-                      <div className="inline-flex items-center rounded-full border border-black/10 bg-white">
+                      <div className="inline-flex items-center rounded-full border border-black/10 bg-white shadow-[0_6px_16px_rgba(0,0,0,0.04)]">
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="px-4 py-2 text-lg text-black/65"
+                          className="px-4 py-2 text-lg text-black/65 transition hover:text-black"
                         >
                           -
                         </button>
@@ -125,7 +189,7 @@ function Cart() {
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="px-4 py-2 text-lg text-black/65"
+                          className="px-4 py-2 text-lg text-black/65 transition hover:text-black"
                         >
                           +
                         </button>
@@ -136,7 +200,7 @@ function Cart() {
                       <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                         Total
                       </p>
-                      <p className="text-sm font-medium text-black">{formatCurrency(item.lineTotal)}</p>
+                      <p className="text-sm font-semibold text-black">{formatCurrency(item.lineTotal)}</p>
                     </div>
                   </article>
                 ))}
@@ -144,16 +208,6 @@ function Cart() {
             </div>
           )}
 
-          {!isLoading && !error && items.length && recommendations.length ? (
-            <div className="space-y-5 pt-4">
-              <h2 className="section-title">You May Also Like</h2>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                {recommendations.map((product, index) => (
-                  <LazyProductCard key={product.id} product={product} priority={index < 4} />
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
 
         <aside className="panel h-fit space-y-6 p-6">
@@ -183,6 +237,10 @@ function Cart() {
             </div>
           </div>
 
+          <div className="rounded-[20px] border border-brand-primary/12 bg-[#fff9ee] px-4 py-4 text-sm leading-6 text-brand-dark/68">
+            Free shipping is already included. Any coupon savings will appear once applied at checkout.
+          </div>
+
           {isAuthenticated ? (
             <Link to="/checkout" className="btn btn-success w-full text-center">
               Proceed to checkout
@@ -198,6 +256,21 @@ function Cart() {
           )}
         </aside>
       </div>
+
+      {!isLoading && !error && items.length && visibleRecommendations.length ? (
+        <div className="space-y-5 pt-10 sm:pt-12">
+          <h2 className="section-title">You May Also Like</h2>
+          <div className="px-2 lg:px-10 xl:px-14">
+            <ProductSlider
+              products={visibleRecommendations}
+              maxDesktopCards={4}
+              arrowTopClass="top-[180px]"
+              arrowLeftClass="-left-12 xl:-left-16"
+              arrowRightClass="-right-12 xl:-right-16"
+            />
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

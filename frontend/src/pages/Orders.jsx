@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import OrderHistorySkeleton from "../components/OrderHistorySkeleton";
 import StatusView from "../components/StatusView";
@@ -35,6 +35,7 @@ function Orders() {
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [cancelError, setCancelError] = useState("");
   const [cancelErrorOrderId, setCancelErrorOrderId] = useState(null);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
     let isMounted = true;
@@ -62,6 +63,14 @@ function Orders() {
     };
   }, []);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   if (isLoading) {
     return <OrderHistorySkeleton />;
   }
@@ -76,7 +85,7 @@ function Orders() {
 
   const handleCancelOrder = async (orderId) => {
     const confirmed = window.confirm(
-      "Cancel this order now? We can only accept cancellations within the short window after checkout."
+      "Cancel this order now? Online cancellations are available within 24 hours of placing the order."
     );
     if (!confirmed) {
       return;
@@ -100,6 +109,22 @@ function Orders() {
       setCancellingOrderId(null);
     }
   };
+
+  const liveCancelableOrderIds = useMemo(
+    () =>
+      new Set(
+        orders
+          .filter((order) => {
+            if (!order?.canCancel || !order?.cancelDeadline) {
+              return false;
+            }
+
+            return new Date(order.cancelDeadline).getTime() > currentTime;
+          })
+          .map((order) => order.id),
+      ),
+    [currentTime, orders],
+  );
 
   return (
     <section className="container-shell py-10 sm:py-12">
@@ -228,7 +253,7 @@ function Orders() {
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                           Action
                         </p>
-                        {order.canCancel ? (
+                        {liveCancelableOrderIds.has(order.id) ? (
                           <button
                             type="button"
                             className="inline-flex items-center gap-2 text-sm font-semibold text-danger hover:opacity-80"

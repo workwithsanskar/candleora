@@ -11,7 +11,7 @@ public record AddressRequest(
     @NotBlank @Size(max = 120) String city,
     @NotBlank @Size(max = 120) String state,
     @NotBlank @Size(max = 20) String postalCode,
-    @Size(max = 120) String country,
+    @NotBlank @Size(max = 120) String country,
     @NotBlank @Size(max = 40) String phoneNumber,
     Boolean isDefault
 ) {

@@ -27,9 +27,9 @@ function SearchIcon() {
 
 function FilterSection({ title, children }) {
   return (
-    <section className="rounded-[22px] border border-black/10 bg-white px-5 py-5 shadow-[0_12px_26px_rgba(0,0,0,0.05)]">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="h-6 w-[2px] bg-black" />
+    <section className="rounded-[22px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_22px_rgba(0,0,0,0.045)]">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="h-5 w-[2px] bg-black" />
         <h2 className="text-base font-semibold text-black">{title}</h2>
       </div>
       {children}
@@ -106,17 +106,17 @@ function Shop() {
   const initialSkeletonCount = 6;
 
   return (
-    <section className="container-shell py-10 sm:py-12">
-      <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
-        <aside className="space-y-4">
+    <section className="container-shell py-8 sm:py-10">
+      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+        <aside className="space-y-3">
           <FilterSection title="Categories">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {FILTERABLE_CATEGORIES.map((item) => (
                 <button
                   key={item.slug || "all"}
                   type="button"
                   onClick={() => setCategory(item.slug)}
-                  className={`flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-[0.98rem] leading-none transition ${
+                  className={`flex w-full items-center justify-between rounded-full px-4 py-2.5 text-left text-[0.98rem] leading-none transition ${
                     category === item.slug
                       ? "bg-brand-primary text-black"
                       : "text-black/82 hover:bg-black/5 hover:text-black"
@@ -130,7 +130,7 @@ function Shop() {
           </FilterSection>
 
           <FilterSection title="Price Range">
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {priceRanges.map((range) => (
                 <label key={range.id} className="flex items-center gap-3 text-[0.95rem] leading-none text-black/82">
                   <input
@@ -150,11 +150,11 @@ function Shop() {
           </FilterSection>
         </aside>
 
-        <div className="space-y-6">
-          <div className="space-y-5">
+        <div className="space-y-5">
+          <div className="space-y-4">
             <h1 className="font-display text-heading-lg font-semibold text-black">Shop</h1>
 
-            <label className="flex items-center gap-3 rounded-full border border-black/15 px-5 py-3">
+            <label className="flex items-center gap-3 rounded-full border border-black/15 px-5 py-2.5">
               <input
                 type="search"
                 value={search}
@@ -173,7 +173,7 @@ function Shop() {
           </div>
 
           {isLoading && page === 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: initialSkeletonCount }).map((_, index) => (
                 <ProductCardSkeleton key={index} />
               ))}
@@ -195,7 +195,7 @@ function Shop() {
             />
           ) : (
             <>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {products.map((product, index) => (
                   <LazyProductCard
                     key={product.id}

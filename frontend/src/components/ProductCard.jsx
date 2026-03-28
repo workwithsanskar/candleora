@@ -6,7 +6,6 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
 import { getProductPath, normalizeProduct } from "../utils/normalize";
-import Tooltip from "./Tooltip";
 
 function HeartIcon({ filled = false }) {
   return (
@@ -15,7 +14,7 @@ function HeartIcon({ filled = false }) {
       className="h-5 w-5"
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
-      strokeWidth="1.7"
+      strokeWidth="2.1"
     >
       <path
         d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
@@ -30,7 +29,7 @@ function StarRow() {
   return (
     <div className="flex items-center justify-center gap-0.5 text-[#f3b33d]">
       {Array.from({ length: 5 }).map((_, index) => (
-        <svg key={index} viewBox="0 0 24 24" className="h-[21px] w-[21px] fill-current">
+        <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
           <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
         </svg>
       ))}
@@ -53,9 +52,9 @@ function ProductCard({ product, badgeLabel = null }) {
   const productPath = getProductPath(item);
 
   return (
-    <article className="group mx-auto w-full max-w-[286px] transition duration-300 hover:-translate-y-1">
-      <Link to={productPath} className="block">
-        <div className="relative h-[360px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
+    <article className="group mx-auto w-full max-w-[250px] transition duration-300 hover:-translate-y-1">
+      <div className="relative h-[314px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
+        <Link to={productPath} className="block h-full w-full">
           <img
             src={item.imageUrls[0]}
             alt={item.name}
@@ -69,50 +68,49 @@ function ProductCard({ product, badgeLabel = null }) {
           />
           {activeBadge && (
             <span
-              className={`absolute left-2.5 top-2.5 inline-flex min-h-[24px] min-w-[46px] items-center justify-center rounded-[8px] px-2.5 text-[12px] font-semibold leading-none text-white ${
+              className={`absolute left-2.5 top-2.5 inline-flex min-h-[22px] min-w-[42px] items-center justify-center rounded-[8px] px-2 text-[11px] font-semibold leading-none text-white ${
                 isNewBadge ? "bg-[#ff0000]" : "bg-black"
               }`}
             >
               {activeBadge}
             </span>
           )}
-          <Tooltip
-            content={wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-            className="absolute right-2.5 top-2.5 z-10"
+        </Link>
+        <m.button
+          type="button"
+          title={wishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleWishlist(item);
+          }}
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.88 }}
+          className={`absolute right-2.5 top-2.5 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full transition ${
+            wishlisted
+              ? "bg-white/92 text-danger shadow-[0_8px_18px_rgba(0,0,0,0.18)]"
+              : "bg-white/78 text-[#e04646] shadow-[0_8px_18px_rgba(0,0,0,0.16)] hover:bg-white/92 hover:text-[#d63d3d]"
+          }`}
+        >
+          <m.span
+            key={wishlisted ? "wishlisted" : "not-wishlisted"}
+            initial={prefersReducedMotion ? false : { scale: 0.82, opacity: 0.8 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
           >
-            <m.button
-              type="button"
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              onClick={(event) => {
-                event.preventDefault();
-                toggleWishlist(item);
-              }}
-              whileTap={prefersReducedMotion ? undefined : { scale: 0.88 }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 shadow-[0_8px_18px_rgba(0,0,0,0.16)] transition ${
-                wishlisted ? "text-danger" : "text-black hover:text-danger"
-              }`}
-            >
-              <m.span
-                key={wishlisted ? "wishlisted" : "not-wishlisted"}
-                initial={prefersReducedMotion ? false : { scale: 0.82, opacity: 0.8 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <HeartIcon filled={wishlisted} />
-              </m.span>
-            </m.button>
-          </Tooltip>
-        </div>
-      </Link>
+            <HeartIcon filled={wishlisted} />
+          </m.span>
+        </m.button>
+      </div>
 
-      <div className="space-y-1 pt-1.5 text-center">
+      <div className="space-y-[2px] pt-1.5 text-center">
         <Link to={productPath}>
-          <h3 className="line-clamp-2 min-h-[48px] font-heading text-[1.02rem] font-semibold leading-[1.18] text-black">
+          <h3 className="line-clamp-1 min-h-[22px] font-sans text-[15px] font-medium leading-[1.15] text-black">
             {item.name}
           </h3>
         </Link>
 
-        <div className="flex items-center justify-center gap-2 text-[16px] leading-none">
+        <div className="flex items-center justify-center gap-1.5 text-[15px] leading-none">
           {item.originalPrice > item.price && (
             <span className="text-black/35 line-through">
               {formatCurrency(item.originalPrice)}
@@ -123,12 +121,12 @@ function ProductCard({ product, badgeLabel = null }) {
 
         <div className="flex items-center justify-center gap-1">
           <StarRow />
-          <span className="text-xs text-black/55">({Math.max(1, Math.round(item.rating))})</span>
+          <span className="text-[12px] text-black/55">({Math.max(1, Math.round(item.rating))})</span>
         </div>
 
         <m.button
           type="button"
-          className={`inline-flex h-[40px] w-full items-center justify-center rounded-[10px] px-4 text-sm font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
+          className={`mt-1 inline-flex h-[36px] w-full items-center justify-center rounded-[8px] px-4 text-[13px] font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
             item.stock <= 0
               ? "cursor-not-allowed bg-black/15 text-black/45"
               : isInCart
@@ -151,6 +149,7 @@ function ProductCard({ product, badgeLabel = null }) {
             initial={prefersReducedMotion ? false : { y: 4, opacity: 0.75 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.18 }}
+            className="uppercase tracking-[0.03em]"
           >
             {item.stock > 0 ? (isInCart ? "Remove from cart" : "Add to Cart") : "Out of Stock"}
           </m.span>

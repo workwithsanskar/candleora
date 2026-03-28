@@ -44,6 +44,38 @@ export function formatDateRange(startValue, endValue) {
   return formatDate(startValue ?? endValue);
 }
 
+export function formatTimeRemaining(endValue, nowValue = Date.now()) {
+  if (!endValue) {
+    return "";
+  }
+
+  const endTime = new Date(endValue).getTime();
+  const diffMs = endTime - Number(nowValue);
+
+  if (!Number.isFinite(diffMs) || diffMs <= 0) {
+    return "Window closed";
+  }
+
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h remaining`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m remaining`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m remaining`;
+  }
+
+  return "Less than a minute remaining";
+}
+
 export function titleCase(value) {
   const normalized = String(value ?? "");
 

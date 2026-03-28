@@ -99,6 +99,11 @@ function Checkout() {
     () => checkoutItems.map((item) => `${item.productId}:${item.quantity}`).join("|"),
     [checkoutItems],
   );
+  const normalizedCouponInput = String(form.couponCode ?? "").trim().toUpperCase();
+  const appliedCouponCode = String(couponQuote?.code ?? "").trim().toUpperCase();
+  const isCouponApplied = Boolean(
+    couponQuote && appliedCouponCode && appliedCouponCode === normalizedCouponInput,
+  );
 
   useEffect(() => {
     if (couponQuote) {
@@ -262,17 +267,8 @@ function Checkout() {
         locationLabel: location.locationLabel || current.locationLabel,
         latitude: String(location.latitude),
         longitude: String(location.longitude),
-        addressLine1: location.addressLine1 || current.addressLine1,
-        city: location.city || current.city,
-        state: location.state || current.state,
-        postalCode: location.postalCode || current.postalCode,
-        country: location.country || current.country,
       }));
-      toast.success(
-        location.addressLine1 || location.city || location.state || location.country
-          ? "Current location and address added."
-          : "Current location attached.",
-      );
+      toast.success("Current location tag added. Please enter the full address manually.");
     } catch (locationError) {
       setError(formatApiError(locationError));
     } finally {
@@ -333,21 +329,27 @@ function Checkout() {
 
   const persistCheckoutAddressIfNeeded = async () => {
     if (!isAuthenticated || !saveAddressForFuture || hasMatchingSavedAddress) {
-      return;
+      return false;
     }
 
-    await createAddress({
-      label: form.locationLabel || "Saved Address",
-      recipientName: form.shippingName,
-      phoneNumber: form.phone,
-      addressLine1: form.addressLine1,
-      addressLine2: form.addressLine2,
-      city: form.city,
-      state: form.state,
-      postalCode: form.postalCode,
-      country: form.country || "India",
-      isDefault: savedAddresses.length === 0,
-    });
+    try {
+      await createAddress({
+        label: form.locationLabel || "Saved Address",
+        recipientName: form.shippingName,
+        phoneNumber: form.phone,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2,
+        city: form.city,
+        state: form.state,
+        postalCode: form.postalCode,
+        country: form.country || "India",
+        isDefault: savedAddresses.length === 0,
+      });
+      return true;
+    } catch {
+      toast.error("Order will continue, but we could not save this address to your account.");
+      return false;
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -369,10 +371,9 @@ function Checkout() {
         throw new Error("Select a payment method before placing the order.");
       }
 
-      await persistCheckoutAddressIfNeeded();
-
       if (form.paymentMethod === "COD") {
         const order = await orderApi.createOrder(payload);
+        await persistCheckoutAddressIfNeeded();
         clearStoredJson(CHECKOUT_DRAFT_STORAGE_KEY);
         clearCart();
         toast.success("Order placed successfully.");
@@ -381,6 +382,7 @@ function Checkout() {
       }
 
       const phonePePayment = await paymentApi.createPhonePeOrder(payload);
+      await persistCheckoutAddressIfNeeded();
       toast.success("Redirecting to PhonePe...");
       window.location.assign(phonePePayment.checkoutUrl);
     } catch (submitError) {
@@ -417,14 +419,17 @@ function Checkout() {
           value={form.couponCode}
           onChange={handleChange}
           placeholder="Discount Code"
+          disabled={isApplyingCoupon || isCouponApplied}
         />
         <button
           type="button"
-          className="btn btn-secondary h-[48px] shrink-0 rounded-full px-6"
-          onClick={handleApplyCoupon}
+          className={`h-[48px] shrink-0 rounded-full px-6 ${
+            isCouponApplied ? "btn btn-outline" : "btn btn-secondary"
+          }`}
+          onClick={isCouponApplied ? handleClearCoupon : handleApplyCoupon}
           disabled={isApplyingCoupon}
         >
-          {isApplyingCoupon ? "Applying..." : "Apply"}
+          {isApplyingCoupon ? "Applying..." : isCouponApplied ? "Remove coupon" : "Apply"}
         </button>
       </div>
 
@@ -444,9 +449,13 @@ function Checkout() {
               type="button"
               className="btn btn-outline shrink-0 whitespace-nowrap rounded-full"
               onClick={handleUseSampleCoupon}
-              disabled={isApplyingCoupon}
+              disabled={isApplyingCoupon || appliedCouponCode === SAMPLE_COUPON_CODE}
             >
-              {isApplyingCoupon ? "Applying..." : "Use coupon"}
+              {isApplyingCoupon
+                ? "Applying..."
+                : appliedCouponCode === SAMPLE_COUPON_CODE
+                  ? "Coupon applied"
+                  : "Use coupon"}
             </button>
           </div>
         </div>
@@ -460,15 +469,6 @@ function Checkout() {
             )}
             {couponError && <p className="text-sm font-medium text-danger">{couponError}</p>}
           </div>
-          {couponQuote && (
-            <button
-              type="button"
-              className="mt-3 text-sm font-semibold text-black underline underline-offset-4"
-              onClick={handleClearCoupon}
-            >
-              Remove coupon
-            </button>
-          )}
         </div>
       )}
 

@@ -13,14 +13,14 @@ function ArrowButton({ direction, onClick, disabled }) {
       aria-label={direction === "right" ? "Next products" : "Previous products"}
       onClick={onClick}
       disabled={disabled}
-      className="hidden h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white/95 text-[#A6A6A6] shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:border-black/20 hover:bg-white hover:text-[#6f6f6f] hover:shadow-[0_10px_18px_rgba(0,0,0,0.16)] disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
+      className="hidden h-[54px] w-[54px] items-center justify-center rounded-full border border-black/8 bg-white text-[#b1b1b1] shadow-[0_8px_18px_rgba(0,0,0,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-black/15 hover:text-[#7a7a7a] hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)] disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
     >
       <svg
         viewBox="0 0 24 24"
-        className={`h-[39px] w-[23px] ${rotateClass}`}
+        className={`h-[30px] w-[18px] ${rotateClass}`}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
       >
         <path d="M8 5L16 12L8 19" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -33,6 +33,7 @@ function ProductSlider({
   arrowTopClass = "top-[180px]",
   arrowLeftClass = "-left-14 lg:-left-16",
   arrowRightClass = "-right-14 lg:-right-16",
+  maxDesktopCards = 4,
 }) {
   const [cardsPerPage, setCardsPerPage] = useState(4);
   const [page, setPage] = useState(0);
@@ -41,7 +42,7 @@ function ProductSlider({
   useEffect(() => {
     const updateCardsPerPage = () => {
       if (window.innerWidth >= 1280) {
-        setCardsPerPage(4);
+        setCardsPerPage(maxDesktopCards);
         return;
       }
 
@@ -62,7 +63,7 @@ function ProductSlider({
     window.addEventListener("resize", updateCardsPerPage);
 
     return () => window.removeEventListener("resize", updateCardsPerPage);
-  }, []);
+  }, [maxDesktopCards]);
 
   const pageCount = Math.max(1, Math.ceil(products.length / cardsPerPage));
 
@@ -141,6 +142,7 @@ ProductSlider.propTypes = {
   arrowTopClass: PropTypes.string,
   arrowLeftClass: PropTypes.string,
   arrowRightClass: PropTypes.string,
+  maxDesktopCards: PropTypes.number,
 };
 
 export default ProductSlider;

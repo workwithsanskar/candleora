@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import heroImage from "../assets/designer/image-optimized.jpg";
 import bookshelfImage from "../assets/designer/bookshelf-floral.png";
@@ -54,7 +54,7 @@ function CategoryTile({ category, className = "" }) {
       className={`group relative block overflow-hidden rounded-[14px] bg-[#cfcfcf] ${className}`.trim()}
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent transition group-hover:from-black/45" />
-      <span className="absolute bottom-4 left-4 text-base font-medium text-white">
+      <span className="absolute bottom-3 left-3 text-[15px] font-medium text-white">
         {category.name}
       </span>
     </Link>
@@ -63,7 +63,10 @@ function CategoryTile({ category, className = "" }) {
 
 function TestimonialCard({ story }) {
   return (
-    <article className="rounded-[14px] border border-[#f0d5a0] bg-white px-5 py-4 shadow-[0_8px_18px_rgba(209,171,92,0.12)]">
+    <article
+      data-testimonial-card
+      className="w-[320px] shrink-0 snap-start rounded-[14px] border border-[#f0d5a0] bg-white px-5 py-4 shadow-[0_8px_18px_rgba(209,171,92,0.12)] sm:w-[360px] lg:w-[390px] xl:w-[calc((100%-40px)/3)]"
+    >
       <div className="flex items-center gap-2">
         <span className="inline-flex h-4 w-4 rounded-full bg-black" />
         <p className="text-base font-semibold text-black">{story.name}</p>
@@ -87,6 +90,22 @@ function Home() {
   const [error, setError] = useState("");
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const testimonialCarouselRef = useRef(null);
+
+  const scrollTestimonials = (direction) => {
+    const container = testimonialCarouselRef.current;
+    if (!container) {
+      return;
+    }
+
+    const card = container.querySelector("[data-testimonial-card]");
+    const cardWidth = card ? card.getBoundingClientRect().width + 20 : 380;
+
+    container.scrollBy({
+      left: direction * cardWidth,
+      behavior: "smooth",
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -140,30 +159,31 @@ function Home() {
   }
 
   return (
-    <div className="bg-white pb-20">
+    <div className="bg-white pb-8">
       <section className="relative w-full overflow-hidden bg-black">
         <img
           src={heroImage}
           alt="CandleOra hero arrangement"
           loading="eager"
           fetchPriority="high"
-          className="h-[320px] w-full object-cover sm:h-[410px] lg:h-[520px]"
+          className="h-[340px] w-full object-cover object-center sm:h-[430px] lg:h-[585px] xl:h-[620px]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
-        <div className="container-shell absolute inset-0 flex items-center">
-          <div className="max-w-[560px]">
-            <h1 className="font-display text-[2rem] font-semibold leading-[0.98] text-white sm:text-[2.75rem] lg:text-[4rem]">
-              <span className="block">Crafting Comfort, Redefining</span>
-              <span className="block">Spaces. Your Home, Your</span>
-              <span className="block">Signature</span>
-              <span className="block">Style!</span>
-            </h1>
-            <Link
-              to="/shop"
-              className="btn btn-primary mt-8 min-w-[160px]"
-            >
-              Shop Now
-            </Link>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/18 via-black/4 to-transparent" />
+        <div className="absolute inset-0">
+          <div className="w-full px-6 sm:px-10 lg:px-[128px] xl:px-[136px]">
+            <div className="max-w-[680px] pt-[56px] text-left sm:pt-[74px] lg:w-[666px] lg:max-w-none lg:pt-[132px] xl:pt-[146px]">
+              <h1 className="font-sans text-[1.95rem] font-bold leading-[1.08] tracking-[-0.02em] text-white sm:text-[2.45rem] lg:text-[40px]">
+                <span className="block lg:whitespace-nowrap">Crafting Comfort, Redefining</span>
+                <span className="block lg:whitespace-nowrap">Spaces. Your Home, Your</span>
+                <span className="block lg:whitespace-nowrap">Signature Style!</span>
+              </h1>
+              <Link
+                to="/shop"
+                className="mt-3 inline-flex h-[45px] min-w-[143px] items-center justify-center rounded-[5px] bg-brand-primary px-5 text-[0.95rem] font-medium text-black shadow-[0_6px_16px_rgba(243,179,61,0.28)] transition duration-200 hover:-translate-y-0.5 hover:brightness-[1.03] lg:mt-3.5"
+              >
+                Shop Now
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -191,23 +211,23 @@ function Home() {
         </Reveal>
       </section>
 
-      <section className="container-shell py-14 sm:py-16">
+      <section className="container-shell pb-10 pt-6 sm:pb-12 sm:pt-8">
         <Reveal delay={0.05}>
           <h2 className="section-title text-center">View Our Range Of Categories</h2>
 
-          <div className="mt-10">
-            <div className="grid gap-4 lg:grid-cols-[1.05fr_0.8fr_1.05fr]">
-              <CategoryTile category={getCategoryBySlug("")} className="min-h-[250px] lg:min-h-[360px]" />
+          <div className="mt-8">
+            <div className="grid gap-3 lg:grid-cols-[1.05fr_0.8fr_1.05fr]">
+              <CategoryTile category={getCategoryBySlug("")} className="min-h-[220px] lg:min-h-[320px]" />
               <div className="grid gap-4">
-                <CategoryTile category={getCategoryBySlug("candle-sets")} className="min-h-[118px] lg:min-h-[172px]" />
-                <CategoryTile category={getCategoryBySlug("glass")} className="min-h-[118px] lg:min-h-[172px]" />
+                <CategoryTile category={getCategoryBySlug("candle-sets")} className="min-h-[102px] lg:min-h-[152px]" />
+                <CategoryTile category={getCategoryBySlug("glass")} className="min-h-[102px] lg:min-h-[152px]" />
               </div>
-              <CategoryTile category={getCategoryBySlug("tea-light")} className="min-h-[250px] lg:min-h-[360px]" />
+              <CategoryTile category={getCategoryBySlug("tea-light")} className="min-h-[220px] lg:min-h-[320px]" />
             </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-              <CategoryTile category={getCategoryBySlug("flower")} className="min-h-[118px]" />
-              <CategoryTile category={getCategoryBySlug("creation")} className="min-h-[118px]" />
+            <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1.2fr]">
+              <CategoryTile category={getCategoryBySlug("flower")} className="min-h-[102px]" />
+              <CategoryTile category={getCategoryBySlug("creation")} className="min-h-[102px]" />
             </div>
           </div>
         </Reveal>
@@ -219,15 +239,15 @@ function Home() {
         </p>
       </section>
 
-      <section id="recommendations" className="container-shell py-16 sm:py-20">
+      <section id="recommendations" className="container-shell py-12 sm:py-14">
         <Reveal delay={0.08}>
           <h2 className="section-title">Recommendations</h2>
 
-          <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
             {recommendationCards.map((card) => (
               <article
                 key={card.title}
-                className="mx-auto flex h-full w-full max-w-[380px] flex-col items-center text-center"
+                className="mx-auto flex h-full w-full max-w-[340px] flex-col items-center text-center"
               >
                 <Link
                   to={card.to}
@@ -238,22 +258,22 @@ function Home() {
                     alt={card.title}
                     loading="lazy"
                     decoding="async"
-                    className="aspect-square w-full object-cover"
+                    className="aspect-[0.92] w-full object-cover"
                   />
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(243,179,61,0.26)] px-4 py-3 backdrop-blur-[1.5px]">
-                    <h3 className="text-[1.15rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.25rem]">
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(243,179,61,0.26)] px-4 py-2.5 backdrop-blur-[1.5px]">
+                    <h3 className="text-[1.08rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.18rem]">
                       {card.title}
                     </h3>
                   </div>
                 </Link>
 
-                <div className="mt-4 flex min-h-[68px] w-full items-start justify-center px-2">
-                  <p className="max-w-[312px] text-base leading-7 text-black/72">{card.description}</p>
+                <div className="mt-3 flex min-h-[56px] w-full items-start justify-center px-2">
+                  <p className="max-w-[292px] text-[15px] leading-6 text-black/72">{card.description}</p>
                 </div>
 
                 <Link
                   to={card.to}
-                  className="btn btn-secondary mt-auto flex h-[50px] w-full items-center justify-center gap-2 tracking-[0.08em] uppercase hover:-translate-y-0.5"
+                  className="btn btn-secondary mt-auto flex h-[46px] w-full items-center justify-center gap-2 tracking-[0.08em] uppercase hover:-translate-y-0.5"
                 >
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M2.5 12C4.6 8.1 8 6.2 12 6.2C16 6.2 19.4 8.1 21.5 12C19.4 15.9 16 17.8 12 17.8C8 17.8 4.6 15.9 2.5 12Z" />
@@ -267,19 +287,47 @@ function Home() {
         </Reveal>
       </section>
 
-      <section className="container-shell py-8 sm:py-10">
+      <section className="container-shell pt-4 pb-8 sm:pt-6 sm:pb-10">
         <Reveal delay={0.1}>
-          <h2 className="section-title">Our Happy Customers</h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="section-title">Our Happy Customers</h2>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            <div className="hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                onClick={() => scrollTestimonials(-1)}
+                aria-label="Scroll testimonials left"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
+              >
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M14.5 6.5L9 12L14.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTestimonials(1)}
+                aria-label="Scroll testimonials right"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
+              >
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M9.5 6.5L15 12L9.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={testimonialCarouselRef}
+            className="stealth-scrollbar mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 pr-1 scroll-smooth"
+          >
             {customerStories.map((story) => (
-              <TestimonialCard key={story.name} story={story} />
+              <TestimonialCard key={`${story.name}-${story.date}`} story={story} />
             ))}
           </div>
         </Reveal>
       </section>
 
-      <section id="faq" className="container-shell grid gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr]">
+      <section id="faq" className="container-shell grid gap-10 pt-14 pb-6 lg:grid-cols-[0.85fr_1.15fr]">
         <Reveal className="contents" delay={0.12}>
           <div className="space-y-4">
             <h2 className="section-title">Frequently Asked Questions</h2>

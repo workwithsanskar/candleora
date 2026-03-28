@@ -103,7 +103,7 @@ public class AddressService {
         address.setCity(trimRequired(request.city(), "city"));
         address.setState(trimRequired(request.state(), "state"));
         address.setPostalCode(trimRequired(request.postalCode(), "postalCode"));
-        address.setCountry(defaultCountry(request.country()));
+        address.setCountry(trimRequired(request.country(), "country"));
         address.setPhone(trimRequired(request.phoneNumber(), "phoneNumber"));
     }
 
@@ -135,10 +135,5 @@ public class AddressService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
-    }
-
-    private String defaultCountry(String country) {
-        String trimmed = trimToNull(country);
-        return trimmed == null ? "India" : trimmed;
     }
 }

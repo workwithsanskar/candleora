@@ -1,21 +1,23 @@
 package com.candleora.dto.auth;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record ProfileUpdateRequest(
-    String name,
-    String phoneNumber,
+    @NotBlank String name,
+    @NotBlank String phoneNumber,
     String alternatePhoneNumber,
-    String addressLine1,
+    @NotBlank String addressLine1,
     String addressLine2,
-    String city,
-    String state,
-    String postalCode,
-    String country,
+    @NotBlank String city,
+    @NotBlank String state,
+    @NotBlank String postalCode,
+    @NotBlank String country,
     String gender,
     LocalDate dateOfBirth,
-    String locationLabel,
-    Double latitude,
-    Double longitude
+    @NotBlank String locationLabel,
+    @NotNull Double latitude,
+    @NotNull Double longitude
 ) {
 }

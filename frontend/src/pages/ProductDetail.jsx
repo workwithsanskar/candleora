@@ -271,8 +271,8 @@ function ProductDetail() {
   ];
 
   return (
-    <section className="container-shell py-8 pb-28 sm:py-10 sm:pb-32 lg:pb-10">
-      <div className="mb-7 flex flex-wrap items-center gap-2 text-[12px] text-black/42">
+    <section className="container-shell py-7 pb-28 sm:py-8 sm:pb-32 lg:pb-10">
+      <div className="mb-5 flex flex-wrap items-center gap-2 text-[12px] text-black/42">
         <Link to="/" className="transition hover:text-black">
           Shop Listing
         </Link>
@@ -280,7 +280,7 @@ function ProductDetail() {
         <span className="text-black/62">{product.name}</span>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:items-start lg:gap-12">
+      <div className="grid gap-5 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:items-start lg:gap-10">
         <div className="order-2 grid grid-cols-3 gap-3 lg:order-1 lg:grid-cols-1 lg:gap-4">
           {product.imageUrls.map((imageUrl) => (
             <button
@@ -316,11 +316,11 @@ function ProductDetail() {
           </div>
         </div>
 
-        <div className="order-3 max-w-[380px] space-y-6 lg:pl-1">
-          <div className="space-y-4">
+        <div className="order-3 max-w-[380px] space-y-4 text-left lg:pl-1">
+          <div className="space-y-2.5">
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="font-display text-heading-md font-semibold leading-tight text-black">
+              <div className="space-y-1">
+                <h1 className="font-display text-heading-md font-semibold leading-[0.98] text-black">
                   {product.name}
                 </h1>
               </div>
@@ -347,7 +347,7 @@ function ProductDetail() {
               </m.button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
               <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
               {product.originalPrice > product.price ? (
@@ -358,22 +358,22 @@ function ProductDetail() {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-black/10 bg-white px-4 py-4">
-            <p className="text-sm leading-7 text-black/72">{product.description}</p>
+          <div className="rounded-[18px] border border-black/10 bg-white px-4 py-3">
+            <p className="text-sm leading-6 text-black/72">{product.description}</p>
           </div>
 
-          <ul className="space-y-2 text-sm leading-6 text-black/70">
+          <ul className="space-y-1.5 text-sm leading-[1.55] text-black/70">
             {detailBullets.map((detail) => (
               <li key={detail} className="flex items-start gap-2">
-                <span className="mt-[8px] inline-flex h-1.5 w-1.5 rounded-full bg-black/45" />
+                <span className="mt-[7px] inline-flex h-1.5 w-1.5 rounded-full bg-black/45" />
                 <span>{detail}</span>
               </li>
             ))}
           </ul>
 
-          <div className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div className="space-y-2">
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="space-y-1.5">
                 <p className="text-sm font-semibold text-black">Pack of</p>
                 <div className="flex flex-wrap gap-3">
                   {packOptions.map((pack) => (
@@ -393,7 +393,7 @@ function ProductDetail() {
                 </div>
               </div>
 
-              <div className="space-y-2 sm:text-right">
+              <div className="space-y-1.5">
                 <p className="text-sm font-semibold text-black">Quantity</p>
                 <div className="inline-flex items-center rounded-full border border-black/10 bg-white">
                   <button
@@ -442,7 +442,7 @@ function ProductDetail() {
             </m.button>
           </div>
 
-          <div className="space-y-3 border-t border-black/10 pt-3 text-sm text-black/56">
+          <div className="space-y-2.5 border-t border-black/10 pt-2.5 text-sm text-black/56">
             <div className="flex items-start gap-3">
               <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M3 7H15V17H3Z" />

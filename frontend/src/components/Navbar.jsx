@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Scrollbars } from "react-custom-scrollbars-2";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -141,15 +142,41 @@ function DesktopNavLink({ to, children }) {
   );
 }
 
+function QuantityControl({ quantity, onDecrease, onIncrease }) {
+  return (
+    <div className="inline-flex items-center rounded-full border border-black/12 bg-white px-2 py-1 shadow-[0_8px_18px_rgba(0,0,0,0.04)]">
+      <button
+        type="button"
+        onClick={onDecrease}
+        aria-label="Decrease quantity"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-lg font-medium leading-none text-black/70 transition hover:bg-black/5 hover:text-black"
+      >
+        -
+      </button>
+      <span className="min-w-[22px] text-center text-sm font-semibold text-black">{quantity}</span>
+      <button
+        type="button"
+        onClick={onIncrease}
+        aria-label="Increase quantity"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-lg font-medium leading-none text-black/70 transition hover:bg-black/5 hover:text-black"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activePanel, setActivePanel] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const panelRef = useRef(null);
+  const wishlistScrollRef = useRef(null);
+  const cartScrollRef = useRef(null);
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
-  const { items: cartItems, cartCount, grandTotal } = useCart();
+  const { items: cartItems, cartCount, grandTotal, updateQuantity } = useCart();
   const { items: wishlistItems, wishlistCount, removeFromWishlist } = useWishlist();
 
   useEffect(() => {
@@ -191,6 +218,55 @@ function Navbar() {
     setActivePanel(null);
   };
 
+  const handleQuickPanelWheel = (event) => {
+    event.stopPropagation();
+  };
+
+  const renderMiniCartView = (props) => (
+    <div
+      {...props}
+      onWheelCapture={handleQuickPanelWheel}
+      className="mini-cart-scroll-view stealth-scrollbar"
+      style={{
+        ...props.style,
+        marginRight: 0,
+        marginBottom: 0,
+        overscrollBehavior: "contain",
+        scrollBehavior: "smooth",
+      }}
+    />
+  );
+
+  const renderMiniCartTrackVertical = (props) => (
+    <div
+      {...props}
+      style={{
+        ...props.style,
+        display: "none",
+      }}
+    />
+  );
+
+  const renderMiniCartThumbVertical = (props) => (
+    <div
+      {...props}
+      style={{
+        ...props.style,
+        display: "none",
+      }}
+    />
+  );
+
+  const renderMiniCartTrackHorizontal = (props) => (
+    <div
+      {...props}
+      style={{
+        ...props.style,
+        display: "none",
+      }}
+    />
+  );
+
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     const trimmedSearch = search.trim();
@@ -198,8 +274,7 @@ function Navbar() {
     closeMenus();
   };
 
-  const previewCartItems = useMemo(() => cartItems.slice(0, 3), [cartItems]);
-  const previewWishlistItems = useMemo(() => wishlistItems.slice(0, 3), [wishlistItems]);
+  const previewWishlistItems = useMemo(() => wishlistItems, [wishlistItems]);
 
   return (
     <header
@@ -327,54 +402,70 @@ function Navbar() {
               <QuickPanel title="Wishlist">
                 {previewWishlistItems.length ? (
                   <div className="space-y-5">
-                    <div className="space-y-4">
-                      {previewWishlistItems.map((item) => (
-                        <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-center gap-3">
-                          <Link to={getProductPath(item)} onClick={closeMenus}>
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="h-16 w-16 rounded-[14px] object-cover"
-                            />
-                          </Link>
-                          <div className="min-w-0">
-                            <Link
-                              to={getProductPath(item)}
-                              onClick={closeMenus}
-                              className="block truncate text-sm font-medium text-black"
-                            >
-                              {item.name}
+                    <Scrollbars
+                      ref={wishlistScrollRef}
+                      autoHide
+                      autoHeight
+                      autoHeightMin={0}
+                      autoHeightMax={318}
+                      thumbMinSize={44}
+                      universal
+                      renderView={renderMiniCartView}
+                      renderTrackVertical={renderMiniCartTrackVertical}
+                      renderThumbVertical={renderMiniCartThumbVertical}
+                      renderTrackHorizontal={renderMiniCartTrackHorizontal}
+                      onWheel={handleQuickPanelWheel}
+                      className="mini-cart-scroll-host"
+                    >
+                      <div className="space-y-4 pr-3">
+                        {previewWishlistItems.map((item) => (
+                          <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-start gap-3">
+                            <Link to={getProductPath(item)} onClick={closeMenus}>
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="h-16 w-16 rounded-[14px] object-cover"
+                              />
                             </Link>
-                            <p className="mt-1 text-xs text-black/55">
-                              {item.category?.name ?? "Candles"}
-                            </p>
-                            <p className="mt-1 text-sm font-semibold text-black">
-                              {formatCurrency(item.price)}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeFromWishlist(item.id)}
-                            className="text-xs font-semibold uppercase tracking-[0.12em] text-danger"
-                          >
-                            Remove
-                          </button>
-                        </article>
-                      ))}
-                    </div>
+                            <div className="min-w-0 pt-0.5">
+                              <Link
+                                to={getProductPath(item)}
+                                onClick={closeMenus}
+                                className="block truncate text-sm font-medium text-black"
+                              >
+                                {item.name}
+                              </Link>
+                              <p className="mt-1 text-xs text-black/55">
+                                {item.category?.name ?? "Candles"}
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-black">
+                                {formatCurrency(item.price)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFromWishlist(item.id)}
+                              className="pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger transition hover:text-danger/80"
+                            >
+                              Remove
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    </Scrollbars>
 
                     <div className="grid grid-cols-2 gap-3">
                       <Link
                         to="/wishlist"
                         onClick={closeMenus}
-                        className="btn btn-outline text-center"
+                        className="btn btn-outline min-h-[56px] whitespace-nowrap px-4 text-center"
                       >
                         View Wishlist
                       </Link>
                       <Link
                         to="/shop"
                         onClick={closeMenus}
-                        className="btn btn-primary text-center"
+                        className="btn btn-primary min-h-[56px] whitespace-nowrap px-4 text-center"
                       >
                         Shop More
                       </Link>
@@ -399,34 +490,59 @@ function Navbar() {
 
             {activePanel === "cart" && (
               <QuickPanel title="Shopping Cart">
-                {previewCartItems.length ? (
+                {cartItems.length ? (
                   <div className="space-y-5">
-                    <div className="space-y-4">
-                      {previewCartItems.map((item) => (
-                        <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-center gap-3">
-                          <Link to="/cart" onClick={closeMenus}>
-                            <img
-                              src={item.imageUrl}
-                              alt={item.productName}
-                              className="h-16 w-16 rounded-[14px] object-cover"
-                            />
-                          </Link>
-                          <div className="min-w-0">
-                            <Link
-                              to="/cart"
-                              onClick={closeMenus}
-                              className="block truncate text-sm font-medium text-black"
-                            >
-                              {item.productName}
+                    <Scrollbars
+                      ref={cartScrollRef}
+                      autoHide
+                      autoHeight
+                      autoHeightMin={0}
+                      autoHeightMax={318}
+                      thumbMinSize={44}
+                      universal
+                      renderView={renderMiniCartView}
+                      renderTrackVertical={renderMiniCartTrackVertical}
+                      renderThumbVertical={renderMiniCartThumbVertical}
+                      renderTrackHorizontal={renderMiniCartTrackHorizontal}
+                      onWheel={handleQuickPanelWheel}
+                      className="mini-cart-scroll-host"
+                    >
+                      <div className="space-y-4 pr-3">
+                        {cartItems.map((item) => (
+                          <article key={item.id} className="grid grid-cols-[64px_1fr] gap-3">
+                            <Link to="/cart" onClick={closeMenus}>
+                              <img
+                                src={item.imageUrl}
+                                alt={item.productName}
+                                className="h-16 w-16 rounded-[14px] object-cover"
+                              />
                             </Link>
-                            <p className="mt-1 text-xs text-black/55">Qty {item.quantity}</p>
-                            <p className="mt-1 text-sm font-semibold text-black">
-                              {formatCurrency(item.lineTotal)}
-                            </p>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
+                            <div className="min-w-0">
+                              <Link
+                                to="/cart"
+                                onClick={closeMenus}
+                                className="block truncate text-sm font-medium text-black"
+                              >
+                                {item.productName}
+                              </Link>
+                              <div className="mt-2 flex items-center justify-between gap-3">
+                                <QuantityControl
+                                  quantity={item.quantity}
+                                  onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
+                                  onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
+                                />
+                                <p className="text-sm font-semibold text-black">
+                                  {formatCurrency(item.lineTotal)}
+                                </p>
+                              </div>
+                              <p className="mt-2 text-xs text-black/55">
+                                Reducing to 0 removes this item.
+                              </p>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </Scrollbars>
 
                     <div className="rounded-[18px] bg-black/[0.03] px-4 py-3">
                       <div className="flex items-center justify-between text-sm font-semibold text-black">

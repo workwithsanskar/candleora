@@ -8,6 +8,7 @@ import {
   formatDate,
   formatDateTime,
   formatDateRange,
+  formatTimeRemaining,
   titleCase,
 } from "../utils/format";
 
@@ -28,6 +29,7 @@ function OrderDetail() {
   const [downloadError, setDownloadError] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
     let isMounted = true;
@@ -55,6 +57,14 @@ function OrderDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const activeStep = useMemo(() => {
     if (!order?.status) {
       return 0;
@@ -66,6 +76,19 @@ function OrderDetail() {
 
     return orderFlow.indexOf(order.status);
   }, [order?.status]);
+
+  const liveCanCancel = useMemo(() => {
+    if (!order?.canCancel || !order?.cancelDeadline) {
+      return false;
+    }
+
+    return new Date(order.cancelDeadline).getTime() > currentTime;
+  }, [currentTime, order?.canCancel, order?.cancelDeadline]);
+
+  const cancelTimeRemaining = useMemo(
+    () => formatTimeRemaining(order?.cancelDeadline, currentTime),
+    [currentTime, order?.cancelDeadline],
+  );
 
   const handleDownloadInvoice = async () => {
     if (!order?.invoiceNumber) {
@@ -93,12 +116,12 @@ function OrderDetail() {
   };
 
   const handleCancelOrder = async () => {
-    if (!order?.canCancel || isCancelling) {
+    if (!liveCanCancel || isCancelling) {
       return;
     }
 
     const confirmed = window.confirm(
-      "Cancel this order now? We can only accept cancellations within the short window after checkout."
+      "Cancel this order now? Online cancellations are available within 24 hours of placing the order."
     );
     if (!confirmed) {
       return;
@@ -163,9 +186,11 @@ function OrderDetail() {
                 Invoice {order.invoiceNumber}
               </p>
             )}
-            {order.canCancel && (
+            {order.status !== "CANCELLED" && (
               <p className="mt-2 text-sm text-brand-dark/70">
-                Cancellation available until {formatDateTime(order.cancelDeadline)}.
+                {liveCanCancel
+                  ? `Cancellation available until ${formatDateTime(order.cancelDeadline)} (${cancelTimeRemaining}).`
+                  : "The 24-hour online cancellation window has ended for this order."} Return or replacement requests can be raised within 7 days after delivery.
               </p>
             )}
           </div>
@@ -302,7 +327,7 @@ function OrderDetail() {
                 )}
               </div>
             )}
-            {order.canCancel && (
+            {liveCanCancel && (
               <div className="mt-4">
                 <button
                   type="button"

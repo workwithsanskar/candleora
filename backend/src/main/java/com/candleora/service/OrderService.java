@@ -50,7 +50,7 @@ public class OrderService {
         OrderNotificationService orderNotificationService,
         CouponService couponService,
         @org.springframework.beans.factory.annotation.Value("${app.auth.require-phone-verification-before-order:false}") boolean requirePhoneVerificationBeforeOrder,
-        @org.springframework.beans.factory.annotation.Value("${app.orders.cancellation-window-minutes:30}") long cancellationWindowMinutes
+        @org.springframework.beans.factory.annotation.Value("${app.orders.cancellation-window-minutes:1440}") long cancellationWindowMinutes
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;

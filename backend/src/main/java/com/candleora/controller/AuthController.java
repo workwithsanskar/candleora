@@ -70,7 +70,7 @@ public class AuthController {
     @PutMapping("/profile")
     public UserResponse updateProfile(
         Authentication authentication,
-        @RequestBody ProfileUpdateRequest request
+        @Valid @RequestBody ProfileUpdateRequest request
     ) {
         AppUser user = ((UserPrincipal) authentication.getPrincipal()).getUser();
         return authService.updateProfile(user, request);
@@ -79,7 +79,7 @@ public class AuthController {
     @PutMapping("/me")
     public UserResponse updateMe(
         Authentication authentication,
-        @RequestBody ProfileUpdateRequest request
+        @Valid @RequestBody ProfileUpdateRequest request
     ) {
         AppUser user = ((UserPrincipal) authentication.getPrincipal()).getUser();
         return authService.updateProfile(user, request);
