@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 
 const inputClassName =
-  "h-[52px] w-full rounded-[16px] border border-black/12 bg-white px-4 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/35 focus:ring-2 focus:ring-[#f3b33d]/20";
+  "h-[48px] w-full rounded-[16px] border border-black/12 bg-white px-4 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/35 focus:ring-2 focus:ring-[#f3b33d]/20";
 
 function LabelText({ label, required = false }) {
   return (
@@ -14,7 +14,7 @@ function LabelText({ label, required = false }) {
 
 function Field({ label, required = false, children, className = "" }) {
   return (
-    <label className={`space-y-2 ${className}`.trim()}>
+    <label className={`space-y-1.5 ${className}`.trim()}>
       <LabelText label={label} required={required} />
       {children}
     </label>
@@ -23,9 +23,9 @@ function Field({ label, required = false, children, className = "" }) {
 
 function Section({ title, children }) {
   return (
-    <div className="space-y-4 rounded-[20px] border border-black/8 bg-white p-4 shadow-[0_8px_18px_rgba(0,0,0,0.04)] sm:p-5">
-      <h3 className="border-b border-black/8 pb-2.5 text-[15px] font-semibold text-black">{title}</h3>
-      <div className="grid gap-3.5 sm:grid-cols-2">{children}</div>
+    <div className="space-y-3.5 rounded-[20px] border border-black/8 bg-white p-4 shadow-[0_8px_18px_rgba(0,0,0,0.04)] sm:p-[18px]">
+      <h3 className="border-b border-black/8 pb-2 text-[15px] font-semibold text-black">{title}</h3>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
     </div>
   );
 }
@@ -44,19 +44,28 @@ function SelectChevron() {
   );
 }
 
+function VerifiedTickIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3.5 8.2L6.6 11.1L12.5 5.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function AccountProfileFields({
   form,
   onChange,
   onUseCurrentLocation,
-  isLocating,
-  showEmail,
-  emailReadOnly,
-  includePassword,
+  isLocating = false,
+  showEmail = true,
+  emailLocked = false,
+  emailVerified = false,
+  includePassword = false,
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Section title="Profile Information">
-        <Field label="Full name" required className="sm:col-span-2">
+        <Field label="Full name" required className={showEmail ? "" : "sm:col-span-2"}>
           <input
             required
             name="name"
@@ -68,17 +77,28 @@ function AccountProfileFields({
         </Field>
 
         {showEmail && (
-          <Field label="Email" required className="sm:col-span-2">
-            <input
-              required
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={onChange}
-              readOnly={emailReadOnly}
-              className={`${inputClassName} ${emailReadOnly ? "cursor-not-allowed opacity-85" : ""}`}
-              autoComplete="email"
-            />
+          <Field label="Email" required>
+            <div className="relative">
+              <input
+                required
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={onChange}
+                readOnly={emailLocked}
+                disabled={emailLocked}
+                className={`${inputClassName} ${emailVerified ? "pr-28 sm:pr-32" : ""} ${
+                  emailLocked ? "cursor-not-allowed border-black/10 bg-black/[0.04] text-black/60 opacity-100" : ""
+                }`}
+                autoComplete="email"
+              />
+              {emailVerified ? (
+                <span className="pointer-events-none absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-full border border-green/20 bg-green/10 px-2.5 py-1 text-[11px] font-semibold text-green-800">
+                  <VerifiedTickIcon />
+                  Verified
+                </span>
+              ) : null}
+            </div>
           </Field>
         )}
 
@@ -166,13 +186,26 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="Address line 2" className="sm:col-span-2">
+        <Field label="Nearest location / landmark" className="sm:col-span-2">
           <input
             name="addressLine2"
             value={form.addressLine2}
             onChange={onChange}
             className={inputClassName}
             autoComplete="address-line2"
+          />
+        </Field>
+
+        <Field label="Postal code" required>
+          <input
+            required
+            name="postalCode"
+            value={form.postalCode}
+            onChange={onChange}
+            className={inputClassName}
+            inputMode="numeric"
+            maxLength={6}
+            autoComplete="postal-code"
           />
         </Field>
 
@@ -198,17 +231,6 @@ function AccountProfileFields({
           />
         </Field>
 
-        <Field label="Postal code" required>
-          <input
-            required
-            name="postalCode"
-            value={form.postalCode}
-            onChange={onChange}
-            className={inputClassName}
-            autoComplete="postal-code"
-          />
-        </Field>
-
         <Field label="Country" required>
           <input
             required
@@ -222,13 +244,13 @@ function AccountProfileFields({
       </Section>
 
       <Section title="Delivery Preferences">
-        <Field label="Current location / address tag" required className="sm:col-span-2">
+        <Field label="Current location tag" required className="sm:col-span-2">
           <input
             required
             name="locationLabel"
             value={form.locationLabel}
             onChange={onChange}
-            placeholder="Home, Office, Near City Center..."
+            placeholder="Nearby post office, service area, or live drop point"
             className={inputClassName}
           />
         </Field>
@@ -240,7 +262,7 @@ function AccountProfileFields({
             disabled={isLocating}
             className="rounded-full border border-black/15 px-5 py-2.5 text-sm font-semibold text-black transition hover:border-black hover:bg-black/5 disabled:opacity-60"
           >
-            {isLocating ? "Detecting location..." : "Use current location"}
+            {isLocating ? "Fetching current location..." : "Fetch current location"}
           </button>
         </div>
 
@@ -295,15 +317,9 @@ AccountProfileFields.propTypes = {
   onUseCurrentLocation: PropTypes.func.isRequired,
   isLocating: PropTypes.bool,
   showEmail: PropTypes.bool,
-  emailReadOnly: PropTypes.bool,
+  emailLocked: PropTypes.bool,
+  emailVerified: PropTypes.bool,
   includePassword: PropTypes.bool,
-};
-
-AccountProfileFields.defaultProps = {
-  isLocating: false,
-  showEmail: true,
-  emailReadOnly: false,
-  includePassword: false,
 };
 
 export default AccountProfileFields;

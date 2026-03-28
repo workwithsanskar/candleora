@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import AccountProfileFields from "../components/AccountProfileFields";
@@ -9,14 +9,14 @@ import { useAuth } from "../context/AuthContext";
 import { PHONE_AUTH_ENABLED, REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER } from "../utils/authFlow";
 import { buildProfilePayload, createAccountForm } from "../utils/account";
 import { formatApiError } from "../utils/format";
-import { getCurrentLocation } from "../utils/location";
+import { getCurrentLocation, lookupPostalCodeDetails } from "../utils/location";
 
 const sectionButtonClass =
   "inline-flex min-h-[54px] items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition";
 const statusPillClass =
   "inline-flex min-h-[54px] items-center justify-center rounded-full border px-4 text-sm font-semibold leading-none transition";
 const addressInputClass =
-  "h-[54px] w-full rounded-[16px] border border-black/12 bg-white px-5 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/28 focus:ring-2 focus:ring-[#f3b33d]/18";
+  "h-[50px] w-full rounded-[16px] border border-black/12 bg-white px-4 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/28 focus:ring-2 focus:ring-[#f3b33d]/18";
 
 function buildAddressDraft(source = {}) {
   return {
@@ -91,13 +91,18 @@ function AccountDetails() {
   const [profile, setProfile] = useState(user);
   const [form, setForm] = useState(() => createAccountForm(user));
   const [activeSection, setActiveSection] = useState("details");
-  const [addressDraft, setAddressDraft] = useState(() => buildAddressDraft(user));
+  const [addressDraft, setAddressDraft] = useState(() => buildAddressDraft());
   const [editingAddressId, setEditingAddressId] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(!user);
+  const profilePostalLookupRequestRef = useRef(0);
+  const addressPostalLookupRequestRef = useRef(0);
+  const resolvedProfile = profile ?? user;
+  const isGoogleVerifiedEmailLocked =
+    String(resolvedProfile?.authProvider ?? "").toUpperCase() === "GOOGLE" && Boolean(resolvedProfile?.emailVerified);
 
   useEffect(() => {
     const syncSectionWithHash = () => {
@@ -118,7 +123,6 @@ function AccountDetails() {
     if (user) {
       setProfile(user);
       setForm(createAccountForm(user));
-      setAddressDraft((current) => (current.id ? current : buildAddressDraft(user)));
       setIsRefreshing(false);
     }
   }, [user]);
@@ -136,7 +140,6 @@ function AccountDetails() {
         if (isMounted) {
           setProfile(response);
           setForm(createAccountForm(response));
-          setAddressDraft(buildAddressDraft(response));
         }
       })
       .catch((profileError) => {
@@ -164,34 +167,100 @@ function AccountDetails() {
     }
   };
 
-  const resetAddressDraft = (source = form) => {
+  const resetAddressDraft = () => {
     setEditingAddressId("");
-    setAddressDraft(
-      buildAddressDraft({
-        name: source.name,
-        phoneNumber: source.phoneNumber,
-        locationLabel: source.locationLabel,
-        addressLine1: source.addressLine1,
-        addressLine2: source.addressLine2,
-        city: source.city,
-        state: source.state,
-        postalCode: source.postalCode,
-        country: source.country,
-      }),
-    );
+    setAddressDraft(buildAddressDraft());
+  };
+
+  const normalizePostalCode = (value) => String(value ?? "").replace(/\D/g, "").slice(0, 6);
+
+  const autofillProfileAddressFromPostalCode = async (postalCode) => {
+    const normalizedPostalCode = normalizePostalCode(postalCode);
+    if (normalizedPostalCode.length !== 6) {
+      return;
+    }
+
+    const requestId = profilePostalLookupRequestRef.current + 1;
+    profilePostalLookupRequestRef.current = requestId;
+
+    try {
+      const resolvedAddress = await lookupPostalCodeDetails(normalizedPostalCode);
+      if (!resolvedAddress || profilePostalLookupRequestRef.current !== requestId) {
+        return;
+      }
+
+      setForm((current) => {
+        if (normalizePostalCode(current.postalCode) !== normalizedPostalCode) {
+          return current;
+        }
+
+        return {
+          ...current,
+          city: resolvedAddress.city || current.city,
+          state: resolvedAddress.state || current.state,
+          country: resolvedAddress.country || current.country || "India",
+          postalCode: normalizedPostalCode,
+        };
+      });
+    } catch {
+      // Silent fallback keeps manual entry available when lookup services are unavailable.
+    }
+  };
+
+  const autofillSavedAddressFromPostalCode = async (postalCode) => {
+    const normalizedPostalCode = normalizePostalCode(postalCode);
+    if (normalizedPostalCode.length !== 6) {
+      return;
+    }
+
+    const requestId = addressPostalLookupRequestRef.current + 1;
+    addressPostalLookupRequestRef.current = requestId;
+
+    try {
+      const resolvedAddress = await lookupPostalCodeDetails(normalizedPostalCode);
+      if (!resolvedAddress || addressPostalLookupRequestRef.current !== requestId) {
+        return;
+      }
+
+      setAddressDraft((current) => {
+        if (normalizePostalCode(current.postalCode) !== normalizedPostalCode) {
+          return current;
+        }
+
+        return {
+          ...current,
+          city: resolvedAddress.city || current.city,
+          state: resolvedAddress.state || current.state,
+          country: resolvedAddress.country || current.country || "India",
+          postalCode: normalizedPostalCode,
+        };
+      });
+    } catch {
+      // Silent fallback keeps manual entry available when lookup services are unavailable.
+    }
   };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    const nextValue = name === "postalCode" ? normalizePostalCode(value) : value;
+    setForm((current) => ({ ...current, [name]: nextValue }));
+
+    if (name === "postalCode") {
+      void autofillProfileAddressFromPostalCode(nextValue);
+    }
   };
 
   const handleAddressDraftChange = (event) => {
     const { name, value, type, checked } = event.target;
+    const nextValue = type === "checkbox" ? checked : name === "postalCode" ? normalizePostalCode(value) : value;
     setAddressDraft((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: nextValue,
     }));
+
+    if (name === "postalCode" && type !== "checkbox") {
+      void autofillSavedAddressFromPostalCode(nextValue);
+    }
   };
 
   const handleUseCurrentLocation = async () => {
@@ -203,11 +272,22 @@ function AccountDetails() {
       const location = await getCurrentLocation();
       setForm((current) => ({
         ...current,
+        addressLine1: current.addressLine1 || location.addressLine1 || current.addressLine1,
+        addressLine2:
+          current.addressLine2 || location.nearestPostalReference || location.addressLine2 || current.addressLine2,
+        city: current.city || location.city || current.city,
+        state: current.state || location.state || current.state,
+        postalCode: current.postalCode || location.postalCode || current.postalCode,
+        country: current.country || location.country || current.country,
         locationLabel: location.locationLabel || current.locationLabel,
         latitude: String(location.latitude),
         longitude: String(location.longitude),
       }));
-      setSuccessMessage("Current location tag added. Address details stay under your control.");
+      setSuccessMessage(
+        location.nearestPostalReference
+          ? `Current location captured. Delivery reference updated around ${location.nearestPostalReference}.`
+          : "Current location captured. Review the live delivery reference before saving.",
+      );
     } catch (locationError) {
       setError(formatApiError(locationError));
     } finally {
@@ -239,7 +319,7 @@ function AccountDetails() {
       return;
     }
     if (!String(form.locationLabel ?? "").trim()) {
-      setError("Current location / address tag is required.");
+      setError("Current location tag is required.");
       return;
     }
     if (form.latitude === "" || form.longitude === "") {
@@ -344,9 +424,8 @@ function AccountDetails() {
       state: address.state || current.state,
       postalCode: address.postalCode || current.postalCode,
       country: address.country || current.country,
-      locationLabel: address.label || current.locationLabel,
     }));
-    toast.success("Saved address loaded into account details.");
+    toast.success("Saved address loaded into account details. Fetch current location for a live delivery reference if needed.");
   };
 
   if (error && !profile) {
@@ -366,13 +445,13 @@ function AccountDetails() {
   }
 
   return (
-    <section className="container-shell py-12 sm:py-14">
-      <div className="mx-auto max-w-[1160px] space-y-8">
-        <div className="space-y-4">
+    <section className="container-shell py-10 sm:py-12">
+      <div className="mx-auto max-w-[1160px] space-y-6">
+        <div className="space-y-3">
           <h1 className="text-heading-lg font-semibold uppercase tracking-[-0.02em] text-black">
             Account Details
           </h1>
-          <p className="max-w-[860px] text-body leading-7 text-black/62">
+          <p className="max-w-[860px] text-body leading-6 text-black/62">
             Keep your profile information current, save multiple delivery addresses, and make future checkouts much faster from one polished account workspace.
           </p>
           <div className="flex flex-wrap items-center gap-3">
@@ -400,22 +479,22 @@ function AccountDetails() {
             </button>
             <span
               className={`${statusPillClass} ${
-                profile?.emailVerified
+                resolvedProfile?.emailVerified
                   ? "border-green/20 bg-green/10 text-green-800"
                   : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
               }`}
             >
-              {profile?.emailVerified ? "Email verified" : "Email verification pending"}
+              {resolvedProfile?.emailVerified ? "Email verified" : "Email verification pending"}
             </span>
             {PHONE_AUTH_ENABLED && (
               <span
                 className={`${statusPillClass} px-5 text-center leading-5 ${
-                  profile?.phoneVerified
+                  resolvedProfile?.phoneVerified
                     ? "border-green/20 bg-green/10 text-green-800"
                     : "border-brand-primary/20 bg-brand-primary/10 text-black/70"
                 }`}
               >
-                {profile?.phoneVerified
+                {resolvedProfile?.phoneVerified
                   ? "Phone verified"
                   : REQUIRE_PHONE_VERIFICATION_BEFORE_ORDER
                     ? "Phone verification required before checkout"
@@ -446,7 +525,9 @@ function AccountDetails() {
                   onChange={handleChange}
                   onUseCurrentLocation={handleUseCurrentLocation}
                   isLocating={isLocating}
-                  emailReadOnly
+                  showEmail
+                  emailLocked={isGoogleVerifiedEmailLocked}
+                  emailVerified={Boolean(resolvedProfile?.emailVerified)}
                 />
               </div>
 
@@ -459,7 +540,7 @@ function AccountDetails() {
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
-                    Add your location label so checkout can identify home vs work instantly.
+                    Keep your delivery details complete so checkout can open with a ready billing summary.
                   </li>
                   <li className="flex gap-3">
                     <span className="mt-2 inline-flex h-1.5 w-1.5 rounded-full bg-black" />
@@ -487,12 +568,12 @@ function AccountDetails() {
             {successMessage && <p className="text-sm font-semibold text-green-700">{successMessage}</p>}
           </form>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-[26px] border border-black/8 bg-[#fffdfa] p-6 shadow-[0_18px_34px_rgba(0,0,0,0.045)] sm:p-7">
+          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-[26px] border border-black/8 bg-[#fffdfa] p-5 shadow-[0_18px_34px_rgba(0,0,0,0.045)] sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-[420px] space-y-2">
+                <div className="max-w-[420px] space-y-1.5">
                   <h2 className="text-xl font-semibold text-black">Saved Addresses</h2>
-                  <p className="text-sm leading-6 text-black/62">
+                  <p className="text-sm leading-5 text-black/62">
                     Your addresses are now synced with your CandleOra account and available across devices.
                   </p>
                 </div>
@@ -505,16 +586,16 @@ function AccountDetails() {
                 <p className="mt-4 text-sm font-medium text-danger">{addressError}</p>
               ) : null}
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 space-y-3">
                 {isAddressesLoading ? (
-                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-7 text-sm leading-7 text-black/58">
+                  <div className="rounded-[20px] border border-dashed border-black/15 bg-white px-5 py-6 text-sm leading-6 text-black/58">
                     Loading saved addresses...
                   </div>
                 ) : savedAddresses.length ? (
                   savedAddresses.map((address) => (
                     <article
                       key={address.id}
-                      className="rounded-[20px] border border-black/8 bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
+                      className="rounded-[20px] border border-black/8 bg-white p-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -528,7 +609,7 @@ function AccountDetails() {
                               </span>
                             ) : null}
                           </div>
-                          <h3 className="mt-2 text-lg font-semibold text-black">{address.recipientName}</h3>
+                          <h3 className="mt-1.5 text-lg font-semibold text-black">{address.recipientName}</h3>
                           <p className="mt-1 text-sm text-black/62">{address.phoneNumber}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -555,8 +636,8 @@ function AccountDetails() {
                         </div>
                       </div>
 
-                      <p className="mt-4 text-sm leading-6 text-black/68">{formatAddressLines(address)}</p>
-                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <p className="mt-3 text-sm leading-6 text-black/68">{formatAddressLines(address)}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
                         <button
                           type="button"
                           onClick={() => handleUseAddressForProfile(address)}
@@ -568,7 +649,7 @@ function AccountDetails() {
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-[22px] border border-dashed border-black/14 bg-white px-6 py-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+                  <div className="rounded-[22px] border border-dashed border-black/14 bg-white px-6 py-8 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
                     <div className="mx-auto max-w-[320px] space-y-3">
                       <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/12 text-lg text-black">
                         +
@@ -583,38 +664,38 @@ function AccountDetails() {
               </div>
             </section>
 
-            <section className="rounded-[26px] border border-black/8 bg-white p-6 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-7">
+            <section className="rounded-[26px] border border-black/8 bg-white p-5 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="max-w-[420px]">
                   <h2 className="text-xl font-semibold text-black">
                     {editingAddressId ? "Edit Address" : "Add New Address"}
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-black/62">
+                  <p className="mt-1.5 text-sm leading-5 text-black/62">
                     Saved addresses are backed by your account now, not only the browser.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => resetAddressDraft()}
-                  className="rounded-full border border-black/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black transition hover:border-black/25"
+                  className="rounded-full border border-black/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-black transition hover:border-black/25"
                 >
                   Reset
                 </button>
               </div>
 
-              <form className="mt-6 space-y-5" onSubmit={handleSaveAddress}>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <RequiredLabel text="Address label" />
+              <form className="mt-5 space-y-4" onSubmit={handleSaveAddress}>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1.5">
+                    <RequiredLabel text="Address tag" />
                     <input
                       name="label"
                       value={addressDraft.label}
                       onChange={handleAddressDraftChange}
-                      placeholder="Home, Office, Studio... (optional)"
+                      placeholder="Home, Office, Village Home... (optional)"
                       className={addressInputClass}
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-1.5">
                     <RequiredLabel text="Recipient name" required />
                     <input
                       required
@@ -626,8 +707,8 @@ function AccountDetails() {
                   </label>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1.5">
                     <RequiredLabel text="Phone number" required />
                     <input
                       required
@@ -637,7 +718,7 @@ function AccountDetails() {
                       className={addressInputClass}
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-1.5">
                     <RequiredLabel text="Country" required />
                     <input
                       required
@@ -649,8 +730,8 @@ function AccountDetails() {
                   </label>
                 </div>
 
-                <div className="grid gap-4">
-                  <label className="space-y-2">
+                <div className="grid gap-3">
+                  <label className="space-y-1.5">
                     <RequiredLabel text="Address line 1" required />
                     <input
                       required
@@ -661,8 +742,8 @@ function AccountDetails() {
                     />
                   </label>
 
-                  <label className="space-y-2">
-                    <RequiredLabel text="Address line 2" />
+                  <label className="space-y-1.5">
+                    <RequiredLabel text="Nearest location / landmark" />
                     <input
                       name="addressLine2"
                       value={addressDraft.addressLine2}
@@ -672,8 +753,20 @@ function AccountDetails() {
                   </label>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <label className="space-y-2">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <label className="space-y-1.5">
+                    <RequiredLabel text="Postal code" required />
+                    <input
+                      required
+                      name="postalCode"
+                      value={addressDraft.postalCode}
+                      onChange={handleAddressDraftChange}
+                      className={addressInputClass}
+                      inputMode="numeric"
+                      maxLength={6}
+                    />
+                  </label>
+                  <label className="space-y-1.5">
                     <RequiredLabel text="City" required />
                     <input
                       required
@@ -683,7 +776,7 @@ function AccountDetails() {
                       className={addressInputClass}
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-1.5">
                     <RequiredLabel text="State" required />
                     <input
                       required
@@ -693,19 +786,9 @@ function AccountDetails() {
                       className={addressInputClass}
                     />
                   </label>
-                  <label className="space-y-2">
-                    <RequiredLabel text="Postal code" required />
-                    <input
-                      required
-                      name="postalCode"
-                      value={addressDraft.postalCode}
-                      onChange={handleAddressDraftChange}
-                      className={addressInputClass}
-                    />
-                  </label>
                 </div>
 
-                <label className="flex items-center gap-3 rounded-[16px] border border-black/8 bg-[#fffdfa] px-4 py-3.5 text-sm text-black/72">
+                <label className="flex items-center gap-3 rounded-[16px] border border-black/8 bg-[#fffdfa] px-4 py-3 text-sm text-black/72">
                   <input
                     type="checkbox"
                     name="isDefault"
@@ -716,7 +799,7 @@ function AccountDetails() {
                   Set as default address
                 </label>
 
-                <div className="flex flex-wrap gap-3 pt-1">
+                <div className="flex flex-wrap gap-3 pt-0.5">
                   <button
                     type="submit"
                     disabled={isAddressMutating}
