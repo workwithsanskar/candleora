@@ -1,6 +1,50 @@
 import PropTypes from "prop-types";
+import { useEffect } from "react";
+import { pauseSmoothScroll, resumeSmoothScroll } from "../../utils/smoothScroll";
+
+let modalScrollLockCount = 0;
+
+function lockBackgroundScroll() {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  if (modalScrollLockCount === 0) {
+    document.body.dataset.modalScrollLocked = "true";
+    document.body.style.overflow = "hidden";
+    pauseSmoothScroll();
+  }
+
+  modalScrollLockCount += 1;
+}
+
+function unlockBackgroundScroll() {
+  if (typeof document === "undefined" || modalScrollLockCount === 0) {
+    return;
+  }
+
+  modalScrollLockCount -= 1;
+
+  if (modalScrollLockCount === 0) {
+    delete document.body.dataset.modalScrollLocked;
+    document.body.style.overflow = "";
+    resumeSmoothScroll();
+  }
+}
 
 function Modal({ open, onClose, title, children, footer, size }) {
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    lockBackgroundScroll();
+
+    return () => {
+      unlockBackgroundScroll();
+    };
+  }, [open]);
+
   if (!open) {
     return null;
   }
@@ -20,7 +64,14 @@ function Modal({ open, onClose, title, children, footer, size }) {
             Close
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">{children}</div>
+        <div
+          className="mini-cart-scroll-view stealth-scrollbar max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth px-6 py-5"
+          data-lenis-prevent
+          data-lenis-prevent-wheel
+          data-lenis-prevent-touch
+        >
+          {children}
+        </div>
         {footer ? <div className="border-t border-black/8 px-6 py-5">{footer}</div> : null}
       </div>
     </div>

@@ -47,6 +47,14 @@ export function resizeSmoothScroll() {
   lenisInstance?.resize();
 }
 
+export function pauseSmoothScroll() {
+  lenisInstance?.stop();
+}
+
+export function resumeSmoothScroll() {
+  lenisInstance?.start();
+}
+
 export function scrollToTopInstant() {
   if (lenisInstance) {
     lenisInstance.scrollTo(0, { immediate: true, force: true });

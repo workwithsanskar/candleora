@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Comparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,10 @@ public class CouponService {
 
     @Transactional(readOnly = true)
     public List<CouponAdminResponse> listCoupons() {
-        return couponRepository.findAll().stream().map(this::toAdminResponse).toList();
+        return couponRepository.findAll().stream()
+            .sorted(Comparator.comparing(Coupon::getCode, String.CASE_INSENSITIVE_ORDER))
+            .map(this::toAdminResponse)
+            .toList();
     }
 
     public CouponAdminResponse createCoupon(AdminCouponRequest request) {
@@ -57,12 +61,19 @@ public class CouponService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Coupon code already exists");
         }
 
+        validateAdminCouponPayload(
+            Objects.requireNonNull(request.type()),
+            request.value(),
+            request.maxDiscount(),
+            request.minOrderAmount(),
+            request.startsAt(),
+            request.endsAt(),
+            request.usageLimit()
+        );
+
         Coupon coupon = new Coupon();
         coupon.setCode(code);
         coupon.setType(Objects.requireNonNull(request.type()));
-        if (request.value().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coupon value must be positive");
-        }
         coupon.setValue(request.value());
         coupon.setMaxDiscount(request.maxDiscount());
         coupon.setMinOrderAmount(request.minOrderAmount());
@@ -88,42 +99,44 @@ public class CouponService {
             coupon.setCode(code);
         }
 
-        if (request.type() != null) {
-            coupon.setType(request.type());
-        }
+        CouponType nextType = request.type() != null ? request.type() : coupon.getType();
+        BigDecimal nextValue = request.value() != null ? request.value() : coupon.getValue();
+        BigDecimal nextMaxDiscount = request.maxDiscount();
+        BigDecimal nextMinOrderAmount = request.minOrderAmount();
+        Instant nextStartsAt = request.startsAt();
+        Instant nextEndsAt = request.endsAt();
+        Integer nextUsageLimit = request.usageLimit();
 
-        if (request.value() != null) {
-            if (request.value().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coupon value must be positive");
-            }
-            coupon.setValue(request.value());
-        }
+        validateAdminCouponPayload(
+            nextType,
+            nextValue,
+            nextMaxDiscount,
+            nextMinOrderAmount,
+            nextStartsAt,
+            nextEndsAt,
+            nextUsageLimit
+        );
 
-        if (request.maxDiscount() != null) {
-            coupon.setMaxDiscount(request.maxDiscount());
-        }
-
-        if (request.minOrderAmount() != null) {
-            coupon.setMinOrderAmount(request.minOrderAmount());
-        }
+        coupon.setType(nextType);
+        coupon.setValue(nextValue);
+        coupon.setMaxDiscount(nextMaxDiscount);
+        coupon.setMinOrderAmount(nextMinOrderAmount);
 
         if (request.active() != null) {
             coupon.setActive(request.active());
         }
 
-        if (request.startsAt() != null) {
-            coupon.setStartsAt(request.startsAt());
-        }
-
-        if (request.endsAt() != null) {
-            coupon.setEndsAt(request.endsAt());
-        }
-
-        if (request.usageLimit() != null) {
-            coupon.setUsageLimit(request.usageLimit());
-        }
+        coupon.setStartsAt(nextStartsAt);
+        coupon.setEndsAt(nextEndsAt);
+        coupon.setUsageLimit(nextUsageLimit);
 
         return toAdminResponse(couponRepository.save(coupon));
+    }
+
+    public void deleteCoupon(Long id) {
+        Coupon coupon = couponRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coupon not found"));
+        couponRepository.delete(coupon);
     }
 
     public CouponQuote quoteCoupon(String code, List<OrderRequestItem> items) {
@@ -224,6 +237,44 @@ public class CouponService {
         }
 
         return discount.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void validateAdminCouponPayload(
+        CouponType type,
+        BigDecimal value,
+        BigDecimal maxDiscount,
+        BigDecimal minOrderAmount,
+        Instant startsAt,
+        Instant endsAt,
+        Integer usageLimit
+    ) {
+        if (type == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coupon type is required");
+        }
+
+        if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coupon value must be positive");
+        }
+
+        if (type == CouponType.PERCENTAGE && value.compareTo(BigDecimal.valueOf(100)) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Percentage coupons cannot exceed 100%");
+        }
+
+        if (maxDiscount != null && maxDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Maximum discount must be positive");
+        }
+
+        if (minOrderAmount != null && minOrderAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Minimum order amount cannot be negative");
+        }
+
+        if (usageLimit != null && usageLimit <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usage limit must be greater than zero");
+        }
+
+        if (startsAt != null && endsAt != null && !endsAt.isAfter(startsAt)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Coupon end time must be after the start time");
+        }
     }
 
     private CouponAdminResponse toAdminResponse(Coupon coupon) {

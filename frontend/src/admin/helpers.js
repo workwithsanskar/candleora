@@ -29,17 +29,22 @@ export function statusClassName(value) {
   switch (String(value ?? "").toUpperCase()) {
     case "CONFIRMED":
     case "DELIVERED":
+    case "LIVE":
       return "bg-[#e7f7ea] text-success";
     case "SHIPPED":
     case "OUT_FOR_DELIVERY":
+    case "SCHEDULED":
       return "bg-[#ebf3ff] text-[#2659b7]";
     case "CANCELLED":
+    case "EXPIRED":
+    case "EXHAUSTED":
       return "bg-[#fdeaea] text-danger";
     case "LOW STOCK":
       return "bg-[#fff3dd] text-[#986700]";
     case "OUT OF STOCK":
       return "bg-[#fdeaea] text-danger";
     case "HIDDEN":
+    case "PAUSED":
       return "bg-black/8 text-brand-muted";
     default:
       return "bg-[#fff3dd] text-[#986700]";
@@ -63,4 +68,18 @@ export function resolveQuickRange(period) {
     startDate: startDate.toISOString().slice(0, 10),
     endDate: endDate.toISOString().slice(0, 10),
   };
+}
+
+export function formatCurrencyAxisTick(value) {
+  const amount = Number(value ?? 0);
+
+  if (!Number.isFinite(amount)) {
+    return "Rs.0";
+  }
+
+  if (Math.abs(amount) >= 1000) {
+    return `Rs.${(amount / 1000).toFixed(0)}k`;
+  }
+
+  return `Rs.${amount.toFixed(0)}`;
 }

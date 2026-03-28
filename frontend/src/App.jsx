@@ -17,6 +17,7 @@ const AdminCustomers = lazy(() => import("./admin/pages/Customers"));
 const AdminDashboard = lazy(() => import("./admin/pages/Dashboard"));
 const AdminOrders = lazy(() => import("./admin/pages/Orders"));
 const AdminProducts = lazy(() => import("./admin/pages/Products"));
+const AdminCoupons = lazy(() => import("./admin/pages/Coupons"));
 const AdminSettings = lazy(() => import("./admin/pages/Settings"));
 const CandleFixes = lazy(() => import("./pages/CandleFixes"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -93,6 +94,7 @@ function AppShell() {
                   <Route index element={<AdminDashboard />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="products" element={<AdminProducts />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="customers" element={<AdminCustomers />} />
                   <Route path="analytics" element={<AdminAnalytics />} />
                   <Route path="settings" element={<AdminSettings />} />

@@ -16,8 +16,7 @@ import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import KPICard from "../components/KPICard";
 import adminApi from "../services/adminApi";
-import { PRIMARY_BUTTON_CLASS, resolveQuickRange, statusClassName } from "../helpers";
-import { formatAdminStatus } from "../helpers";
+import { PRIMARY_BUTTON_CLASS, formatAdminStatus, formatCurrencyAxisTick, resolveQuickRange, statusClassName } from "../helpers";
 import { formatCurrency, formatDate } from "../../utils/format";
 
 const quickRanges = [
@@ -154,7 +153,7 @@ function Dashboard() {
             <LineChart data={salesTrend}>
               <CartesianGrid stroke="#e7dfd0" strokeDasharray="3 3" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={formatCurrencyAxisTick} tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value, name) =>
                   name === "orders" ? [value, "Orders"] : [formatCurrency(value), "Revenue"]

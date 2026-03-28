@@ -951,7 +951,7 @@ function Checkout() {
               <div className="flex flex-wrap items-center gap-3 lg:shrink-0">
                 <Link
                   to={billingSummaryReady ? "/profile/details#addresses" : "/profile/details"}
-                  className="inline-flex min-h-[42px] items-center justify-center whitespace-nowrap rounded-full border border-white/16 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex min-h-[42px] min-w-[192px] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/16 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
                   {billingSummaryReady ? "Manage in profile" : "Complete profile"}
                 </Link>
@@ -1203,7 +1203,10 @@ function Checkout() {
                     Add your primary delivery details in Account Details or save an address in your profile. After that, checkout can stay focused on review instead of data entry.
                   </p>
                 </div>
-                <Link to="/profile/details" className="btn btn-secondary min-h-[46px] rounded-full px-5 text-sm">
+                <Link
+                  to="/profile/details"
+                  className="btn btn-secondary inline-flex min-h-[46px] min-w-[192px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm"
+                >
                   Complete profile
                 </Link>
               </div>
@@ -1442,7 +1445,7 @@ function Checkout() {
                         type="button"
                         onClick={handleUseCurrentLocation}
                         disabled={isLocating}
-                        className="btn btn-outline h-[46px] rounded-full px-5 text-sm disabled:opacity-60"
+                        className="btn btn-outline h-[46px] min-w-[220px] shrink-0 whitespace-nowrap rounded-full px-5 text-sm disabled:opacity-60"
                       >
                         {isLocating ? "Fetching..." : "Fetch current location"}
                       </button>

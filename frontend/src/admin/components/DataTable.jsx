@@ -40,15 +40,22 @@ function DataTable({ columns, rows, isLoading, emptyTitle, emptyDescription, key
             ) : null}
 
             {!isLoading
-              ? rows.map((row) => (
-                  <tr key={row[keyField]} className="transition hover:bg-[#fbf7f0]">
-                    {columns.map((column) => (
-                      <td key={column.key} className="border-b border-black/6 px-4 py-4 align-top text-sm text-brand-dark">
-                        {column.cell ? column.cell(row) : row[column.key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+              ? rows.map((row, index) => {
+                  const rowKey = row?.[keyField] ?? `${keyField}-${index}`;
+
+                  return (
+                    <tr key={rowKey} className="transition hover:bg-[#fbf7f0]">
+                      {columns.map((column) => (
+                        <td
+                          key={`${rowKey}-${column.key}`}
+                          className="border-b border-black/6 px-4 py-4 align-top text-sm text-brand-dark"
+                        >
+                          {column.cell ? column.cell(row) : row[column.key]}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })
               : null}
           </tbody>
         </table>

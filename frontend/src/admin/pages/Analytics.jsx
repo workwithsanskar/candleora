@@ -19,7 +19,7 @@ import ChartCard from "../components/ChartCard";
 import FiltersBar from "../components/FiltersBar";
 import KPICard from "../components/KPICard";
 import adminApi from "../services/adminApi";
-import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS, resolveQuickRange } from "../helpers";
+import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS, formatCurrencyAxisTick, resolveQuickRange } from "../helpers";
 import { formatCurrency } from "../../utils/format";
 
 const quickRanges = [
@@ -125,7 +125,7 @@ function Analytics() {
             <LineChart data={salesQuery.data?.trend ?? []}>
               <CartesianGrid stroke="#e7dfd0" strokeDasharray="3 3" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={formatCurrencyAxisTick} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value, name) => (name === "orders" ? [value, "Orders"] : [formatCurrency(value), name === "profit" ? "Profit" : "Revenue"])} />
               <Legend />
               <Line type="monotone" dataKey="revenue" stroke="#17120f" strokeWidth={2.6} dot={false} />
@@ -175,7 +175,7 @@ function Analytics() {
             <LineChart data={forecastQuery.data ?? []}>
               <CartesianGrid stroke="#e7dfd0" strokeDasharray="3 3" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={formatCurrencyAxisTick} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value) => [formatCurrency(value), "Forecast Revenue"]} />
               <Line type="monotone" dataKey="revenue" stroke="#9b7850" strokeWidth={2.6} dot={false} strokeDasharray="6 4" />
             </LineChart>
@@ -189,7 +189,7 @@ function Analytics() {
             <BarChart data={salesQuery.data?.revenueDistribution ?? []}>
               <CartesianGrid stroke="#efe7d9" strokeDasharray="3 3" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={formatCurrencyAxisTick} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value) => [formatCurrency(value), "Revenue"]} />
               <Bar dataKey="value" fill="#17120f" radius={[8, 8, 0, 0]} />
             </BarChart>

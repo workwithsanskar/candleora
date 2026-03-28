@@ -171,6 +171,7 @@
   .mini-cart-scroll-view {
     overscroll-behavior: contain;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   .stealth-scrollbar {

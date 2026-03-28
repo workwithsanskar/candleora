@@ -7,6 +7,7 @@ const titles = {
   "/admin": "Dashboard",
   "/admin/orders": "Orders",
   "/admin/products": "Products",
+  "/admin/coupons": "Coupons",
   "/admin/customers": "Customers",
   "/admin/analytics": "Analytics",
   "/admin/settings": "Settings",
@@ -15,6 +16,7 @@ const titles = {
 const placeholders = {
   "/admin/orders": "Search orders by ID, customer, or email",
   "/admin/products": "Search products by name, slug, or description",
+  "/admin/coupons": "Search coupons by code or campaign status",
   "/admin/customers": "Search customers by name, email, or phone",
 };
 
