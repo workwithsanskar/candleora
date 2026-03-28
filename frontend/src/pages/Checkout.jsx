@@ -949,11 +949,6 @@ function Checkout() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 lg:shrink-0">
-                {selectedSavedAddress ? (
-                  <span className="inline-flex items-center rounded-full border border-white/16 bg-white/10 px-3.5 py-1.5 text-xs font-semibold tracking-[0.12em] text-white">
-                    {selectedSavedAddress.label || "Saved address"}
-                  </span>
-                ) : null}
                 <Link
                   to={billingSummaryReady ? "/profile/details#addresses" : "/profile/details"}
                   className="inline-flex min-h-[42px] items-center justify-center whitespace-nowrap rounded-full border border-white/16 px-5 text-sm font-semibold text-white transition hover:bg-white/10"
