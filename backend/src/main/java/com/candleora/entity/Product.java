@@ -11,14 +11,28 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    indexes = {
+        @Index(name = "idx_products_slug", columnList = "slug", unique = true),
+        @Index(name = "idx_products_visible_created_at", columnList = "visible, created_at"),
+        @Index(name = "idx_products_visible_price", columnList = "visible, price"),
+        @Index(name = "idx_products_visible_rating_created_at", columnList = "visible, rating, created_at"),
+        @Index(name = "idx_products_visible_category_created_at", columnList = "visible, category_id, created_at"),
+        @Index(name = "idx_products_visible_occasion_created_at", columnList = "visible, occasion_tag, created_at")
+    }
+)
 public class Product {
 
     @Id
@@ -68,9 +82,11 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url", nullable = false, length = 1024)
+    @BatchSize(size = 24)
+    @Fetch(FetchMode.SUBSELECT)
     private List<String> imageUrls = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)

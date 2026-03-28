@@ -14,6 +14,7 @@ class CatalogControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").exists())
             .andExpect(jsonPath("$.content[0].category.slug").exists())
+            .andExpect(jsonPath("$.content[0].imageUrl").exists())
             .andExpect(jsonPath("$.totalElements").isNumber());
     }
 
@@ -30,10 +31,21 @@ class CatalogControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void getProductsAcceptsCombinedOccasionFilters() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/products")
+                    .param("occasions", "Wedding,Relaxation")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].occasionTag").isNotEmpty());
+    }
+
+    @Test
     void getRelatedProductsReturnsSameCategoryRecommendations() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/products/1/related"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").exists())
-            .andExpect(jsonPath("$[0].category.slug").exists());
+            .andExpect(jsonPath("$[0].category.slug").exists())
+            .andExpect(jsonPath("$[0].imageUrl").exists());
     }
 }

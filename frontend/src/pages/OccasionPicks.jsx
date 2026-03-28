@@ -1,14 +1,13 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import LazyProductCard from "../components/LazyProductCard";
 import StatusView from "../components/StatusView";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
 import { catalogApi } from "../services/api";
 import { formatApiError } from "../utils/format";
-import { normalizeProduct } from "../utils/normalize";
 
-const initialVisibleCount = 8;
-const loadMoreStep = 4;
+const pageSize = 8;
 
 const occasionBuckets = ["Birthday", "Wedding", "Relaxation", "Housewarming"];
 
@@ -41,99 +40,44 @@ function FilterSection({ title, children }) {
 }
 
 function OccasionPicks() {
-  const [curatedProducts, setCuratedProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
-  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
+  const trimmedSearch = deferredSearch.trim();
+  const productsQuery = useInfiniteQuery({
+    queryKey: ["catalog", "occasion-picks", trimmedSearch, selectedCategory, activeRange?.id ?? ""],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      catalogApi.getProducts({
+        page: pageParam,
+        size: pageSize,
+        occasions: occasionBuckets.join(","),
+        search: trimmedSearch || undefined,
+        category: selectedCategory || undefined,
+        minPrice: activeRange?.min,
+        maxPrice: activeRange?.max,
+        sort: "popular",
+      }),
+    getNextPageParam: (lastPage) => {
+      const currentPage = Number(lastPage?.page ?? 0);
+      const totalPages = Math.max(Number(lastPage?.totalPages ?? 0), 1);
 
-  useEffect(() => {
-    let isMounted = true;
+      return currentPage + 1 < totalPages ? currentPage + 1 : undefined;
+    },
+  });
 
-    const loadOccasionProducts = async () => {
-      setIsLoading(true);
-      setError("");
-
-      try {
-        const occasionResponses = await Promise.all(
-          occasionBuckets.map((occasion) =>
-            catalogApi.getProducts({ size: 24, occasion, sort: "popular" }),
-          ),
-        );
-
-        if (!isMounted) {
-          return;
-        }
-
-        const dedupedProducts = [];
-        const seenIds = new Set();
-
-        occasionResponses
-          .flatMap((response) => response.content ?? [])
-          .forEach((product) => {
-            const productId = Number(product.id);
-
-            if (seenIds.has(productId)) {
-              return;
-            }
-
-            seenIds.add(productId);
-            dedupedProducts.push(product);
-          });
-
-        setCuratedProducts(dedupedProducts);
-      } catch (occasionError) {
-        if (isMounted) {
-          setError(formatApiError(occasionError));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadOccasionProducts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    setVisibleCount(initialVisibleCount);
-  }, [deferredSearch, selectedCategory, selectedPriceRange]);
-
-  const filteredProducts = useMemo(() => {
-    const normalizedSearch = deferredSearch.trim().toLowerCase();
-
-    return curatedProducts.filter((product) => {
-      const item = normalizeProduct(product);
-      const matchesSearch =
-        !normalizedSearch ||
-        item.name.toLowerCase().includes(normalizedSearch) ||
-        item.description.toLowerCase().includes(normalizedSearch) ||
-        item.occasionTag.toLowerCase().includes(normalizedSearch) ||
-        item.category.name.toLowerCase().includes(normalizedSearch);
-
-      const matchesCategory = !selectedCategory || item.category.slug === selectedCategory;
-
-      const matchesPrice =
-        !activeRange || (item.price >= activeRange.min && item.price <= activeRange.max);
-
-      return matchesSearch && matchesCategory && matchesPrice;
-    });
-  }, [activeRange, curatedProducts, deferredSearch, selectedCategory]);
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const showingFrom = filteredProducts.length > 0 ? 1 : 0;
+  const visibleProducts = productsQuery.data?.pages.flatMap((response) => response?.content ?? []) ?? [];
+  const firstPage = productsQuery.data?.pages?.[0];
+  const totalElements = Number(firstPage?.totalElements ?? visibleProducts.length);
+  const showingFrom = totalElements > 0 ? 1 : 0;
   const showingTo = visibleProducts.length;
-  const hasMoreProducts = visibleCount < filteredProducts.length;
+  const hasMoreProducts = Boolean(productsQuery.hasNextPage);
+  const error = productsQuery.error ? formatApiError(productsQuery.error) : "";
+  const isInitialLoading = productsQuery.isPending;
+  const isLoadingMore = productsQuery.isFetchingNextPage;
 
   return (
     <section className="container-shell py-10 sm:py-12">
@@ -199,12 +143,10 @@ function OccasionPicks() {
               </span>
             </label>
 
-            <p className="text-sm text-black/76">
-              Showing {showingFrom}-{showingTo} of {filteredProducts.length} item(s)
-            </p>
+            <p className="text-sm text-black/76">Showing {showingFrom}-{showingTo} of {totalElements} item(s)</p>
           </div>
 
-          {isLoading ? (
+          {isInitialLoading ? (
             <StatusView
               title="Loading occasion picks"
               message="We are curating the current CandleOra occasion edit."
@@ -219,7 +161,7 @@ function OccasionPicks() {
                 </Link>
               }
             />
-          ) : filteredProducts.length === 0 ? (
+          ) : visibleProducts.length === 0 ? (
             <StatusView
               title="No occasion picks match those filters"
               message="Try clearing the category filter or widening the price range."
@@ -233,17 +175,16 @@ function OccasionPicks() {
               </div>
 
               <div className="pt-8 text-center">
-                <p className="text-sm text-black/76">
-                  Showing {showingFrom}-{showingTo} of {filteredProducts.length} item(s)
-                </p>
+                <p className="text-sm text-black/76">Showing {showingFrom}-{showingTo} of {totalElements} item(s)</p>
                 <div className="mx-auto mt-4 h-px w-full max-w-[420px] bg-black/12" />
                 {hasMoreProducts && (
                   <button
                     type="button"
-                    onClick={() => setVisibleCount((currentVisibleCount) => currentVisibleCount + loadMoreStep)}
+                    onClick={() => productsQuery.fetchNextPage()}
+                    disabled={isLoadingMore}
                     className="btn btn-primary mt-6"
                   >
-                    Load More
+                    {isLoadingMore ? "Loading..." : "Load More"}
                   </button>
                 )}
               </div>

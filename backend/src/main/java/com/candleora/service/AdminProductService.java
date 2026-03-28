@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.util.List;
+import org.springframework.cache.annotation.Caching;
 import java.util.Locale;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -98,7 +99,13 @@ public class AdminProductService {
         return PagedResponse.from(productPage);
     }
 
-    @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "adminAnalytics", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductPages", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductDetail", allEntries = true),
+        @CacheEvict(cacheNames = "catalogRelatedProducts", allEntries = true),
+        @CacheEvict(cacheNames = "catalogCategories", allEntries = true)
+    })
     public AdminProductResponse createProduct(AdminProductRequest request) {
         validateCreateRequest(request);
 
@@ -107,14 +114,26 @@ public class AdminProductService {
         return toProductResponse(productRepository.save(product));
     }
 
-    @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "adminAnalytics", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductPages", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductDetail", allEntries = true),
+        @CacheEvict(cacheNames = "catalogRelatedProducts", allEntries = true),
+        @CacheEvict(cacheNames = "catalogCategories", allEntries = true)
+    })
     public AdminProductResponse updateProduct(Long id, AdminProductRequest request) {
         Product product = findProduct(id);
         applyRequest(product, request, false);
         return toProductResponse(productRepository.save(product));
     }
 
-    @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "adminAnalytics", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductPages", allEntries = true),
+        @CacheEvict(cacheNames = "catalogProductDetail", allEntries = true),
+        @CacheEvict(cacheNames = "catalogRelatedProducts", allEntries = true),
+        @CacheEvict(cacheNames = "catalogCategories", allEntries = true)
+    })
     public void deleteProduct(Long id) {
         Product product = findProduct(id);
         try {

@@ -2,20 +2,25 @@ package com.candleora.service;
 
 import com.candleora.dto.catalog.CategoryResponse;
 import com.candleora.dto.catalog.ProductResponse;
+import com.candleora.dto.catalog.ProductSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
 import com.candleora.entity.Product;
 import com.candleora.repository.CategoryRepository;
 import com.candleora.repository.ProductRepository;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -30,12 +35,14 @@ public class CatalogService {
         this.categoryRepository = categoryRepository;
     }
 
-    public PagedResponse<ProductResponse> getProducts(
+    @Cacheable(cacheNames = "catalogProductPages")
+    public PagedResponse<ProductSummaryResponse> getProducts(
         String search,
         String category,
         BigDecimal minPrice,
         BigDecimal maxPrice,
         String occasion,
+        String occasions,
         String sort,
         int page,
         int size
@@ -61,10 +68,10 @@ public class CatalogService {
             );
         }
 
-        if (occasion != null && !occasion.isBlank()) {
-            String occasionTag = occasion.toLowerCase(Locale.ROOT);
+        List<String> occasionTags = resolveOccasionTags(occasion, occasions);
+        if (!occasionTags.isEmpty()) {
             specification = specification.and((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(criteriaBuilder.lower(root.get("occasionTag")), occasionTag)
+                criteriaBuilder.lower(root.get("occasionTag")).in(occasionTags)
             );
         }
 
@@ -80,19 +87,21 @@ public class CatalogService {
             );
         }
 
-        Page<ProductResponse> productPage = productRepository.findAll(
+        Page<ProductSummaryResponse> productPage = productRepository.findAll(
             specification,
             PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 24), resolveSort(sort))
-        ).map(this::toProductResponse);
+        ).map(this::toProductSummaryResponse);
 
         return PagedResponse.from(productPage);
     }
 
+    @Cacheable(cacheNames = "catalogProductDetail")
     public ProductResponse getProduct(String identifier) {
         return toProductResponse(findProduct(identifier));
     }
 
-    public List<ProductResponse> getRelatedProducts(String identifier) {
+    @Cacheable(cacheNames = "catalogRelatedProducts")
+    public List<ProductSummaryResponse> getRelatedProducts(String identifier) {
         Product product = findProduct(identifier);
 
         return productRepository.findTop4ByCategoryAndVisibleTrueAndIdNotOrderByCreatedAtDesc(
@@ -100,10 +109,11 @@ public class CatalogService {
                 product.getId()
             )
             .stream()
-            .map(this::toProductResponse)
+            .map(this::toProductSummaryResponse)
             .toList();
     }
 
+    @Cacheable(cacheNames = "catalogCategories")
     public List<CategoryResponse> getCategories() {
         return categoryRepository.findAll(Sort.by("name"))
             .stream()
@@ -169,5 +179,37 @@ public class CatalogService {
             product.getImageUrls(),
             product.getCreatedAt()
         );
+    }
+
+    private ProductSummaryResponse toProductSummaryResponse(Product product) {
+        return new ProductSummaryResponse(
+            product.getId(),
+            product.getName(),
+            product.getSlug(),
+            product.getPrice(),
+            product.getOriginalPrice(),
+            product.getDiscount(),
+            product.getStock(),
+            product.getOccasionTag(),
+            product.getRating(),
+            new CategoryResponse(
+                product.getCategory().getId(),
+                product.getCategory().getName(),
+                product.getCategory().getSlug()
+            ),
+            product.getImageUrls().stream().findFirst().orElse(null)
+        );
+    }
+
+    private List<String> resolveOccasionTags(String occasion, String occasions) {
+        return Arrays.stream(new String[] { occasion, occasions })
+            .filter(StringUtils::hasText)
+            .flatMap(value -> Arrays.stream(value.split(",")))
+            .map(String::trim)
+            .filter(StringUtils::hasText)
+            .map(value -> value.toLowerCase(Locale.ROOT))
+            .distinct()
+            .filter(Objects::nonNull)
+            .toList();
     }
 }

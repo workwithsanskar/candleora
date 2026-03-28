@@ -47,8 +47,16 @@ api.interceptors.response.use(
 
 const unwrap = (response) => response.data;
 
+function withDefinedParams(params = {}) {
+  return Object.fromEntries(
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .map(([key, value]) => [key, Array.isArray(value) ? value.join(",") : value]),
+  );
+}
+
 export const catalogApi = {
-  getProducts: (params = {}) => api.get("/products", { params }).then(unwrap),
+  getProducts: (params = {}) => api.get("/products", { params: withDefinedParams(params) }).then(unwrap),
   getProduct: (id) => api.get(`/products/${id}`).then(unwrap),
   getRelatedProducts: (id) => api.get(`/products/${id}/related`).then(unwrap),
   getProductReviews: (id) => api.get(`/products/${id}/reviews`).then(unwrap),

@@ -1,7 +1,8 @@
 import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OccasionPicks from "./OccasionPicks";
 
 const { mockCatalogApi, addToCartMock } = vi.hoisted(() => ({
@@ -43,6 +44,9 @@ function buildProduct(id, name, categorySlug, categoryName, occasionTag) {
 }
 
 describe("OccasionPicks", () => {
+  let activeQueryClient = null;
+  let activeView = null;
+
   beforeEach(() => {
     mockCatalogApi.getCategories.mockReset();
     mockCatalogApi.getProducts.mockReset();
@@ -56,55 +60,92 @@ describe("OccasionPicks", () => {
       { id: 5, name: "Textured", slug: "textured" },
     ]);
 
-    mockCatalogApi.getProducts
-      .mockResolvedValueOnce({
+    mockCatalogApi.getProducts.mockImplementation((params = {}) => {
+      if (params.search === "relaxing") {
+        return Promise.resolve({
+          content: [buildProduct(7, "Relaxing Glass Glow", "glass", "Glass", "Relaxation")],
+          page: 0,
+          totalPages: 1,
+          totalElements: 1,
+        });
+      }
+
+      if (Number(params.page) === 1) {
+        return Promise.resolve({
+          content: [
+            buildProduct(9, "Housewarming Ember Set", "candle-sets", "Sets", "Housewarming"),
+            buildProduct(10, "Warm Welcome Holder", "holder", "Holders", "Housewarming"),
+          ],
+          page: 1,
+          totalPages: 2,
+          totalElements: 10,
+        });
+      }
+
+      return Promise.resolve({
         content: [
           buildProduct(1, "Golden Aura Holder Set", "candle-sets", "Sets", "Birthday"),
           buildProduct(2, "Birthday Glow Trio", "glass", "Glass", "Birthday"),
           buildProduct(3, "Celebrate With Tea Lights", "tea-light", "Tea Lights", "Birthday"),
-        ],
-      })
-      .mockResolvedValueOnce({
-        content: [
           buildProduct(4, "Rose Petal Bloom", "glass", "Glass", "Wedding"),
           buildProduct(5, "Garden Bloom Trio", "candle-sets", "Sets", "Wedding"),
           buildProduct(6, "Wedding Table Holders", "holder", "Holders", "Wedding"),
-        ],
-      })
-      .mockResolvedValueOnce({
-        content: [
           buildProduct(7, "Relaxing Glass Glow", "glass", "Glass", "Relaxation"),
           buildProduct(8, "Quiet Evening Pillar", "textured", "Textured", "Relaxation"),
         ],
-      })
-      .mockResolvedValueOnce({
-        content: [
-          buildProduct(9, "Housewarming Ember Set", "candle-sets", "Sets", "Housewarming"),
-          buildProduct(10, "Warm Welcome Holder", "holder", "Holders", "Housewarming"),
-          buildProduct(1, "Golden Aura Holder Set", "candle-sets", "Sets", "Birthday"),
-        ],
+        page: 0,
+        totalPages: 2,
+        totalElements: 10,
       });
+    });
   });
 
-  it("renders the screenshot-style occasion picks catalog with merged results", async () => {
-    render(
-      <MemoryRouter initialEntries={["/occasion-picks"]}>
-        <Routes>
-          <Route path="/occasion-picks" element={<OccasionPicks />} />
-        </Routes>
-      </MemoryRouter>,
+  afterEach(() => {
+    activeQueryClient?.cancelQueries();
+    activeQueryClient?.clear();
+    activeView?.unmount();
+    activeQueryClient = null;
+    activeView = null;
+  });
+
+  function renderOccasionPicks() {
+    activeQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          gcTime: Infinity,
+          retry: false,
+        },
+      },
+    });
+
+    activeView = render(
+      <QueryClientProvider client={activeQueryClient}>
+        <MemoryRouter initialEntries={["/occasion-picks"]}>
+          <Routes>
+            <Route path="/occasion-picks" element={<OccasionPicks />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
+    return activeView;
+  }
+
+  it("renders the screenshot-style occasion picks catalog with merged results", async () => {
+    renderOccasionPicks();
+
     expect(await screen.findByText("Occasion Picks")).toBeInTheDocument();
-    expect(screen.getByText("Occasion Picks")).toBeInTheDocument();
+    expect(await screen.findByText("Golden Aura Holder Set")).toBeInTheDocument();
     expect(screen.getAllByText("Showing 1-8 of 10 item(s)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Golden Aura Holder Set")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Added" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load More" })).toBeInTheDocument();
-    expect(mockCatalogApi.getProducts).toHaveBeenCalledTimes(4);
-    expect(mockCatalogApi.getProducts).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ occasion: "Birthday", size: 24, sort: "popular" }),
+    expect(mockCatalogApi.getProducts).toHaveBeenCalledTimes(1);
+    expect(mockCatalogApi.getProducts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        occasions: "Birthday,Wedding,Relaxation,Housewarming",
+        page: 0,
+        size: 8,
+        sort: "popular",
+      }),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Load More" }));
@@ -114,13 +155,7 @@ describe("OccasionPicks", () => {
   });
 
   it("filters the merged occasion picks by search text", async () => {
-    render(
-      <MemoryRouter initialEntries={["/occasion-picks"]}>
-        <Routes>
-          <Route path="/occasion-picks" element={<OccasionPicks />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderOccasionPicks();
 
     fireEvent.change((await screen.findAllByPlaceholderText("Search An Item"))[0], {
       target: { value: "relaxing" },

@@ -1,7 +1,8 @@
 import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Shop from "./Shop";
 
 const { mockCatalogApi } = vi.hoisted(() => ({
@@ -23,6 +24,9 @@ vi.mock("../context/CartContext", () => ({
 }));
 
 describe("Shop", () => {
+  let activeQueryClient = null;
+  let activeView = null;
+
   beforeEach(() => {
     mockCatalogApi.getCategories.mockReset();
     mockCatalogApi.getProducts.mockReset();
@@ -44,14 +48,39 @@ describe("Shop", () => {
     });
   });
 
-  it("loads categories and products from the catalog API", async () => {
-    render(
-      <MemoryRouter initialEntries={["/shop"]}>
-        <Routes>
-          <Route path="/shop" element={<Shop />} />
-        </Routes>
-      </MemoryRouter>,
+  afterEach(() => {
+    activeQueryClient?.cancelQueries();
+    activeQueryClient?.clear();
+    activeView?.unmount();
+    activeQueryClient = null;
+    activeView = null;
+  });
+
+  function renderShop() {
+    activeQueryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          gcTime: Infinity,
+          retry: false,
+        },
+      },
+    });
+
+    activeView = render(
+      <QueryClientProvider client={activeQueryClient}>
+        <MemoryRouter initialEntries={["/shop"]}>
+          <Routes>
+            <Route path="/shop" element={<Shop />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
+
+    return activeView;
+  }
+
+  it("loads categories and products from the catalog API", async () => {
+    renderShop();
 
     expect(await screen.findByText("Glass")).toBeInTheDocument();
     expect(await screen.findByText("Lavender Ember Jar")).toBeInTheDocument();
@@ -62,13 +91,7 @@ describe("Shop", () => {
   });
 
   it("refetches products when a category filter is selected", async () => {
-    render(
-      <MemoryRouter initialEntries={["/shop"]}>
-        <Routes>
-          <Route path="/shop" element={<Shop />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderShop();
 
     fireEvent.click((await screen.findAllByRole("button", { name: "Glass" }))[0]);
 

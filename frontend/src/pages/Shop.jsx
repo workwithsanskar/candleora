@@ -1,4 +1,5 @@
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import LazyProductCard from "../components/LazyProductCard";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
@@ -39,71 +40,47 @@ function FilterSection({ title, children }) {
 
 function Shop() {
   const [searchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
 
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    setError("");
-
-    catalogApi
-      .getProducts({
-        page,
+  const trimmedSearch = deferredSearch.trim();
+  const productsQuery = useInfiniteQuery({
+    queryKey: ["catalog", "shop", trimmedSearch, category, activeRange?.id ?? ""],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      catalogApi.getProducts({
+        page: pageParam,
         size: pageSize,
-        search: deferredSearch || undefined,
+        search: trimmedSearch || undefined,
         category: category || undefined,
         minPrice: activeRange?.min,
         maxPrice: activeRange?.max,
         sort: "popular",
-      })
-      .then((response) => {
-        if (!isMounted) {
-          return;
-        }
+      }),
+    getNextPageParam: (lastPage) => {
+      const currentPage = Number(lastPage?.page ?? 0);
+      const totalPages = Math.max(Number(lastPage?.totalPages ?? 0), 1);
 
-        const nextProducts = response.content ?? [];
-        setProducts((currentProducts) =>
-          page === 0 ? nextProducts : [...currentProducts, ...nextProducts],
-        );
-        setTotalPages(Math.max(response.totalPages ?? 1, 1));
-        setTotalElements(Number(response.totalElements ?? nextProducts.length));
-      })
-      .catch((productsError) => {
-        if (isMounted) {
-          setError(formatApiError(productsError));
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
+      return currentPage + 1 < totalPages ? currentPage + 1 : undefined;
+    },
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [page, deferredSearch, category, activeRange]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [deferredSearch, category, selectedPriceRange]);
+  const products = productsQuery.data?.pages.flatMap((response) => response?.content ?? []) ?? [];
+  const firstPage = productsQuery.data?.pages?.[0];
+  const totalElements = Number(firstPage?.totalElements ?? products.length);
+  const error = productsQuery.error ? formatApiError(productsQuery.error) : "";
 
   const visibleCount = products.length;
   const showingFrom = visibleCount > 0 ? 1 : 0;
   const showingTo = visibleCount;
-  const hasMorePages = page + 1 < totalPages;
+  const hasMorePages = Boolean(productsQuery.hasNextPage);
   const initialSkeletonCount = 6;
+  const isInitialLoading = productsQuery.isPending;
+  const isLoadingMore = productsQuery.isFetchingNextPage;
 
   return (
     <section className="container-shell py-8 sm:py-10">
@@ -172,7 +149,7 @@ function Shop() {
             </p>
           </div>
 
-          {isLoading && page === 0 ? (
+          {isInitialLoading ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: initialSkeletonCount }).map((_, index) => (
                 <ProductCardSkeleton key={index} />
@@ -200,11 +177,10 @@ function Shop() {
                   <LazyProductCard
                     key={product.id}
                     product={product}
-                    priority={page === 0 && index < initialSkeletonCount}
+                    priority={index < initialSkeletonCount}
                   />
                 ))}
-                {isLoading &&
-                  page > 0 &&
+                {isLoadingMore &&
                   Array.from({ length: 3 }).map((_, index) => (
                     <ProductCardSkeleton key={`loading-${index}`} />
                   ))}
@@ -218,11 +194,11 @@ function Shop() {
                   <div className="mx-auto mt-4 h-px w-full max-w-[420px] bg-black/12" />
                   <button
                     type="button"
-                    onClick={() => setPage((currentPage) => currentPage + 1)}
-                    disabled={isLoading}
+                    onClick={() => productsQuery.fetchNextPage()}
+                    disabled={isLoadingMore}
                     className="btn btn-primary mt-6 disabled:cursor-not-allowed disabled:opacity-55"
                   >
-                    {isLoading ? "Loading..." : "Load More"}
+                    {isLoadingMore ? "Loading..." : "Load More"}
                   </button>
                 </div>
               )}
