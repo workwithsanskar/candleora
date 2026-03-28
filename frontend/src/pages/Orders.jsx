@@ -71,6 +71,22 @@ function Orders() {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  const liveCancelableOrderIds = useMemo(
+    () =>
+      new Set(
+        orders
+          .filter((order) => {
+            if (!order?.canCancel || !order?.cancelDeadline) {
+              return false;
+            }
+
+            return new Date(order.cancelDeadline).getTime() > currentTime;
+          })
+          .map((order) => order.id),
+      ),
+    [currentTime, orders],
+  );
+
   if (isLoading) {
     return <OrderHistorySkeleton />;
   }
@@ -109,22 +125,6 @@ function Orders() {
       setCancellingOrderId(null);
     }
   };
-
-  const liveCancelableOrderIds = useMemo(
-    () =>
-      new Set(
-        orders
-          .filter((order) => {
-            if (!order?.canCancel || !order?.cancelDeadline) {
-              return false;
-            }
-
-            return new Date(order.cancelDeadline).getTime() > currentTime;
-          })
-          .map((order) => order.id),
-      ),
-    [currentTime, orders],
-  );
 
   return (
     <section className="container-shell py-10 sm:py-12">
