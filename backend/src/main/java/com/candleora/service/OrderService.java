@@ -36,6 +36,7 @@ public class OrderService {
     private final CustomerOrderRepository customerOrderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final InventoryService inventoryService;
     private final InvoiceService invoiceService;
     private final OrderNotificationService orderNotificationService;
     private final CouponService couponService;
@@ -46,6 +47,7 @@ public class OrderService {
         CustomerOrderRepository customerOrderRepository,
         CartItemRepository cartItemRepository,
         ProductRepository productRepository,
+        InventoryService inventoryService,
         InvoiceService invoiceService,
         OrderNotificationService orderNotificationService,
         CouponService couponService,
@@ -55,6 +57,7 @@ public class OrderService {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.inventoryService = inventoryService;
         this.invoiceService = invoiceService;
         this.orderNotificationService = orderNotificationService;
         this.couponService = couponService;
@@ -79,7 +82,7 @@ public class OrderService {
         applyEstimatedDelivery(order);
 
         CustomerOrder savedOrder = customerOrderRepository.save(order);
-        decrementStock(savedOrder);
+        commitDirectSaleStock(savedOrder);
         cartItemRepository.deleteByUser(user);
         if (StringUtils.hasText(savedOrder.getCouponCode())) {
             couponService.incrementUsage(savedOrder.getCouponCode());
@@ -110,7 +113,9 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentProvider(paymentProvider);
         order.setPaymentStatus(PaymentStatus.PENDING);
-        return customerOrderRepository.save(order);
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        reservePendingStock(savedOrder);
+        return savedOrder;
     }
 
     public CustomerOrder attachGatewayOrder(CustomerOrder order, String gatewayOrderId) {
@@ -120,6 +125,7 @@ public class OrderService {
 
     public CustomerOrder markPaymentFailed(CustomerOrder order) {
         order.setPaymentStatus(PaymentStatus.FAILED);
+        releasePendingReservation(order, "Reservation released after payment failure");
         return customerOrderRepository.save(order);
     }
 
@@ -142,7 +148,7 @@ public class OrderService {
         order.setStatus(OrderStatus.CONFIRMED);
         applyEstimatedDelivery(order);
 
-        decrementStock(order);
+        commitReservedStock(order);
         cartItemRepository.deleteByUser(user);
         CustomerOrder savedOrder = customerOrderRepository.save(order);
         if (StringUtils.hasText(savedOrder.getCouponCode())) {
@@ -184,6 +190,8 @@ public class OrderService {
 
         if (previousStatus == OrderStatus.CONFIRMED) {
             restock(order);
+        } else if (previousStatus == OrderStatus.PENDING_PAYMENT) {
+            releasePendingReservation(order, "Reservation released after order cancellation");
         }
 
         CustomerOrder savedOrder = customerOrderRepository.save(order);
@@ -218,7 +226,7 @@ public class OrderService {
         BigDecimal subtotalAmount = BigDecimal.ZERO;
 
         for (OrderLine orderLine : orderLines) {
-            validateStock(orderLine.product(), orderLine.quantity());
+            inventoryService.validateAvailableStock(orderLine.product(), orderLine.quantity());
             OrderItem item = createOrderItem(orderLine.product(), orderLine.quantity());
             item.setOrder(order);
             orderItems.add(item);
@@ -250,33 +258,38 @@ public class OrderService {
             .toList();
     }
 
-    private void decrementStock(CustomerOrder order) {
+    private void commitDirectSaleStock(CustomerOrder order) {
         for (OrderItem item : order.getItems()) {
             Product product = findProduct(item.getProductId());
-            validateStock(product, item.getQuantity());
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepository.save(product);
+            inventoryService.commitDirectSale(product, item.getQuantity(), order.getId());
+        }
+    }
+
+    private void reservePendingStock(CustomerOrder order) {
+        for (OrderItem item : order.getItems()) {
+            Product product = findProduct(item.getProductId());
+            inventoryService.reserveForPendingOrder(product, item.getQuantity(), order.getId());
+        }
+    }
+
+    private void releasePendingReservation(CustomerOrder order, String note) {
+        for (OrderItem item : order.getItems()) {
+            Product product = findProduct(item.getProductId());
+            inventoryService.releasePendingReservation(product, item.getQuantity(), order.getId(), note);
+        }
+    }
+
+    private void commitReservedStock(CustomerOrder order) {
+        for (OrderItem item : order.getItems()) {
+            Product product = findProduct(item.getProductId());
+            inventoryService.commitReservedOrder(product, item.getQuantity(), order.getId());
         }
     }
 
     private void restock(CustomerOrder order) {
         for (OrderItem item : order.getItems()) {
             Product product = findProduct(item.getProductId());
-            Integer currentStock = product.getStock();
-            if (currentStock == null) {
-                currentStock = 0;
-            }
-            product.setStock(currentStock + item.getQuantity());
-            productRepository.save(product);
-        }
-    }
-
-    private void validateStock(Product product, Integer quantity) {
-        if (product.getStock() == null || product.getStock() < quantity) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Insufficient stock for " + product.getName()
-            );
+            inventoryService.restockFromCancelledOrder(product, item.getQuantity(), order.getId());
         }
     }
 
@@ -404,7 +417,7 @@ public class OrderService {
             return;
         }
 
-        CouponService.CouponQuote quote = couponService.quoteCoupon(couponCode, order.getItems().stream()
+        CouponService.CouponQuote quote = couponService.quoteCoupon(order.getUser(), couponCode, order.getItems().stream()
             .map(item -> new OrderRequestItem(item.getProductId(), item.getQuantity()))
             .toList());
         order.setCouponCode(quote.code());

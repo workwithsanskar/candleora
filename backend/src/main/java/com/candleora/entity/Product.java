@@ -26,6 +26,7 @@ import org.hibernate.annotations.FetchMode;
     name = "products",
     indexes = {
         @Index(name = "idx_products_slug", columnList = "slug", unique = true),
+        @Index(name = "idx_products_sku", columnList = "sku", unique = true),
         @Index(name = "idx_products_visible_created_at", columnList = "visible, created_at"),
         @Index(name = "idx_products_visible_price", columnList = "visible, price"),
         @Index(name = "idx_products_visible_rating_created_at", columnList = "visible, rating, created_at"),
@@ -45,6 +46,9 @@ public class Product {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(unique = true, length = 64)
+    private String sku;
+
     @Column(nullable = false, length = 3000)
     private String description;
 
@@ -62,6 +66,12 @@ public class Product {
 
     @Column(nullable = false)
     private Integer stock;
+
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 5")
+    private Integer lowStockThreshold = 5;
+
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    private Integer reservedStock = 0;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean visible = true;
@@ -117,6 +127,14 @@ public class Product {
         this.slug = slug;
     }
 
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -163,6 +181,22 @@ public class Product {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public Integer getLowStockThreshold() {
+        return lowStockThreshold;
+    }
+
+    public void setLowStockThreshold(Integer lowStockThreshold) {
+        this.lowStockThreshold = lowStockThreshold;
+    }
+
+    public Integer getReservedStock() {
+        return reservedStock;
+    }
+
+    public void setReservedStock(Integer reservedStock) {
+        this.reservedStock = reservedStock;
     }
 
     public boolean isVisible() {
@@ -223,5 +257,11 @@ public class Product {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public int getAvailableStock() {
+        int onHand = stock == null ? 0 : stock;
+        int reserved = reservedStock == null ? 0 : reservedStock;
+        return Math.max(onHand - reserved, 0);
     }
 }

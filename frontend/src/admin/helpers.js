@@ -34,6 +34,7 @@ export function statusClassName(value) {
     case "SHIPPED":
     case "OUT_FOR_DELIVERY":
     case "SCHEDULED":
+    case "RESERVED":
       return "bg-[#ebf3ff] text-[#2659b7]";
     case "CANCELLED":
     case "EXPIRED":

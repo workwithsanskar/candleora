@@ -15,7 +15,7 @@ const titles = {
 
 const placeholders = {
   "/admin/orders": "Search orders by ID, customer, or email",
-  "/admin/products": "Search products by name, slug, or description",
+  "/admin/products": "Search products by name, SKU, slug, or description",
   "/admin/coupons": "Search coupons by code or campaign status",
   "/admin/customers": "Search customers by name, email, or phone",
 };
@@ -29,11 +29,20 @@ function AdminLayout() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
-  const title = useMemo(() => titles[location.pathname] ?? "Admin", [location.pathname]);
-  const placeholder = useMemo(
-    () => placeholders[location.pathname] ?? "Search this workspace",
-    [location.pathname],
-  );
+  const title = useMemo(() => {
+    if (location.pathname.startsWith("/admin/customers/")) {
+      return "Customer profile";
+    }
+
+    return titles[location.pathname] ?? "Admin";
+  }, [location.pathname]);
+  const placeholder = useMemo(() => {
+    if (location.pathname.startsWith("/admin/customers/")) {
+      return "Search customer history, orders, or contact details";
+    }
+
+    return placeholders[location.pathname] ?? "Search this workspace";
+  }, [location.pathname]);
   const search = searchParams.get("q") ?? "";
 
   const handleSearchChange = (value) => {

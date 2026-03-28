@@ -29,12 +29,16 @@ const adminApi = {
   createProduct: (payload) => api.post("/admin/products", payload).then(unwrap),
   updateProduct: (id, payload) => api.put(`/admin/products/${id}`, payload).then(unwrap),
   deleteProduct: (id) => api.delete(`/admin/products/${id}`).then(unwrap),
+  getProductInventoryHistory: (id) => api.get(`/admin/products/${id}/inventory-history`).then(unwrap),
+  adjustProductInventory: (id, payload) =>
+    api.post(`/admin/products/${id}/inventory-adjustments`, payload).then(unwrap),
   getCoupons: () => api.get("/admin/coupons").then(unwrap),
   createCoupon: (payload) => api.post("/admin/coupons", payload).then(unwrap),
   updateCoupon: (id, payload) => api.put(`/admin/coupons/${id}`, payload).then(unwrap),
   deleteCoupon: (id) => api.delete(`/admin/coupons/${id}`).then(unwrap),
   getCustomers: (params = {}) =>
     api.get("/admin/customers", { params: withDefinedParams(params) }).then(unwrap),
+  getCustomer: (id) => api.get(`/admin/customers/${id}`).then(unwrap),
   getCategories: () => api.get("/categories").then(unwrap),
 };
 

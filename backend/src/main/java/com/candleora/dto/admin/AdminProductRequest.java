@@ -8,6 +8,7 @@ import java.util.List;
 public record AdminProductRequest(
     String name,
     String slug,
+    String sku,
     String description,
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
     BigDecimal price,
@@ -17,6 +18,8 @@ public record AdminProductRequest(
     BigDecimal costPrice,
     @Min(value = 0, message = "Stock cannot be negative")
     Integer stock,
+    @Min(value = 0, message = "Low stock threshold cannot be negative")
+    Integer lowStockThreshold,
     Long categoryId,
     String categorySlug,
     String occasionTag,

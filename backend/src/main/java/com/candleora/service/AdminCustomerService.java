@@ -1,10 +1,18 @@
 package com.candleora.service;
 
+import com.candleora.dto.admin.AdminCustomerAddressResponse;
+import com.candleora.dto.admin.AdminCustomerDetailResponse;
+import com.candleora.dto.admin.AdminCustomerOrderHistoryResponse;
+import com.candleora.dto.admin.AdminCustomerOrderItemResponse;
 import com.candleora.dto.admin.AdminCustomerSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
+import com.candleora.entity.Address;
 import com.candleora.entity.AppUser;
 import com.candleora.entity.CustomerOrder;
+import com.candleora.entity.OrderItem;
+import com.candleora.entity.OrderStatus;
 import com.candleora.entity.Role;
+import com.candleora.repository.AddressRepository;
 import com.candleora.repository.AppUserRepository;
 import com.candleora.repository.CustomerOrderRepository;
 import java.math.BigDecimal;
@@ -22,6 +30,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,13 +41,16 @@ public class AdminCustomerService {
 
     private final AppUserRepository appUserRepository;
     private final CustomerOrderRepository customerOrderRepository;
+    private final AddressRepository addressRepository;
 
     public AdminCustomerService(
         AppUserRepository appUserRepository,
-        CustomerOrderRepository customerOrderRepository
+        CustomerOrderRepository customerOrderRepository,
+        AddressRepository addressRepository
     ) {
         this.appUserRepository = appUserRepository;
         this.customerOrderRepository = customerOrderRepository;
+        this.addressRepository = addressRepository;
     }
 
     public PagedResponse<AdminCustomerSummaryResponse> getCustomers(String search, int page, int size) {
@@ -77,13 +90,76 @@ public class AdminCustomerService {
         return PagedResponse.from(new PageImpl<>(summaries, users.getPageable(), users.getTotalElements()));
     }
 
+    public AdminCustomerDetailResponse getCustomer(Long customerId) {
+        AppUser user = appUserRepository.findById(customerId)
+            .filter(candidate -> candidate.getRole() == Role.USER)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+
+        List<CustomerOrder> orders = customerOrderRepository.findByUserOrderByCreatedAtDesc(user);
+        List<Address> addresses = addressRepository.findAllByUserIdOrderByIsDefaultDescUpdatedAtDescIdDesc(user.getId());
+        CustomerMetrics metrics = calculateMetrics(orders);
+
+        return new AdminCustomerDetailResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getPhoneNumber(),
+            user.getAlternatePhoneNumber(),
+            user.isEmailVerified(),
+            user.isPhoneVerified(),
+            user.getAuthProvider().name(),
+            user.getGender(),
+            user.getDateOfBirth(),
+            user.getAddressLine1(),
+            user.getAddressLine2(),
+            user.getCity(),
+            user.getState(),
+            user.getPostalCode(),
+            user.getCountry(),
+            user.getLocationLabel(),
+            user.getLatitude(),
+            user.getLongitude(),
+            user.getCreatedAt(),
+            metrics.totalOrders(),
+            metrics.deliveredOrders(),
+            metrics.cancelledOrders(),
+            metrics.totalSpent(),
+            metrics.averageOrderValue(),
+            metrics.lastOrderAt(),
+            addresses.stream().map(this::toAddressResponse).toList(),
+            orders.stream().map(this::toOrderHistoryResponse).toList()
+        );
+    }
+
     private AdminCustomerSummaryResponse toSummary(AppUser user, List<CustomerOrder> orders) {
+        CustomerMetrics metrics = calculateMetrics(orders);
+
+        return new AdminCustomerSummaryResponse(
+            user.getId(),
+            user.getName(),
+            user.getEmail(),
+            user.getPhoneNumber(),
+            metrics.totalOrders(),
+            metrics.totalSpent(),
+            metrics.averageOrderValue(),
+            metrics.lastOrderAt(),
+            user.getCreatedAt()
+        );
+    }
+
+    private CustomerMetrics calculateMetrics(List<CustomerOrder> orders) {
         BigDecimal totalSpent = orders.stream()
-            .filter(order -> order.getStatus() != com.candleora.entity.OrderStatus.CANCELLED)
+            .filter(order -> order.getStatus() != OrderStatus.CANCELLED)
             .map(CustomerOrder::getTotalAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         long totalOrders = orders.stream()
-            .filter(order -> order.getStatus() != com.candleora.entity.OrderStatus.CANCELLED)
+            .filter(order -> order.getStatus() != OrderStatus.CANCELLED)
+            .count();
+        long deliveredOrders = orders.stream()
+            .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
+            .count();
+        long cancelledOrders = orders.stream()
+            .filter(order -> order.getStatus() == OrderStatus.CANCELLED)
             .count();
         BigDecimal averageOrderValue = totalOrders == 0
             ? BigDecimal.ZERO
@@ -93,16 +169,82 @@ public class AdminCustomerService {
             .max(Instant::compareTo)
             .orElse(null);
 
-        return new AdminCustomerSummaryResponse(
-            user.getId(),
-            user.getName(),
-            user.getEmail(),
-            user.getPhoneNumber(),
+        return new CustomerMetrics(
             totalOrders,
+            deliveredOrders,
+            cancelledOrders,
             totalSpent,
             averageOrderValue,
-            lastOrderAt,
-            user.getCreatedAt()
+            lastOrderAt
         );
+    }
+
+    private AdminCustomerAddressResponse toAddressResponse(Address address) {
+        return new AdminCustomerAddressResponse(
+            address.getId(),
+            address.getLabel(),
+            address.getFullName(),
+            address.getPhone(),
+            address.getAddressLine1(),
+            address.getAddressLine2(),
+            address.getCity(),
+            address.getState(),
+            address.getPostalCode(),
+            address.getCountry(),
+            address.isDefault(),
+            address.getUpdatedAt()
+        );
+    }
+
+    private AdminCustomerOrderHistoryResponse toOrderHistoryResponse(CustomerOrder order) {
+        return new AdminCustomerOrderHistoryResponse(
+            order.getId(),
+            order.getCreatedAt(),
+            order.getStatus().name(),
+            order.getPaymentStatus().name(),
+            order.getPaymentMethod(),
+            order.getTotalAmount(),
+            order.getSubtotalAmount(),
+            order.getDiscountAmount(),
+            order.getCouponCode(),
+            order.getItems().size(),
+            order.getShippingName(),
+            order.getPhone(),
+            order.getContactEmail(),
+            order.getAlternatePhoneNumber(),
+            order.getAddressLine1(),
+            order.getAddressLine2(),
+            order.getCity(),
+            order.getState(),
+            order.getPostalCode(),
+            order.getCountry(),
+            order.getLocationLabel(),
+            order.getEstimatedDeliveryStart(),
+            order.getEstimatedDeliveryEnd(),
+            order.getCancelledAt(),
+            order.getCancellationReason(),
+            order.getItems().stream().map(this::toOrderItemResponse).toList()
+        );
+    }
+
+    private AdminCustomerOrderItemResponse toOrderItemResponse(OrderItem item) {
+        return new AdminCustomerOrderItemResponse(
+            item.getId(),
+            item.getProductId(),
+            item.getProductName(),
+            item.getImageUrl(),
+            item.getQuantity(),
+            item.getPrice()
+        );
+    }
+
+    private record CustomerMetrics(
+        long totalOrders,
+        long deliveredOrders,
+        long cancelledOrders,
+        BigDecimal totalSpent,
+        BigDecimal averageOrderValue,
+        Instant lastOrderAt
+    ) {
     }
 }

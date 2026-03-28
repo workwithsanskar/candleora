@@ -2,6 +2,7 @@ package com.candleora.controller;
 
 import com.candleora.dto.coupon.CouponQuoteResponse;
 import com.candleora.dto.coupon.ValidateCouponRequest;
+import com.candleora.security.UserPrincipal;
 import com.candleora.service.CouponService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,14 @@ public class CouponController {
         Authentication authentication,
         @Valid @RequestBody ValidateCouponRequest request
     ) {
-        return couponService.validateCoupon(request.code(), request.items());
+        UserPrincipal principal = authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal
+            ? userPrincipal
+            : null;
+
+        return couponService.validateCoupon(
+            principal != null ? principal.getUser() : null,
+            request.code(),
+            request.items()
+        );
     }
 }

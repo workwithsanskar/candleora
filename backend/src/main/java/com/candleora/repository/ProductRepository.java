@@ -11,6 +11,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Optional<Product> findBySlugIgnoreCase(String slug);
 
+    Optional<Product> findBySkuIgnoreCase(String sku);
+
     boolean existsBySlugIgnoreCase(String slug);
 
     List<Product> findTop4ByCategoryAndVisibleTrueAndIdNotOrderByCreatedAtDesc(Category category, Long id);

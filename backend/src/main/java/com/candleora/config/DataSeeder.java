@@ -402,7 +402,10 @@ public class DataSeeder implements ApplicationRunner {
         product.setOriginalPrice(BigDecimal.valueOf(originalPrice));
         product.setCostPrice(BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(0.58)));
         product.setDiscount(discount);
+        product.setSku(("CORA-" + slug).toUpperCase().replaceAll("[^A-Z0-9-]", ""));
         product.setStock(stock);
+        product.setLowStockThreshold(5);
+        product.setReservedStock(0);
         product.setVisible(true);
         product.setOccasionTag(occasionTag);
         product.setRating(BigDecimal.valueOf(rating));

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Pagination from "../components/Pagination";
 import adminApi from "../services/adminApi";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS } from "../helpers";
+import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS, SECONDARY_BUTTON_CLASS } from "../helpers";
 import { formatCurrency, formatDate } from "../../utils/format";
 
 function Customers() {
@@ -30,7 +30,12 @@ function Customers() {
         header: "Customer",
         cell: (customer) => (
           <div>
-            <p className="font-medium text-brand-dark">{customer.name}</p>
+            <Link
+              to={`/admin/customers/${customer.id}`}
+              className="font-medium text-brand-dark transition hover:text-black"
+            >
+              {customer.name}
+            </Link>
             <p className="mt-1 text-xs text-brand-muted">{customer.email}</p>
           </div>
         ),
@@ -58,6 +63,15 @@ function Customers() {
         key: "createdAt",
         header: "Joined",
         cell: (customer) => formatDate(customer.createdAt),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        cell: (customer) => (
+          <Link to={`/admin/customers/${customer.id}`} className={`${SECONDARY_BUTTON_CLASS} px-4 py-2 text-xs`}>
+            View profile
+          </Link>
+        ),
       },
     ],
     [],

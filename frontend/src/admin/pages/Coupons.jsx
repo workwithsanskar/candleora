@@ -25,6 +25,11 @@ import {
 } from "../../utils/format";
 
 const COUPON_TYPE_OPTIONS = ["PERCENTAGE", "FLAT"];
+const COUPON_SCOPE_OPTIONS = [
+  { value: "ALL_PRODUCTS", label: "Entire catalog" },
+  { value: "CATEGORIES", label: "Selected categories" },
+  { value: "PRODUCTS", label: "Selected products" },
+];
 const COUPON_STATUS_OPTIONS = ["ALL", "LIVE", "SCHEDULED", "PAUSED", "EXPIRED", "EXHAUSTED"];
 const DURATION_MODE_OPTIONS = [
   { value: "NONE", label: "No expiry" },
@@ -38,14 +43,19 @@ const PAGE_SIZE = 8;
 const blankFormValues = {
   code: "",
   type: "PERCENTAGE",
+  scope: "ALL_PRODUCTS",
   value: "",
   maxDiscount: "",
   minOrderAmount: "",
   usageLimit: "",
   active: true,
+  firstOrderOnly: false,
+  oneUsePerCustomer: false,
   durationMode: "NONE",
   startsAt: "",
   endsAt: "",
+  categorySlugs: [],
+  productIds: [],
 };
 
 function Coupons() {
@@ -71,6 +81,7 @@ function Coupons() {
 
   const durationMode = watch("durationMode");
   const couponType = watch("type");
+  const couponScope = watch("scope");
 
   useEffect(() => {
     setPage(0);
@@ -82,10 +93,40 @@ function Coupons() {
     }
   }, [editingCoupon, modalOpen, reset]);
 
+  const categoriesQuery = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: () => adminApi.getCategories(),
+  });
+
+  const productOptionsQuery = useQuery({
+    queryKey: ["admin", "coupon-product-options"],
+    queryFn: () =>
+      adminApi.getProducts({
+        page: 0,
+        size: 50,
+      }),
+  });
+
   const couponsQuery = useQuery({
     queryKey: ["admin", "coupons"],
     queryFn: () => adminApi.getCoupons(),
   });
+
+  const categoryMap = useMemo(() => {
+    const map = new Map();
+    for (const category of categoriesQuery.data ?? []) {
+      map.set(category.slug, category.name);
+    }
+    return map;
+  }, [categoriesQuery.data]);
+
+  const productMap = useMemo(() => {
+    const map = new Map();
+    for (const product of productOptionsQuery.data?.content ?? []) {
+      map.set(product.id, product.name);
+    }
+    return map;
+  }, [productOptionsQuery.data?.content]);
 
   const filteredCoupons = useMemo(() => {
     const normalizedSearch = debouncedSearch.trim().toUpperCase();
@@ -128,8 +169,8 @@ function Coupons() {
         tone: "text-success",
       },
       {
-        label: "Scheduled",
-        value: coupons.filter((coupon) => getCouponLifecycleStatus(coupon) === "SCHEDULED").length,
+        label: "Targeted offers",
+        value: coupons.filter((coupon) => coupon.scope !== "ALL_PRODUCTS").length,
         tone: "text-[#2659b7]",
       },
       { label: "Redemptions", value: totalRedemptions, tone: "text-brand-dark" },
@@ -181,13 +222,18 @@ function Coupons() {
     const payload = toCouponPayload({
       code: values.code,
       type: values.type,
+      scope: values.scope,
       value: values.value,
       maxDiscount: values.type === "PERCENTAGE" ? values.maxDiscount : null,
       minOrderAmount: values.minOrderAmount,
       usageLimit: values.usageLimit,
       active: values.active,
+      firstOrderOnly: values.firstOrderOnly,
+      oneUsePerCustomer: values.oneUsePerCustomer,
       startsAt,
       endsAt,
+      categorySlugs: values.categorySlugs,
+      productIds: values.productIds,
     });
 
     await saveCouponMutation.mutateAsync(payload);
@@ -213,6 +259,18 @@ function Coupons() {
             <p className="font-medium text-brand-dark">{describeCouponValue(coupon)}</p>
             <p className="mt-1 text-xs text-brand-muted">
               {coupon.minOrderAmount ? `Min cart ${formatCurrency(coupon.minOrderAmount)}` : "No minimum cart value"}
+            </p>
+          </div>
+        ),
+      },
+      {
+        key: "rules",
+        header: "Rules",
+        cell: (coupon) => (
+          <div>
+            <p className="font-medium text-brand-dark">{formatCouponScopeLabel(coupon.scope)}</p>
+            <p className="mt-1 text-xs text-brand-muted">
+              {buildCouponRulesSummary(coupon, categoryMap, productMap)}
             </p>
           </div>
         ),
@@ -288,7 +346,7 @@ function Coupons() {
         ),
       },
     ],
-    [toggleCouponMutation],
+    [categoryMap, productMap, toggleCouponMutation],
   );
 
   if (couponsQuery.isError) {
@@ -306,7 +364,7 @@ function Coupons() {
     <div className="space-y-6">
       <FiltersBar
         title="Coupon management"
-        description="Run discount campaigns with start and end windows, cart thresholds, redemption caps, and quick pause or resume controls."
+        description="Run discount campaigns with targeting, customer restrictions, redemption caps, and scheduled launch windows."
         actions={
           <button
             type="button"
@@ -418,6 +476,17 @@ function Coupons() {
           </div>
 
           <div className="flex flex-col gap-2">
+            <label className={FILTER_LABEL_CLASS}>Applies to</label>
+            <select className={FILTER_FIELD_CLASS} {...register("scope")}>
+              {COUPON_SCOPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
             <label className={FILTER_LABEL_CLASS}>
               {couponType === "PERCENTAGE" ? "Discount percentage" : "Discount amount"}
             </label>
@@ -458,6 +527,42 @@ function Coupons() {
             <input type="number" className={FILTER_FIELD_CLASS} {...register("usageLimit")} placeholder="200" />
           </div>
 
+          {couponScope === "CATEGORIES" ? (
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className={FILTER_LABEL_CLASS}>Eligible categories</label>
+              <select
+                multiple
+                className={`${FILTER_FIELD_CLASS} h-auto min-h-[150px] py-3`}
+                {...register("categorySlugs")}
+              >
+                {(categoriesQuery.data ?? []).map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-brand-muted">Hold Ctrl or Cmd to select multiple categories.</p>
+            </div>
+          ) : null}
+
+          {couponScope === "PRODUCTS" ? (
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className={FILTER_LABEL_CLASS}>Eligible products</label>
+              <select
+                multiple
+                className={`${FILTER_FIELD_CLASS} h-auto min-h-[180px] py-3`}
+                {...register("productIds")}
+              >
+                {(productOptionsQuery.data?.content ?? []).map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-brand-muted">Choose which candles or accessories can trigger this coupon.</p>
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-2 md:col-span-2">
             <label className={FILTER_LABEL_CLASS}>Coupon duration</label>
             <select className={FILTER_FIELD_CLASS} {...register("durationMode")}>
@@ -488,10 +593,22 @@ function Coupons() {
             </div>
           )}
 
-          <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark md:col-span-2">
-            <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("active")} />
-            Coupon is active and can be redeemed whenever its duration window is valid.
-          </label>
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark">
+              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("active")} />
+              Coupon is active
+            </label>
+
+            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark">
+              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("firstOrderOnly")} />
+              First order only
+            </label>
+
+            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark md:col-span-2">
+              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("oneUsePerCustomer")} />
+              Limit this coupon to one successful redemption per customer
+            </label>
+          </div>
         </form>
       </Modal>
 
@@ -558,6 +675,17 @@ function formatCouponType(type) {
   return type === "PERCENTAGE" ? "Percentage" : "Flat amount";
 }
 
+function formatCouponScopeLabel(scope) {
+  switch (scope) {
+    case "CATEGORIES":
+      return "Selected categories";
+    case "PRODUCTS":
+      return "Selected products";
+    default:
+      return "Entire catalog";
+  }
+}
+
 function formatCouponStatus(status) {
   switch (status) {
     case "LIVE":
@@ -576,9 +704,43 @@ function formatCouponStatus(status) {
 }
 
 function describeCouponValue(coupon) {
-  return coupon.type === "PERCENTAGE"
+  const base = coupon.type === "PERCENTAGE"
     ? `${trimNumericValue(coupon.value)}% off`
     : `Flat ${formatCurrency(coupon.value)}`;
+
+  if (coupon.type === "PERCENTAGE" && coupon.maxDiscount) {
+    return `${base} up to ${formatCurrency(coupon.maxDiscount)}`;
+  }
+
+  return base;
+}
+
+function buildCouponRulesSummary(coupon, categoryMap, productMap) {
+  const parts = [];
+
+  if (coupon.scope === "CATEGORIES") {
+    const labels = (coupon.categorySlugs ?? [])
+      .map((slug) => categoryMap.get(slug) ?? slug)
+      .slice(0, 2);
+    parts.push(labels.length > 0 ? labels.join(", ") : "Category targeted");
+  } else if (coupon.scope === "PRODUCTS") {
+    const labels = (coupon.productIds ?? [])
+      .map((id) => productMap.get(Number(id)) ?? `Product #${id}`)
+      .slice(0, 2);
+    parts.push(labels.length > 0 ? labels.join(", ") : "Product targeted");
+  } else {
+    parts.push("All catalog items");
+  }
+
+  if (coupon.firstOrderOnly) {
+    parts.push("First order only");
+  }
+
+  if (coupon.oneUsePerCustomer) {
+    parts.push("One use per customer");
+  }
+
+  return parts.join(" / ");
 }
 
 function formatCouponWindow(coupon) {
@@ -674,6 +836,7 @@ function toCouponPayload(source, overrides = {}) {
   return {
     code: String(payload.code ?? "").trim().toUpperCase(),
     type: payload.type,
+    scope: payload.scope ?? "ALL_PRODUCTS",
     value: payload.value === "" || payload.value == null ? null : Number(payload.value),
     maxDiscount:
       payload.type === "PERCENTAGE" && payload.maxDiscount !== "" && payload.maxDiscount != null
@@ -684,9 +847,13 @@ function toCouponPayload(source, overrides = {}) {
         ? null
         : Number(payload.minOrderAmount),
     active: Boolean(payload.active),
+    firstOrderOnly: Boolean(payload.firstOrderOnly),
+    oneUsePerCustomer: Boolean(payload.oneUsePerCustomer),
     startsAt: payload.startsAt || null,
     endsAt: payload.endsAt || null,
     usageLimit: payload.usageLimit === "" || payload.usageLimit == null ? null : Number(payload.usageLimit),
+    categorySlugs: payload.scope === "CATEGORIES" ? normalizeStringArray(payload.categorySlugs) : [],
+    productIds: payload.scope === "PRODUCTS" ? normalizeNumberArray(payload.productIds) : [],
   };
 }
 
@@ -694,15 +861,47 @@ function toFormValues(coupon) {
   return {
     code: coupon.code ?? "",
     type: coupon.type ?? "PERCENTAGE",
+    scope: coupon.scope ?? "ALL_PRODUCTS",
     value: coupon.value ?? "",
     maxDiscount: coupon.maxDiscount ?? "",
     minOrderAmount: coupon.minOrderAmount ?? "",
     usageLimit: coupon.usageLimit ?? "",
     active: Boolean(coupon.active),
+    firstOrderOnly: Boolean(coupon.firstOrderOnly),
+    oneUsePerCustomer: Boolean(coupon.oneUsePerCustomer),
     durationMode: coupon.startsAt || coupon.endsAt ? "CUSTOM" : "NONE",
     startsAt: toDateTimeLocalValue(coupon.startsAt),
     endsAt: toDateTimeLocalValue(coupon.endsAt),
+    categorySlugs: normalizeStringArray(coupon.categorySlugs),
+    productIds: normalizeNumberArray(coupon.productIds).map(String),
   };
+}
+
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).map((item) => String(item));
+  }
+
+  if (value == null || value === "") {
+    return [];
+  }
+
+  return [String(value)];
+}
+
+function normalizeNumberArray(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => Number(item))
+      .filter((item) => Number.isFinite(item) && item > 0);
+  }
+
+  if (value == null || value === "") {
+    return [];
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? [parsed] : [];
 }
 
 function toDateTimeLocalValue(value) {

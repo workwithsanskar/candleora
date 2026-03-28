@@ -36,14 +36,17 @@ public class AdminOrderService {
 
     private final CustomerOrderRepository customerOrderRepository;
     private final ProductRepository productRepository;
+    private final InventoryService inventoryService;
     private final ZoneId zoneId = ZoneId.systemDefault();
 
     public AdminOrderService(
         CustomerOrderRepository customerOrderRepository,
-        ProductRepository productRepository
+        ProductRepository productRepository,
+        InventoryService inventoryService
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.productRepository = productRepository;
+        this.inventoryService = inventoryService;
     }
 
     @Transactional(readOnly = true)
@@ -92,12 +95,16 @@ public class AdminOrderService {
         }
 
         if (previousStatus == OrderStatus.PENDING_PAYMENT && isActiveStatus(nextStatus)) {
-            decrementStock(order);
+            commitReservedStock(order);
             applyEstimatedDelivery(order);
         }
 
-        if (nextStatus == OrderStatus.CANCELLED && previousStatus != OrderStatus.PENDING_PAYMENT) {
-            restock(order);
+        if (nextStatus == OrderStatus.CANCELLED) {
+            if (previousStatus == OrderStatus.PENDING_PAYMENT) {
+                releasePendingReservation(order, "Reservation released from admin cancellation");
+            } else {
+                restock(order);
+            }
             order.setPaymentStatus(PaymentStatus.FAILED);
             order.setCancelledAt(Instant.now());
             if (!StringUtils.hasText(order.getCancellationReason())) {
@@ -193,33 +200,30 @@ public class AdminOrderService {
         order.setEstimatedDeliveryEnd(LocalDate.now(zoneId).plusDays(6));
     }
 
-    private void decrementStock(CustomerOrder order) {
+    private void commitReservedStock(CustomerOrder order) {
         for (OrderItem item : order.getItems()) {
             Product product = productRepository.findById(item.getProductId())
                 .orElseThrow(() -> new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "One or more products on this order are no longer available"
                 ));
-
-            if (product.getStock() == null || product.getStock() < item.getQuantity()) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Insufficient stock for " + product.getName()
-                );
-            }
-
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepository.save(product);
+            inventoryService.commitReservedOrder(product, item.getQuantity(), order.getId());
         }
     }
 
     private void restock(CustomerOrder order) {
         for (OrderItem item : order.getItems()) {
             productRepository.findById(item.getProductId()).ifPresent(product -> {
-                int currentStock = product.getStock() == null ? 0 : product.getStock();
-                product.setStock(currentStock + item.getQuantity());
-                productRepository.save(product);
+                inventoryService.restockFromCancelledOrder(product, item.getQuantity(), order.getId());
             });
+        }
+    }
+
+    private void releasePendingReservation(CustomerOrder order, String note) {
+        for (OrderItem item : order.getItems()) {
+            productRepository.findById(item.getProductId()).ifPresent(product ->
+                inventoryService.releasePendingReservation(product, item.getQuantity(), order.getId(), note)
+            );
         }
     }
 

@@ -26,6 +26,10 @@ public class Coupon {
     @Column(nullable = false)
     private CouponType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(32) DEFAULT 'ALL_PRODUCTS'")
+    private CouponScope scope = CouponScope.ALL_PRODUCTS;
+
     @Column(name = "`value`", nullable = false, precision = 10, scale = 2)
     private BigDecimal value;
 
@@ -38,6 +42,12 @@ public class Coupon {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean firstOrderOnly = false;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean oneUsePerCustomer = false;
+
     @Column
     private Instant startsAt;
 
@@ -49,6 +59,12 @@ public class Coupon {
 
     @Column(nullable = false)
     private Integer usageCount = 0;
+
+    @Column(length = 1000)
+    private String targetCategorySlugs;
+
+    @Column(length = 2000)
+    private String targetProductIds;
 
     public Long getId() {
         return id;
@@ -68,6 +84,14 @@ public class Coupon {
 
     public void setType(CouponType type) {
         this.type = type;
+    }
+
+    public CouponScope getScope() {
+        return scope;
+    }
+
+    public void setScope(CouponScope scope) {
+        this.scope = scope;
     }
 
     public BigDecimal getValue() {
@@ -102,6 +126,22 @@ public class Coupon {
         this.active = active;
     }
 
+    public boolean isFirstOrderOnly() {
+        return firstOrderOnly;
+    }
+
+    public void setFirstOrderOnly(boolean firstOrderOnly) {
+        this.firstOrderOnly = firstOrderOnly;
+    }
+
+    public boolean isOneUsePerCustomer() {
+        return oneUsePerCustomer;
+    }
+
+    public void setOneUsePerCustomer(boolean oneUsePerCustomer) {
+        this.oneUsePerCustomer = oneUsePerCustomer;
+    }
+
     public Instant getStartsAt() {
         return startsAt;
     }
@@ -132,6 +172,22 @@ public class Coupon {
 
     public void setUsageCount(Integer usageCount) {
         this.usageCount = usageCount;
+    }
+
+    public String getTargetCategorySlugs() {
+        return targetCategorySlugs;
+    }
+
+    public void setTargetCategorySlugs(String targetCategorySlugs) {
+        this.targetCategorySlugs = targetCategorySlugs;
+    }
+
+    public String getTargetProductIds() {
+        return targetProductIds;
+    }
+
+    public void setTargetProductIds(String targetProductIds) {
+        this.targetProductIds = targetProductIds;
     }
 
     public void incrementUsage() {

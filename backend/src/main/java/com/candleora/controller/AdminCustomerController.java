@@ -1,8 +1,10 @@
 package com.candleora.controller;
 
+import com.candleora.dto.admin.AdminCustomerDetailResponse;
 import com.candleora.dto.admin.AdminCustomerSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
 import com.candleora.service.AdminCustomerService;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,5 +29,10 @@ public class AdminCustomerController {
         @RequestParam(defaultValue = "10") int size
     ) {
         return adminCustomerService.getCustomers(search, page, size);
+    }
+
+    @GetMapping("/{customerId}")
+    public AdminCustomerDetailResponse getCustomer(@PathVariable Long customerId) {
+        return adminCustomerService.getCustomer(customerId);
     }
 }
