@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Scrollbars } from "react-custom-scrollbars-2";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -172,8 +171,6 @@ function Navbar() {
   const [activePanel, setActivePanel] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const panelRef = useRef(null);
-  const wishlistScrollRef = useRef(null);
-  const cartScrollRef = useRef(null);
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
   const { items: cartItems, cartCount, grandTotal, updateQuantity } = useCart();
@@ -221,51 +218,6 @@ function Navbar() {
   const handleQuickPanelWheel = (event) => {
     event.stopPropagation();
   };
-
-  const renderMiniCartView = (props) => (
-    <div
-      {...props}
-      onWheelCapture={handleQuickPanelWheel}
-      className="mini-cart-scroll-view stealth-scrollbar"
-      style={{
-        ...props.style,
-        marginRight: 0,
-        marginBottom: 0,
-        overscrollBehavior: "contain",
-        scrollBehavior: "smooth",
-      }}
-    />
-  );
-
-  const renderMiniCartTrackVertical = (props) => (
-    <div
-      {...props}
-      style={{
-        ...props.style,
-        display: "none",
-      }}
-    />
-  );
-
-  const renderMiniCartThumbVertical = (props) => (
-    <div
-      {...props}
-      style={{
-        ...props.style,
-        display: "none",
-      }}
-    />
-  );
-
-  const renderMiniCartTrackHorizontal = (props) => (
-    <div
-      {...props}
-      style={{
-        ...props.style,
-        display: "none",
-      }}
-    />
-  );
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -402,22 +354,11 @@ function Navbar() {
               <QuickPanel title="Wishlist">
                 {previewWishlistItems.length ? (
                   <div className="space-y-5">
-                    <Scrollbars
-                      ref={wishlistScrollRef}
-                      autoHide
-                      autoHeight
-                      autoHeightMin={0}
-                      autoHeightMax={318}
-                      thumbMinSize={44}
-                      universal
-                      renderView={renderMiniCartView}
-                      renderTrackVertical={renderMiniCartTrackVertical}
-                      renderThumbVertical={renderMiniCartThumbVertical}
-                      renderTrackHorizontal={renderMiniCartTrackHorizontal}
-                      onWheel={handleQuickPanelWheel}
-                      className="mini-cart-scroll-host"
+                    <div
+                      onWheelCapture={handleQuickPanelWheel}
+                      className="mini-cart-scroll-view stealth-scrollbar max-h-[318px] overflow-y-auto pr-3"
                     >
-                      <div className="space-y-4 pr-3">
+                      <div className="space-y-4">
                         {previewWishlistItems.map((item) => (
                           <article key={item.id} className="grid grid-cols-[64px_1fr_auto] items-start gap-3">
                             <Link to={getProductPath(item)} onClick={closeMenus}>
@@ -452,7 +393,7 @@ function Navbar() {
                           </article>
                         ))}
                       </div>
-                    </Scrollbars>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <Link
@@ -492,22 +433,11 @@ function Navbar() {
               <QuickPanel title="Shopping Cart">
                 {cartItems.length ? (
                   <div className="space-y-5">
-                    <Scrollbars
-                      ref={cartScrollRef}
-                      autoHide
-                      autoHeight
-                      autoHeightMin={0}
-                      autoHeightMax={318}
-                      thumbMinSize={44}
-                      universal
-                      renderView={renderMiniCartView}
-                      renderTrackVertical={renderMiniCartTrackVertical}
-                      renderThumbVertical={renderMiniCartThumbVertical}
-                      renderTrackHorizontal={renderMiniCartTrackHorizontal}
-                      onWheel={handleQuickPanelWheel}
-                      className="mini-cart-scroll-host"
+                    <div
+                      onWheelCapture={handleQuickPanelWheel}
+                      className="mini-cart-scroll-view stealth-scrollbar max-h-[318px] overflow-y-auto pr-3"
                     >
-                      <div className="space-y-4 pr-3">
+                      <div className="space-y-4">
                         {cartItems.map((item) => (
                           <article key={item.id} className="grid grid-cols-[64px_1fr] gap-3">
                             <Link to="/cart" onClick={closeMenus}>
@@ -542,7 +472,7 @@ function Navbar() {
                           </article>
                         ))}
                       </div>
-                    </Scrollbars>
+                    </div>
 
                     <div className="rounded-[18px] bg-black/[0.03] px-4 py-3">
                       <div className="flex items-center justify-between text-sm font-semibold text-black">

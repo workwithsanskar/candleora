@@ -72,7 +72,7 @@ function TestimonialCard({ story }) {
         <p className="text-base font-semibold text-black">{story.name}</p>
         <span className="text-sm text-black/45">{story.date}</span>
       </div>
-      <p className="mt-3 text-base leading-7 text-black/72">{story.quote}</p>
+      <p className="mt-3 text-base leading-6 text-black/72">{story.quote}</p>
       <div className="mt-3 flex items-center gap-0.5 text-[#f3b33d]">
         {Array.from({ length: 5 }).map((_, index) => (
           <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
