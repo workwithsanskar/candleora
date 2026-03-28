@@ -369,6 +369,11 @@ function OrderDetail() {
     .filter(Boolean)
     .join(", ");
   const currentStep = activeStep >= 0 ? orderFlow[activeStep] : null;
+  const nextStep =
+    activeStep >= 0 && activeStep < orderFlow.length - 1 ? orderFlow[activeStep + 1] : null;
+  const progressPercent =
+    activeStep >= 0 ? (activeStep / Math.max(orderFlow.length - 1, 1)) * 100 : 0;
+  const reachedStepCount = activeStep >= 0 ? activeStep + 1 : 0;
   const orderSummary =
     order.status === "CANCELLED"
       ? `Cancelled on ${formatDateTime(order.cancelledAt || order.createdAt)}.`
@@ -382,7 +387,7 @@ function OrderDetail() {
   const showCancelActions = order.status !== "CANCELLED" && liveCanCancel;
 
   return (
-    <section className="bg-[radial-gradient(circle_at_top_left,rgba(243,179,61,0.16),transparent_40%),radial-gradient(circle_at_top_right,rgba(0,0,0,0.04),transparent_28%)] py-8 sm:py-10">
+    <section className="bg-white py-8 sm:py-10">
       <div className="container-shell">
         <Link
           to="/orders"
@@ -473,7 +478,7 @@ function OrderDetail() {
               {downloadError ? <p className="mt-4 text-sm text-danger">{downloadError}</p> : null}
             </div>
 
-            <aside className={`border-t border-black/8 px-6 py-8 sm:px-8 xl:border-l xl:border-t-0 ${statusMeta.accentClass}`.trim()}>
+            <aside className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 xl:border-l xl:border-t-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
                 Order snapshot
               </p>
@@ -524,7 +529,7 @@ function OrderDetail() {
             </aside>
           </div>
 
-          <div className="border-t border-black/8 bg-[#fffdf8] px-6 py-8 sm:px-8 lg:px-10">
+          <div className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 lg:px-10">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
@@ -555,8 +560,68 @@ function OrderDetail() {
                 </p>
               </div>
             ) : (
-              <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="mt-6 space-y-6">
+                <div className="hidden rounded-[28px] border border-black/8 bg-white px-6 py-7 lg:block">
+                  <div className="relative">
+                    <div className="absolute left-[48px] right-[48px] top-[22px] h-px bg-black/10" />
+                    <div
+                      className="absolute left-[48px] top-[22px] h-px bg-brand-primary transition-[width] duration-300"
+                      style={{ width: `calc((100% - 96px) * ${progressPercent / 100})` }}
+                    />
+
+                    <div className="grid grid-cols-5 gap-4">
+                      {orderFlow.map((step, index) => {
+                        const completed = activeStep >= index;
+                        const current = activeStep === index;
+
+                        return (
+                          <div key={step.key} className="relative">
+                            <div className="flex justify-center">
+                              <span
+                                className={`inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm font-semibold transition ${
+                                  current
+                                    ? "border-brand-primary bg-white text-brand-dark shadow-[0_0_0_6px_rgba(243,179,61,0.18)]"
+                                    : completed
+                                      ? "border-brand-primary bg-brand-primary text-brand-dark"
+                                      : "border-black/12 bg-white text-black/42"
+                                }`}
+                              >
+                                {completed && !current ? (
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    className="h-4.5 w-4.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  >
+                                    <path d="M7.5 12.5L10.5 15.5L16.5 8.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                ) : (
+                                  index + 1
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="mt-5 text-center">
+                              <p
+                                className={`text-sm font-semibold ${
+                                  current || completed ? "text-brand-dark" : "text-black/45"
+                                }`}
+                              >
+                                {step.label}
+                              </p>
+                              <p className="mx-auto mt-2 max-w-[150px] text-xs leading-6 text-black/48">
+                                {step.copy}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 lg:hidden">
                   {orderFlow.map((step, index) => {
                     const completed = activeStep >= index;
                     const current = activeStep === index;
@@ -564,37 +629,81 @@ function OrderDetail() {
                     return (
                       <article
                         key={step.key}
-                        className={`rounded-[24px] border px-4 py-4 transition ${
+                        className={`rounded-[22px] border bg-white px-4 py-4 ${
                           current
-                            ? "border-brand-primary/35 bg-[#fff5db] shadow-[0_16px_36px_rgba(243,179,61,0.16)]"
-                            : completed
-                              ? "border-black/8 bg-white"
-                              : "border-black/8 bg-white/75"
+                            ? "border-brand-primary shadow-[0_0_0_4px_rgba(243,179,61,0.14)]"
+                            : "border-black/8"
                         }`}
                       >
-                        <StepMarker completed={completed} current={current} index={index} />
-                        <p
-                          className={`mt-4 text-sm font-semibold ${
-                            current || completed ? "text-brand-dark" : "text-black/45"
-                          }`}
-                        >
-                          {step.label}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-black/55">{step.copy}</p>
+                        <div className="flex items-start gap-3">
+                          <StepMarker completed={completed} current={current} index={index} />
+                          <div className="min-w-0">
+                            <p
+                              className={`text-sm font-semibold ${
+                                current || completed ? "text-brand-dark" : "text-black/45"
+                              }`}
+                            >
+                              {step.label}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-black/55">{step.copy}</p>
+                          </div>
+                        </div>
                       </article>
                     );
                   })}
                 </div>
 
-                <div className="rounded-[24px] border border-black/8 bg-white px-5 py-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                    Tracking reference
-                  </p>
-                  <p className="mt-3 break-all text-lg font-semibold text-brand-dark">{trackingReference}</p>
-                  <div className="mt-5 space-y-4">
-                    <DetailRow label="Current status" value={statusMeta.label} />
-                    <DetailRow label="Payment" value={paymentStatusLabel} />
-                    <DetailRow label="Estimate" value={deliveryRange} />
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+                  <div className="rounded-[26px] border border-black/8 bg-white px-5 py-5 sm:px-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                          Current milestone
+                        </p>
+                        <p className="mt-3 text-xl font-semibold text-brand-dark">{currentStep?.label || statusMeta.label}</p>
+                      </div>
+                      <span className="inline-flex w-fit items-center rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
+                        Stage {reachedStepCount} of {orderFlow.length}
+                      </span>
+                    </div>
+
+                    <p className="mt-4 max-w-3xl text-sm leading-7 text-black/62">
+                      {currentStep?.copy || "This order will keep updating here as CandleOra moves it through the fulfillment flow."}
+                    </p>
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-[20px] border border-black/8 bg-white px-4 py-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
+                          Right now
+                        </p>
+                        <p className="mt-3 text-sm leading-7 text-black/62">
+                          The order is currently marked as <span className="font-semibold text-brand-dark">{statusMeta.label}</span>.
+                        </p>
+                      </div>
+
+                      <div className="rounded-[20px] border border-black/8 bg-white px-4 py-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
+                          Next up
+                        </p>
+                        <p className="mt-3 text-sm leading-7 text-black/62">
+                          {nextStep
+                            ? `The next visible update here will be ${nextStep.label.toLowerCase()}.`
+                            : "This is the final milestone in the fulfillment flow."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[26px] border border-black/8 bg-white px-5 py-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                      Tracking reference
+                    </p>
+                    <p className="mt-3 break-all text-lg font-semibold text-brand-dark">{trackingReference}</p>
+                    <div className="mt-5 space-y-4">
+                      <DetailRow label="Current status" value={statusMeta.label} />
+                      <DetailRow label="Payment" value={paymentStatusLabel} />
+                      <DetailRow label="Estimate" value={deliveryRange} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -619,7 +728,7 @@ function OrderDetail() {
               </div>
 
               {orderItems.length ? (
-                <div className="mt-6 overflow-hidden rounded-[28px] border border-black/8 bg-[#fffdf9]">
+                <div className="mt-6 overflow-hidden rounded-[28px] border border-black/8 bg-white">
                   <div className="divide-y divide-black/8">
                     {orderItems.map((item) => {
                       const itemImage = getResponsiveImageProps(item.imageUrl, {
@@ -674,7 +783,7 @@ function OrderDetail() {
                     })}
                   </div>
 
-                  <div className="border-t border-black/8 bg-[#fff8ed] px-5 py-5">
+                  <div className="border-t border-black/8 bg-white px-5 py-5">
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
                       <div className="space-y-3 text-sm text-black/62">
                         <DetailRow
@@ -712,7 +821,7 @@ function OrderDetail() {
               )}
             </div>
 
-            <aside className="border-t border-black/8 bg-[#fffaf3] px-6 py-8 sm:px-8 xl:border-l">
+            <aside className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 xl:border-l">
               <div className="space-y-4">
                 <div className="rounded-[24px] border border-black/8 bg-white px-5 py-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/42">
