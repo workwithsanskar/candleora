@@ -106,9 +106,9 @@ function Shop() {
           </FilterSection>
 
           <FilterSection title="Price Range">
-            <div className="space-y-1.5">
+            <div className="space-y-2.5">
               {priceRanges.map((range) => (
-                <label key={range.id} className="flex items-center gap-2.5 text-[0.94rem] leading-none text-black/82">
+                <label key={range.id} className="flex items-center gap-3 text-[0.96rem] leading-[1.05] text-black/82">
                   <input
                     type="checkbox"
                     checked={selectedPriceRange === range.id}
@@ -117,9 +117,9 @@ function Shop() {
                         currentRange === range.id ? "" : range.id,
                       )
                     }
-                    className="h-4 w-4 accent-black"
+                    className="h-4 w-4 shrink-0 accent-black"
                   />
-                  <span>{range.label}</span>
+                  <span className="whitespace-nowrap">{range.label}</span>
                 </label>
               ))}
             </div>

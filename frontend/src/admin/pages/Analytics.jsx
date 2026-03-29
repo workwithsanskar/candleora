@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import {
   Bar,
   BarChart,
@@ -20,7 +21,7 @@ import FiltersBar from "../components/FiltersBar";
 import KPICard from "../components/KPICard";
 import adminApi from "../services/adminApi";
 import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS, formatCurrencyAxisTick, resolveQuickRange } from "../helpers";
-import { formatCurrency } from "../../utils/format";
+import { formatApiError, formatCurrency, formatDateTime } from "../../utils/format";
 
 const quickRanges = [
   { label: "Last 7 Days", value: "LAST_7_DAYS" },
@@ -32,9 +33,12 @@ const segmentColors = ["#17120f", "#f3b33d", "#9b7850", "#d5c2a5"];
 
 function Analytics() {
   const initialRange = resolveQuickRange("LAST_30_DAYS");
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState("LAST_30_DAYS");
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
+  const [trainingDrafts, setTrainingDrafts] = useState({});
+  const [trainingNotes, setTrainingNotes] = useState({});
 
   const filters = { startDate, endDate };
 
@@ -58,8 +62,34 @@ function Analytics() {
     queryFn: () => adminApi.getForecast({ days: 7 }),
   });
 
+  const auraOverviewQuery = useQuery({
+    queryKey: ["admin", "aura", "overview", startDate, endDate],
+    queryFn: () => adminApi.getAuraOverview(filters),
+  });
+
+  const auraTrainingQuery = useQuery({
+    queryKey: ["admin", "aura", "training", "OPEN"],
+    queryFn: () => adminApi.getAuraTrainingQueue({ status: "OPEN", limit: 6 }),
+  });
+
+  const updateAuraTrainingMutation = useMutation({
+    mutationFn: ({ id, payload }) => adminApi.updateAuraTrainingItem(id, payload),
+    onSuccess: async () => {
+      toast.success("Aura training item updated.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "aura", "overview"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "aura", "training"] }),
+      ]);
+    },
+    onError: (error) => {
+      toast.error(formatApiError(error));
+    },
+  });
+
   const metrics = revenueQuery.data;
   const customerInsights = customersQuery.data;
+  const auraOverview = auraOverviewQuery.data;
+  const auraTrainingItems = auraTrainingQuery.data ?? [];
 
   if (revenueQuery.isError || salesQuery.isError || customersQuery.isError) {
     return (
@@ -222,6 +252,223 @@ function Analytics() {
           </div>
         </section>
       </div>
+
+      <FiltersBar
+        title="Aura intelligence"
+        description="See what Aura is answering, where it struggles, and which weak replies need training attention."
+      />
+
+      {auraOverviewQuery.isError ? (
+        <div className="rounded-[28px] border border-danger/20 bg-white p-6 shadow-sm">
+          <h3 className="font-display text-2xl font-semibold text-brand-dark">Aura analytics unavailable</h3>
+          <p className="mt-2 text-sm leading-6 text-brand-muted">
+            Aura event logging or training endpoints did not respond. Verify the new Aura analytics API and refresh this page.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <KPICard
+              title="Aura chats"
+              value={String(auraOverview?.totalConversations ?? "0")}
+              helper="Tracked Aura conversations in the selected range"
+              isLoading={auraOverviewQuery.isLoading}
+            />
+            <KPICard
+              title="Resolved"
+              value={`${Number(auraOverview?.resolutionRate ?? 0).toFixed(1)}%`}
+              helper="Replies that did not fall into the review queue"
+              isLoading={auraOverviewQuery.isLoading}
+            />
+            <KPICard
+              title="AI polish"
+              value={String(auraOverview?.aiPolishedReplies ?? "0")}
+              helper="Replies refined through OpenAI copy polishing"
+              isLoading={auraOverviewQuery.isLoading}
+            />
+            <KPICard
+              title="Aura add to cart"
+              value={String(auraOverview?.productAddToCartActions ?? "0")}
+              helper={`${auraOverview?.openTrainingItems ?? 0} open training item${Number(auraOverview?.openTrainingItems ?? 0) === 1 ? "" : "s"}`}
+              isLoading={auraOverviewQuery.isLoading}
+            />
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <ChartCard title="Aura trend" subtitle="Daily conversations, unresolved replies, and Aura-driven add-to-cart actions." isLoading={auraOverviewQuery.isLoading}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={auraOverview?.trend ?? []}>
+                  <CartesianGrid stroke="#e7dfd0" strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="conversations" stroke="#17120f" strokeWidth={2.6} dot={false} />
+                  <Line type="monotone" dataKey="unresolvedReplies" stroke="#c0504d" strokeWidth={2.4} dot={false} />
+                  <Line type="monotone" dataKey="addToCartActions" stroke="#9b7850" strokeWidth={2.4} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Top Aura intents" subtitle="The intent buckets Aura is seeing most often in the selected window." isLoading={auraOverviewQuery.isLoading}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={auraOverview?.topIntents ?? []}>
+                  <CartesianGrid stroke="#efe7d9" strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} angle={-14} textAnchor="end" height={62} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#17120f" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+            <ChartCard title="Aura event mix" subtitle="How people are interacting with Aura beyond simple replies." isLoading={auraOverviewQuery.isLoading}>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={auraOverview?.eventMix ?? []}
+                    dataKey="value"
+                    nameKey="label"
+                    innerRadius={62}
+                    outerRadius={98}
+                    paddingAngle={4}
+                  >
+                    {(auraOverview?.eventMix ?? []).map((entry, index) => (
+                      <Cell key={entry.label} fill={segmentColors[index % segmentColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="font-display text-2xl font-semibold text-brand-dark">Aura training queue</h3>
+                  <p className="mt-1 text-sm leading-6 text-brand-muted">
+                    Review weak or unanswered prompts, then train Aura with a cleaner answer or dismiss noise.
+                  </p>
+                </div>
+                <p className="text-xs uppercase tracking-[0.18em] text-brand-muted">
+                  {auraOverview?.openTrainingItems ?? 0} open items
+                </p>
+              </div>
+
+              {auraTrainingQuery.isError ? (
+                <div className="mt-5 rounded-[22px] border border-danger/20 bg-[#fff7f7] p-4 text-sm text-danger">
+                  Aura training items could not be loaded right now.
+                </div>
+              ) : auraTrainingQuery.isLoading ? (
+                <div className="mt-5 space-y-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-32 animate-pulse rounded-[22px] bg-black/6" />
+                  ))}
+                </div>
+              ) : auraTrainingItems.length ? (
+                <div className="mt-5 space-y-4">
+                  {auraTrainingItems.map((item) => {
+                    const answerDraft = trainingDrafts[item.id] ?? item.suggestedAnswer ?? "";
+                    const notesDraft = trainingNotes[item.id] ?? item.resolutionNotes ?? "";
+
+                    return (
+                      <div key={item.id} className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.18em] text-brand-muted">
+                              {item.detectedIntent || "General"} · {item.occurrences} hit{item.occurrences === 1 ? "" : "s"}
+                            </p>
+                            <p className="mt-2 font-medium leading-6 text-brand-dark">{item.question}</p>
+                          </div>
+                          <p className="text-xs text-brand-muted">{formatDateTime(item.updatedAt)}</p>
+                        </div>
+
+                        {item.lastAssistantMessage ? (
+                          <div className="mt-3 rounded-[18px] border border-black/6 bg-white px-4 py-3">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-brand-muted">Last Aura reply</p>
+                            <p className="mt-2 text-sm leading-6 text-brand-dark">{item.lastAssistantMessage}</p>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-4 grid gap-3">
+                          <textarea
+                            value={answerDraft}
+                            onChange={(event) =>
+                              setTrainingDrafts((current) => ({ ...current, [item.id]: event.target.value }))
+                            }
+                            rows={3}
+                            className="min-h-[112px] rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm text-brand-dark outline-none transition focus:border-black/20"
+                            placeholder="Write the answer Aura should use next time..."
+                          />
+
+                          <input
+                            type="text"
+                            value={notesDraft}
+                            onChange={(event) =>
+                              setTrainingNotes((current) => ({ ...current, [item.id]: event.target.value }))
+                            }
+                            className="rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm text-brand-dark outline-none transition focus:border-black/20"
+                            placeholder="Optional review note for your team"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateAuraTrainingMutation.mutate({
+                                id: item.id,
+                                payload: {
+                                  status: "TRAINED",
+                                  suggestedAnswer: answerDraft,
+                                  resolutionNotes: notesDraft,
+                                },
+                              })
+                            }
+                            disabled={!answerDraft.trim() || updateAuraTrainingMutation.isPending}
+                            className="rounded-full bg-[#17120f] px-4 py-2 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Mark trained
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateAuraTrainingMutation.mutate({
+                                id: item.id,
+                                payload: {
+                                  status: "DISMISSED",
+                                  suggestedAnswer: "",
+                                  resolutionNotes: notesDraft,
+                                },
+                              })
+                            }
+                            disabled={updateAuraTrainingMutation.isPending}
+                            className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-brand-dark transition hover:border-black/20"
+                          >
+                            Dismiss
+                          </button>
+                          {item.pagePath ? (
+                            <span className="inline-flex items-center rounded-full border border-black/8 px-3 py-2 text-xs uppercase tracking-[0.16em] text-brand-muted">
+                              {item.pagePath}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[22px] border border-dashed border-black/12 bg-[#fbf7f0] px-4 py-5 text-sm text-brand-muted">
+                  Aura has no open training items right now.
+                </div>
+              )}
+            </section>
+          </div>
+        </>
+      )}
     </div>
   );
 }

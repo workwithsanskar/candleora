@@ -24,25 +24,28 @@ function AdminPanelIcon() {
 
 function OverviewCard({ as: Component = Link, to, onClick, icon, title }) {
   const sharedClassName =
-    "flex min-h-[146px] flex-col items-center justify-center rounded-[14px] border border-black/10 bg-white px-6 py-7 text-center transition hover:-translate-y-0.5 hover:border-black/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]";
+    "flex min-h-[146px] flex-col items-center justify-center rounded-[14px] border border-black/10 bg-white px-5 py-7 text-center transition hover:-translate-y-0.5 hover:border-black/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]";
+
+  const content = (
+    <>
+      <span className="mb-4 inline-flex h-[60px] w-[60px] items-center justify-center">{icon}</span>
+      <h2 className="whitespace-nowrap text-[17px] font-semibold uppercase tracking-[0.01em] text-black xl:text-[18px]">
+        {title}
+      </h2>
+    </>
+  );
 
   if (Component === "button") {
     return (
       <button type="button" onClick={onClick} className={sharedClassName}>
-        <span className="mb-4 inline-flex h-[60px] w-[60px] items-center justify-center">{icon}</span>
-        <h2 className="text-[18px] font-semibold uppercase tracking-[0.01em] text-black">
-          {title}
-        </h2>
+        {content}
       </button>
     );
   }
 
   return (
     <Component to={to} onClick={onClick} className={sharedClassName}>
-      <span className="mb-4 inline-flex h-[60px] w-[60px] items-center justify-center">{icon}</span>
-      <h2 className="text-[18px] font-semibold uppercase tracking-[0.01em] text-black">
-        {title}
-      </h2>
+      {content}
     </Component>
   );
 }
@@ -50,17 +53,22 @@ function OverviewCard({ as: Component = Link, to, onClick, icon, title }) {
 function Profile() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const introCopy = isAdmin
+    ? "Welcome back, CandleOra Admin! Review orders, manage account settings, and jump into the admin panel from one clear overview."
+    : `Welcome back${user?.name ? `, ${user.name}!` : "!"} Manage your orders, saved addresses, and account details from one clear overview.`;
 
   return (
     <section className="container-shell py-16 sm:py-20">
       <div className="space-y-4">
         <h1 className="text-heading-lg font-semibold uppercase tracking-[-0.02em] text-black">My Account</h1>
-        <p className="max-w-[980px] text-body leading-8 text-black/62">
-          Welcome back{user?.name ? `, ${user.name}!` : "!"} Manage your orders, saved addresses, and account details from one clear overview.
-        </p>
+        <p className="max-w-[980px] text-body leading-8 text-black/62">{introCopy}</p>
       </div>
 
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div
+        data-testid="profile-overview-grid"
+        className={`mt-12 grid gap-4 sm:grid-cols-2 ${isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+      >
         <OverviewCard
           to="/orders"
           icon={<ProfileIcon src={ordersIcon} alt="" />}
@@ -76,7 +84,7 @@ function Profile() {
           icon={<ProfileIcon src={accountIcon} alt="" />}
           title="Account Details"
         />
-        {user?.role === "ADMIN" ? (
+        {isAdmin ? (
           <OverviewCard
             to="/admin"
             icon={<AdminPanelIcon />}

@@ -1,6 +1,4 @@
 import { Link } from "react-router-dom";
-import { FOOTER_CATEGORIES } from "../constants/categories";
-import whatsappFooterIcon from "../assets/whatsapp-footer.svg";
 import BrandLogo from "./BrandLogo";
 
 const whatsappMessage = encodeURIComponent(
@@ -10,55 +8,62 @@ const whatsappHref = `https://wa.me/918999908639?text=${whatsappMessage}`;
 const instagramHref = "https://instagram.com";
 const facebookHref = "https://facebook.com";
 
+const footerStaticItemClassName =
+  "block text-[17px] font-normal leading-[22px] text-white lg:whitespace-nowrap";
+const footerInteractiveItemClassName =
+  "group flex items-center text-[17px] font-normal leading-[22px] text-white transition-colors duration-200 hover:text-[#D6D6D6] lg:whitespace-nowrap";
+
+const quickLinks = [
+  { to: "/", label: "Home" },
+  { to: "/shop", label: "Shop" },
+  { to: "/about-us", label: "Our Story" },
+  { to: "/contact", label: "Contact" },
+  { to: "/track", label: "Track Order" },
+];
+
+const footerCategories = [
+  { to: "/shop", label: "All Products" },
+  { to: "/shop?category=candle-sets", label: "Candle Sets" },
+  { to: "/shop?category=glass", label: "Glass" },
+  { to: "/shop?category=tea-light", label: "Tealights" },
+  { to: "/shop?category=creation", label: "Creations" },
+];
+
 function FooterLink({ to, children, onClick }) {
   return (
-    <Link
-      className="block text-[15px] leading-7 text-white/78 transition hover:text-white"
-      to={to}
-      onClick={onClick}
-    >
-      {children}
+    <Link className={footerInteractiveItemClassName} to={to} onClick={onClick}>
+      <span className="transition-transform duration-200 group-hover:translate-x-[2px]">
+        {children}
+      </span>
     </Link>
   );
 }
 
 function FooterExternalLink({ href, children }) {
+  const isMailLink = href.startsWith("mailto:");
+  const itemClassName = isMailLink
+    ? "group flex items-center text-[15px] font-normal leading-[20px] text-[#BDBDBD] transition-colors duration-200 hover:text-white lg:whitespace-nowrap"
+    : footerInteractiveItemClassName;
+
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="block text-[15px] leading-7 text-white/78 transition hover:text-white"
+      target={isMailLink ? undefined : "_blank"}
+      rel={isMailLink ? undefined : "noreferrer"}
+      className={itemClassName}
     >
-      {children}
+      <span className="transition-transform duration-200 group-hover:translate-x-[2px]">
+        {children}
+      </span>
     </a>
   );
 }
 
 function FooterHeading({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/48">
+    <p className="text-[17px] font-normal uppercase leading-[21px] tracking-normal text-[#9A9A9A]">
       {children}
     </p>
-  );
-}
-
-function FooterContactRow({ title, href, children }) {
-  const content = (
-    <div className="space-y-1.5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">{title}</p>
-      <p className="text-[15px] leading-6 text-white/82">{children}</p>
-    </div>
-  );
-
-  if (!href) {
-    return content;
-  }
-
-  return (
-    <a href={href} className="block transition hover:opacity-100 hover:text-white">
-      {content}
-    </a>
   );
 }
 
@@ -80,114 +85,86 @@ function Footer() {
   };
 
   return (
-    <footer id="footer" className="mt-14 bg-black text-white">
-      <div className="relative w-full bg-black">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col px-6 pb-4 pt-8 sm:px-8 lg:px-10 lg:pt-9">
-          <div className="grid gap-8 border-b border-white/12 pb-8 lg:grid-cols-[1.35fr_0.82fr_0.92fr_0.86fr_0.72fr] lg:items-start lg:gap-x-8 xl:gap-x-10">
-            <div className="space-y-5">
-              <BrandLogo
-                tone="light"
-                className="max-w-[150px] sm:max-w-[165px] lg:max-w-[180px]"
-              />
-
-              <p className="max-w-[360px] text-[15px] leading-7 text-white/66">
-                Handmade candles for warm homes, thoughtful gifting, and quiet little rituals that
-                make a room feel finished.
+    <footer
+      id="footer"
+      className="border-t border-[#161616] bg-black text-white"
+      style={{ fontFamily: '"Oxygen", "Segoe UI", sans-serif' }}
+    >
+      <div className="w-full bg-[linear-gradient(180deg,#070707_0%,#000000_18%,#000000_100%)]">
+        <div className="mx-auto w-full max-w-[1440px] px-6 py-10 sm:px-10 sm:py-12 lg:pl-[74px] lg:pr-[49px] lg:pt-[42px] lg:pb-[68px]">
+          <div className="grid gap-y-10 lg:grid-cols-[190px_942px] lg:gap-x-[170px]">
+            <div className="flex flex-col gap-7 lg:pt-[92px]">
+              <BrandLogo tone="light" className="max-w-[190px]" imageClassName="opacity-95" />
+              <p className="text-[15px] leading-[19px] text-[#676767] sm:text-[16px]">
+                Copyright {"\u00A9"} 2025
+                <br />
+                candleora.in
               </p>
+            </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FooterContactRow title="Phone" href="tel:+918999908639">
-                  +91 89999 08639
-                </FooterContactRow>
-                <FooterContactRow title="Email" href="mailto:candleora25@gmail.com">
-                  candleora25@gmail.com
-                </FooterContactRow>
-                <FooterContactRow title="Location">
-                  Nagpur, Maharashtra, India
-                </FooterContactRow>
-                <FooterContactRow title="Availability" href={whatsappHref}>
-                  WhatsApp support available
-                </FooterContactRow>
+            <div className="grid gap-y-8 sm:grid-cols-2 sm:gap-x-10 lg:flex lg:w-[942px] lg:gap-0 lg:items-start">
+              <div className="lg:w-[108px]">
+                <FooterHeading>Quick Links</FooterHeading>
+                <div className="mt-[18px] space-y-[18px]">
+                  {quickLinks.map((item) => (
+                    <FooterLink key={item.to} to={item.to} onClick={handleFooterNavigation}>
+                      {item.label}
+                    </FooterLink>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link
-                  to="/contact"
-                  onClick={handleFooterNavigation}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-white/16 px-5 text-sm font-semibold text-white transition hover:border-white/28 hover:bg-white/6"
-                >
-                  Contact Us
-                </Link>
-                <Link
-                  to="/track"
-                  onClick={handleFooterNavigation}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-brand-primary px-5 text-sm font-semibold text-black transition hover:brightness-105"
-                >
-                  Track Order
-                </Link>
+              <div className="lg:ml-[102px] lg:w-[214px]">
+                <FooterHeading>Customer Care</FooterHeading>
+                <div className="mt-[18px] space-y-[18px]">
+                  <p className={footerStaticItemClassName}>Returns & Cancellation</p>
+                  <FooterLink to="/privacy-policy" onClick={handleFooterNavigation}>
+                    Privacy Policy
+                  </FooterLink>
+                  <FooterLink to="/terms-and-conditions" onClick={handleFooterNavigation}>
+                    Terms & Conditions
+                  </FooterLink>
+                  <FooterLink to="/faq" onClick={handleFooterNavigation}>
+                    FAQ
+                  </FooterLink>
+                  <p className={footerStaticItemClassName}>Shipping & Delivery</p>
+                </div>
+              </div>
+
+              <div className="lg:ml-[75px] lg:w-[130px]">
+                <FooterHeading>Categories</FooterHeading>
+                <div className="mt-[18px] space-y-[18px]">
+                  {footerCategories.map((category) => (
+                    <FooterLink
+                      key={category.to}
+                      to={category.to}
+                      onClick={handleFooterNavigation}
+                    >
+                      {category.label}
+                    </FooterLink>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lg:ml-[123px] lg:w-[190px]">
+                <FooterHeading>
+                  For Inquiry &<br />
+                  Bulk Order
+                </FooterHeading>
+                <div className="mt-[18px] space-y-[18px]">
+                  <FooterExternalLink href={facebookHref}>Facebook</FooterExternalLink>
+                  <FooterExternalLink href={instagramHref}>Instagram</FooterExternalLink>
+                  <FooterExternalLink href={whatsappHref}>Whatsapp</FooterExternalLink>
+                  <div className="pt-0.5">
+                    <FooterExternalLink href="mailto:candleora25@gmail.com">
+                      candleora25@gmail.com
+                    </FooterExternalLink>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div className="space-y-3 lg:pl-5 xl:pl-7">
-              <FooterHeading>Quick Links</FooterHeading>
-              <FooterLink to="/" onClick={handleFooterNavigation}>Home</FooterLink>
-              <FooterLink to="/shop" onClick={handleFooterNavigation}>Shop</FooterLink>
-              <FooterLink to="/about-us" onClick={handleFooterNavigation}>Our Story</FooterLink>
-              <FooterLink to="/contact" onClick={handleFooterNavigation}>Contact</FooterLink>
-              <FooterLink to="/track" onClick={handleFooterNavigation}>Track Order</FooterLink>
-              <FooterLink to="/wishlist" onClick={handleFooterNavigation}>Wishlist</FooterLink>
-            </div>
-
-            <div className="space-y-3">
-              <FooterHeading>Customer Care</FooterHeading>
-              <p className="text-[15px] leading-7 text-white/78">Returns & Cancellation</p>
-              <FooterLink to="/privacy-policy" onClick={handleFooterNavigation}>Privacy Policy</FooterLink>
-              <FooterLink to="/terms-and-conditions" onClick={handleFooterNavigation}>Terms & Conditions</FooterLink>
-              <FooterLink to="/faq" onClick={handleFooterNavigation}>FAQ</FooterLink>
-              <p className="text-[15px] leading-7 text-white/78">Shipping & Delivery</p>
-            </div>
-
-            <div className="space-y-3">
-              <FooterHeading>Categories</FooterHeading>
-              {FOOTER_CATEGORIES.map((category) => (
-                <FooterLink
-                  key={category.slug || "all"}
-                  to={category.to}
-                  onClick={handleFooterNavigation}
-                >
-                  {category.footerLabel}
-                </FooterLink>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              <FooterHeading>Follow Us</FooterHeading>
-              <FooterExternalLink href={instagramHref}>Instagram</FooterExternalLink>
-              <FooterExternalLink href={whatsappHref}>WhatsApp</FooterExternalLink>
-              <FooterExternalLink href={facebookHref}>Facebook</FooterExternalLink>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-white/12 pt-4 text-[13px] text-white/54 sm:flex-row sm:items-center sm:justify-between">
-            <p>Copyright {"\u00A9"} 2025 CandleOra, Inc</p>
-            <p className="text-white/42">Handmade candles, warm gifting, and thoughtful details.</p>
           </div>
         </div>
-
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Chat with CandleOra on WhatsApp"
-          className="absolute bottom-[26px] right-3 inline-flex h-[56px] w-[56px] items-center justify-center rounded-full transition duration-300 hover:-translate-y-1 sm:right-4 sm:h-[60px] sm:w-[60px] lg:bottom-[36px] lg:right-[22px]"
-        >
-          <img
-            src={whatsappFooterIcon}
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-contain drop-shadow-[0_14px_28px_rgba(37,211,102,0.32)]"
-          />
-        </a>
       </div>
     </footer>
   );

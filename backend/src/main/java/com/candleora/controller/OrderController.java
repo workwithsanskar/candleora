@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -75,6 +76,19 @@ public class OrderController {
             ((UserPrincipal) authentication.getPrincipal()).getUser(),
             orderId
         );
+        return buildInvoiceResponse(order);
+    }
+
+    @GetMapping(value = "/{orderId}/invoice/tracking", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> downloadTrackedInvoice(
+        @PathVariable Long orderId,
+        @RequestParam("email") String email
+    ) {
+        CustomerOrder order = orderService.getOrderEntityForTracking(orderId, email);
+        return buildInvoiceResponse(order);
+    }
+
+    private ResponseEntity<byte[]> buildInvoiceResponse(CustomerOrder order) {
         byte[] pdf = invoiceService.generateInvoicePdf(order);
 
         return ResponseEntity.ok()

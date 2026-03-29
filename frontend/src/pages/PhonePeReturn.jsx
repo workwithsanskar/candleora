@@ -4,8 +4,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import StatusView from "../components/StatusView";
 import { useCart } from "../context/CartContext";
 import { paymentApi } from "../services/api";
+import { clearCheckoutDraftForStoredSession } from "../utils/checkoutStorage";
 import { formatApiError, titleCase } from "../utils/format";
-import { CHECKOUT_DRAFT_STORAGE_KEY, clearStoredJson } from "../utils/storage";
 
 function PhonePeReturn() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ function PhonePeReturn() {
       setOrder(response);
 
       if (response.paymentStatus === "PAID") {
-        clearStoredJson(CHECKOUT_DRAFT_STORAGE_KEY);
+        clearCheckoutDraftForStoredSession();
         clearCart();
         toast.success("Payment confirmed.");
         navigate(`/order-confirmation/${response.id}`, { replace: true });

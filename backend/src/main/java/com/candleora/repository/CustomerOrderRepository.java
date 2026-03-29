@@ -17,6 +17,8 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
 
     Optional<CustomerOrder> findByIdAndUser(Long id, AppUser user);
 
+    Optional<CustomerOrder> findByIdAndContactEmailIgnoreCase(Long id, String contactEmail);
+
     Optional<CustomerOrder> findByGatewayOrderId(String gatewayOrderId);
 
     long countByUserAndStatusNotAndPaymentStatusNot(

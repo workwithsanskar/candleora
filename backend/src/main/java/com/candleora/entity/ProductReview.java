@@ -30,6 +30,10 @@ public class ProductReview {
     @Column(nullable = false, length = 255)
     private String reviewerEmail;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewer_user_id")
+    private AppUser reviewerUser;
+
     @Column(nullable = false)
     private Integer rating;
 
@@ -70,6 +74,14 @@ public class ProductReview {
 
     public void setReviewerEmail(String reviewerEmail) {
         this.reviewerEmail = reviewerEmail;
+    }
+
+    public AppUser getReviewerUser() {
+        return reviewerUser;
+    }
+
+    public void setReviewerUser(AppUser reviewerUser) {
+        this.reviewerUser = reviewerUser;
     }
 
     public Integer getRating() {

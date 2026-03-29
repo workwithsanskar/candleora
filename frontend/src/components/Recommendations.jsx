@@ -1,33 +1,53 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[14px] w-[14px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M2.5 12C4.6 8.1 8 6.2 12 6.2C16 6.2 19.4 8.1 21.5 12C19.4 15.9 16 17.8 12 17.8C8 17.8 4.6 15.9 2.5 12Z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </svg>
+  );
+}
+
 function Recommendations({ cards }) {
   return (
-    <div className="grid gap-8 md:grid-cols-3">
+    <div className="grid gap-4 md:gap-5 lg:grid-cols-2 lg:gap-6">
       {cards.map((card) => (
-        <article key={card.title} className="group rounded-[10px]">
-          <Link to={card.to} className="block space-y-4">
-            <div className="relative overflow-hidden rounded-[12px]">
-              <img
-                src={card.image}
-                alt={card.title}
-                className="h-[300px] w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_10%,rgba(0,0,0,0.16)_40%,rgba(0,0,0,0.36)_100%)]" />
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-white/45 px-4 py-2 text-center backdrop-blur-[2px]">
-                <h3 className="text-[18px] font-semibold uppercase tracking-[0.08em] text-black">
-                  {card.title}
-                </h3>
-              </div>
+        <article
+          key={card.title}
+          className="group relative isolate flex h-[208px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.18)] sm:h-[220px] lg:h-[236px]"
+        >
+          <img
+            src={card.image}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.16)_0%,rgba(8,8,8,0.42)_100%)]" />
+
+          <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 py-6 text-center text-white sm:px-8">
+            <div className="-mx-6 w-[calc(100%+3rem)] bg-black/42 py-3 backdrop-blur-[1px] sm:-mx-8 sm:w-[calc(100%+4rem)]">
+              <h3 className="text-[1.2rem] font-semibold uppercase tracking-[0.02em] text-white sm:text-[1.35rem] lg:text-[1.5rem]">
+                {card.title}
+              </h3>
             </div>
 
-            <div className="space-y-3 px-1 text-center">
-              <p className="min-h-[44px] text-[13px] leading-5 text-black/74">{card.description}</p>
-              <span className="inline-flex w-full items-center justify-center rounded-[4px] bg-black px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition group-hover:bg-[#FFD700] group-hover:text-black">
-                View
-              </span>
-            </div>
-          </Link>
+            <p className="mt-4 max-w-[16rem] text-[0.92rem] leading-[1.55] text-white/92 sm:max-w-[19rem] sm:text-[0.98rem]">
+              {card.description}
+            </p>
+
+            <Link
+              to={card.to}
+              aria-label={`View ${card.title}`}
+              className="mt-4 inline-flex h-[32px] w-[88px] items-center justify-center gap-1.5 rounded-[8px] bg-black px-3.5 text-[12px] font-semibold uppercase tracking-[0.04em] text-white shadow-[0_6px_16px_rgba(0,0,0,0.22)] transition duration-300 group-hover:-translate-y-0.5 group-hover:bg-black/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-black/30"
+            >
+              <EyeIcon />
+              View
+            </Link>
+          </div>
         </article>
       ))}
     </div>

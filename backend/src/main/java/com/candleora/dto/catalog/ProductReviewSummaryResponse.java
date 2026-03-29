@@ -6,6 +6,7 @@ import java.util.List;
 public record ProductReviewSummaryResponse(
     BigDecimal averageRating,
     long reviewCount,
-    List<ProductReviewResponse> reviews
+    List<ProductReviewResponse> reviews,
+    ProductReviewResponse currentUserReview
 ) {
 }

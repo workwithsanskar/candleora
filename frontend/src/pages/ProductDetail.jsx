@@ -53,7 +53,7 @@ function RatingRow({ rating, reviewCount = null }) {
   );
 }
 
-function RatingSelector({ value, onChange }) {
+function RatingSelector({ value, onChange, disabled = false }) {
   return (
     <div className="flex items-center gap-1 text-[#f3b33d]">
       {Array.from({ length: 5 }).map((_, index) => {
@@ -65,7 +65,8 @@ function RatingSelector({ value, onChange }) {
             key={nextRating}
             type="button"
             onClick={() => onChange(nextRating)}
-            className={`transition ${active ? "scale-100" : "scale-[0.96] text-black/25 hover:text-[#f3b33d]"}`}
+            disabled={disabled}
+            className={`transition ${active ? "scale-100" : "scale-[0.96] text-black/25 hover:text-[#f3b33d]"} ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
             aria-label={`Rate ${nextRating} star${nextRating === 1 ? "" : "s"}`}
           >
             <StarIcon active={active} className="h-5 w-5" />
@@ -99,6 +100,7 @@ function normalizeReviewSummary(payload, fallbackRating) {
     averageRating: Number(payload?.averageRating ?? fallbackRating ?? 0),
     reviewCount: Number(payload?.reviewCount ?? 0),
     reviews: Array.isArray(payload?.reviews) ? payload.reviews : [],
+    currentUserReview: payload?.currentUserReview ?? null,
   };
 }
 
@@ -111,6 +113,19 @@ function createInitialReviewForm(user = null) {
     rating: 0,
     message: "",
   };
+}
+
+function createReviewFormFromSummary(user = null, summary = null) {
+  if (summary?.currentUserReview) {
+    return {
+      reviewerName: summary.currentUserReview.reviewerName ?? user?.name ?? "",
+      reviewerEmail: user?.email ?? "",
+      rating: Number(summary.currentUserReview.rating ?? 0),
+      message: summary.currentUserReview.message ?? "",
+    };
+  }
+
+  return createInitialReviewForm(user);
 }
 
 function ProductDetail() {
@@ -132,14 +147,12 @@ function ProductDetail() {
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const hasCurrentUserReview = Boolean(reviewSummary.currentUserReview?.id);
+  const isReviewFormLocked = !user || hasCurrentUserReview;
 
   useEffect(() => {
-    setReviewForm((current) => ({
-      ...current,
-      reviewerName: current.reviewerName || user?.name || "",
-      reviewerEmail: current.reviewerEmail || user?.email || "",
-    }));
-  }, [user]);
+    setReviewForm(createReviewFormFromSummary(user, reviewSummary));
+  }, [id, reviewSummary, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -212,6 +225,16 @@ function ProductDetail() {
       message: reviewForm.message.trim(),
     };
 
+    if (!user) {
+      setReviewError("Sign in to post a review for this product.");
+      return;
+    }
+
+    if (hasCurrentUserReview) {
+      setReviewError("You have already reviewed this product.");
+      return;
+    }
+
     if (!payload.reviewerName || !payload.reviewerEmail || !payload.message) {
       setReviewError("Please complete your name, email, and review before submitting.");
       return;
@@ -228,11 +251,6 @@ function ProductDetail() {
     try {
       const nextSummary = await catalogApi.createProductReview(id, payload);
       setReviewSummary(normalizeReviewSummary(nextSummary, product?.rating ?? 0));
-      setReviewForm((current) => ({
-        ...current,
-        rating: 0,
-        message: "",
-      }));
       toast.success("Review posted successfully.");
     } catch (reviewSubmitError) {
       const message = formatApiError(reviewSubmitError);
@@ -519,23 +537,31 @@ function ProductDetail() {
               </div>
 
               {reviewSummary.reviews.length ? (
-                reviewSummary.reviews.map((review) => (
-                  <article
-                    key={review.id}
-                    className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-base font-semibold text-black">{review.reviewerName}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/42">
-                          {formatDate(review.createdAt)}
-                        </p>
+                <div
+                  className={`space-y-4 ${
+                    reviewSummary.reviews.length > 3
+                      ? "mini-cart-scroll-view stealth-scrollbar max-h-[572px] overflow-y-auto pr-2 scroll-smooth"
+                      : ""
+                  }`}
+                >
+                  {reviewSummary.reviews.map((review) => (
+                    <article
+                      key={review.id}
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-base font-semibold text-black">{review.reviewerName}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/42">
+                            {formatDate(review.createdAt)}
+                          </p>
+                        </div>
+                        <RatingRow rating={review.rating} />
                       </div>
-                      <RatingRow rating={review.rating} />
-                    </div>
-                    <p className="mt-4 text-sm leading-6 text-black/68">{review.message}</p>
-                  </article>
-                ))
+                      <p className="mt-4 text-sm leading-6 text-black/68">{review.message}</p>
+                    </article>
+                  ))}
+                </div>
               ) : (
                 <div className="rounded-[20px] border border-dashed border-black/12 px-5 py-8 text-sm leading-7 text-black/58">
                   No reviews yet. Be the first to share how this candle looked, smelled, and burned in your space.
@@ -563,6 +589,7 @@ function ProductDetail() {
                     name="reviewerName"
                     value={reviewForm.reviewerName}
                     onChange={handleReviewChange}
+                    disabled={isReviewFormLocked}
                     className="input-pill h-[50px] rounded-[18px]"
                     placeholder="John Doe"
                   />
@@ -576,6 +603,7 @@ function ProductDetail() {
                     name="reviewerEmail"
                     value={reviewForm.reviewerEmail}
                     onChange={handleReviewChange}
+                    disabled={isReviewFormLocked}
                     className="input-pill h-[50px] rounded-[18px]"
                     placeholder="you@example.com"
                   />
@@ -588,6 +616,7 @@ function ProductDetail() {
                 </span>
                 <RatingSelector
                   value={reviewForm.rating}
+                  disabled={isReviewFormLocked}
                   onChange={(rating) => {
                     setReviewForm((current) => ({
                       ...current,
@@ -607,6 +636,7 @@ function ProductDetail() {
                   name="message"
                   value={reviewForm.message}
                   onChange={handleReviewChange}
+                  disabled={isReviewFormLocked}
                   className="min-h-[150px] w-full rounded-[18px] border border-black/15 bg-white px-4 py-3 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-[#f3b33d]/20"
                   placeholder="Share your experience with the fragrance, finish, packaging, and burn quality..."
                 />
@@ -618,16 +648,24 @@ function ProductDetail() {
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm leading-6 text-black/52">
-                  {user
-                    ? "Posting as your signed-in CandleOra account."
-                    : "You can submit a review without signing in."}
+                  {!user
+                    ? "Sign in to write a review for this candle."
+                    : hasCurrentUserReview
+                      ? "Your submitted review is shown here. Each CandleOra account can review a product once."
+                      : "Posting as your signed-in CandleOra account."}
                 </p>
                 <button
                   type="submit"
-                  disabled={isSubmittingReview}
+                  disabled={isSubmittingReview || isReviewFormLocked}
                   className="btn btn-secondary rounded-full px-7 disabled:opacity-60"
                 >
-                  {isSubmittingReview ? "Posting..." : "Post Review"}
+                  {isSubmittingReview
+                    ? "Posting..."
+                    : !user
+                      ? "Sign In to Review"
+                      : hasCurrentUserReview
+                        ? "Review Posted"
+                        : "Post Review"}
                 </button>
               </div>
             </form>

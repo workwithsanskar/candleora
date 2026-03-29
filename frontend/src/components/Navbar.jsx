@@ -82,7 +82,7 @@ function IconButton({ onClick, label, children, badge, active = false, accent = 
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <Tooltip content={label} position="bottom">
+    <Tooltip content={label} position="bottom" variant="simple">
       <button
         type="button"
         onClick={onClick}
@@ -104,7 +104,7 @@ function IconButton({ onClick, label, children, badge, active = false, accent = 
               animate={{ scale: 1, opacity: 1 }}
               exit={prefersReducedMotion ? { opacity: 0 } : { scale: 0.72, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-brand-primary px-1 text-[9px] font-bold leading-none text-white"
+              className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-brand-primary px-1 text-[9px] font-normal leading-none text-white"
             >
               {badge}
             </m.span>

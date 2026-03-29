@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { authApi } from "../services/api";
+import { clearCheckoutDraftForUser } from "../utils/checkoutStorage";
 import { formatApiError } from "../utils/format";
 import {
   AUTH_STORAGE_KEY,
@@ -153,6 +154,7 @@ export function AuthProvider({ children }) {
     if (typeof window !== "undefined" && window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
     }
+    clearCheckoutDraftForUser(session?.user ?? null);
     setSession(null);
     toast.success("Signed out.");
   };

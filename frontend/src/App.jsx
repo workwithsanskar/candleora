@@ -11,6 +11,7 @@ import { destroySmoothScroll, initSmoothScroll, resizeSmoothScroll } from "./uti
 
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AccountDetails = lazy(() => import("./pages/AccountDetails"));
+const AuraChatbot = lazy(() => import("./components/AuraChatbot"));
 const AdminLayout = lazy(() => import("./admin/layout/AdminLayout"));
 const AdminAnalytics = lazy(() => import("./admin/pages/Analytics"));
 const AdminCustomers = lazy(() => import("./admin/pages/Customers"));
@@ -190,6 +191,12 @@ function AppShell() {
             </Suspense>
           </m.main>
         </AnimatePresence>
+
+        {!isAdminRoute ? (
+          <Suspense fallback={null}>
+            <AuraChatbot />
+          </Suspense>
+        ) : null}
 
         {!isAdminRoute ? <Footer /> : null}
       </div>

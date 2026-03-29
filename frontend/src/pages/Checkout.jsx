@@ -20,11 +20,11 @@ import { formatApiError, formatCurrency } from "../utils/format";
 import { getCurrentLocation } from "../utils/location";
 import { PHONEPE_COMING_SOON_MESSAGE, PHONEPE_ENABLED } from "../utils/payments";
 import {
-  CHECKOUT_DRAFT_STORAGE_KEY,
-  clearStoredJson,
-  readStoredJson,
-  writeStoredJson,
-} from "../utils/storage";
+  clearCheckoutDraftForUser,
+  getCheckoutDraftStorageKey,
+  readCheckoutDraftForUser,
+  writeCheckoutDraftForUser,
+} from "../utils/checkoutStorage";
 
 const inputClassName =
   "w-full rounded-[12px] border border-black/12 bg-white px-4 py-3 text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/40 focus:bg-white";
@@ -127,9 +127,11 @@ function Checkout() {
     createAddress,
   } = useAddresses();
   const { items, grandTotal, clearCart } = useCart();
-  const [form, setForm] = useState(() =>
-    mergeCheckoutFormWithUser(readStoredJson(CHECKOUT_DRAFT_STORAGE_KEY, {}), user),
+  const checkoutDraftStorageKey = useMemo(
+    () => getCheckoutDraftStorageKey(user),
+    [user?.email, user?.id],
   );
+  const [form, setForm] = useState(() => mergeCheckoutFormWithUser(readCheckoutDraftForUser(user), user));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isSendingEmailVerification, setIsSendingEmailVerification] = useState(false);
@@ -146,14 +148,21 @@ function Checkout() {
   const [currentLocationPreview, setCurrentLocationPreview] = useState(null);
   const [error, setError] = useState("");
   const couponInputRef = useRef(null);
+  const shouldPersistCheckoutDraftRef = useRef(false);
 
   useEffect(() => {
-    setForm((current) => mergeCheckoutFormWithUser(current, user));
-  }, [user]);
+    shouldPersistCheckoutDraftRef.current = false;
+    setForm(mergeCheckoutFormWithUser(readCheckoutDraftForUser(user), user));
+  }, [checkoutDraftStorageKey, user]);
 
   useEffect(() => {
-    writeStoredJson(CHECKOUT_DRAFT_STORAGE_KEY, form);
-  }, [form]);
+    if (!shouldPersistCheckoutDraftRef.current) {
+      shouldPersistCheckoutDraftRef.current = true;
+      return;
+    }
+
+    writeCheckoutDraftForUser(user, form);
+  }, [checkoutDraftStorageKey, form, user]);
 
   const phoneVerificationRequired = requiresPhoneVerification(user);
   const emailVerificationRecommended = requiresEmailVerification(user);
@@ -499,7 +508,7 @@ function Checkout() {
       if (form.paymentMethod === "COD") {
         const order = await orderApi.createOrder(payload);
         await persistCheckoutAddressIfNeeded();
-        clearStoredJson(CHECKOUT_DRAFT_STORAGE_KEY);
+        clearCheckoutDraftForUser(user);
         clearCart();
         toast.success("Order placed successfully.");
         navigate(`/order-confirmation/${order.id}`, { replace: true });

@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { m, useReducedMotion } from "framer-motion";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useCart } from "../context/CartContext";
@@ -38,6 +38,34 @@ function StarRow() {
   );
 }
 
+function CartIcon({ variant = "add" }) {
+  if (variant === "added") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M8.5 12.2L10.8 14.5L15.8 9.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (variant === "remove") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M8.5 12H15.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 8.5V15.5" strokeLinecap="round" />
+      <path d="M8.5 12H15.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ProductCard({ product, badgeLabel = null, priority = false }) {
   const { addToCart, removeFromCart, items: cartItems } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
@@ -51,6 +79,19 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
   const activeBadge = badgeLabel ?? (item.discount > 0 ? `-${item.discount}%` : null);
   const isNewBadge = activeBadge?.toUpperCase() === "NEW";
   const productPath = getProductPath(item);
+  const cartButtonLabel =
+    item.stock > 0
+      ? isInCart
+        ? "Added to Cart"
+        : "Add to Cart"
+      : "Out of Stock";
+  const cartButtonIcon = isInCart ? "added" : "add";
+  const cartButtonClasses =
+    item.stock <= 0
+      ? "cursor-not-allowed bg-black/15 text-black/45"
+      : isInCart
+        ? "bg-[#058b1f] text-white"
+        : "bg-brand-primary text-black";
   const cardImage = getResponsiveImageProps(item.imageUrls[0], {
     widths: [240, 320, 480],
     quality: 68,
@@ -132,13 +173,7 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
 
         <m.button
           type="button"
-          className={`mt-1 inline-flex h-[36px] w-full items-center justify-center rounded-[8px] px-4 text-[13px] font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition ${
-            item.stock <= 0
-              ? "cursor-not-allowed bg-black/15 text-black/45"
-              : isInCart
-                ? "bg-[#d63d3d] text-white hover:bg-[#be3131]"
-                : "bg-brand-primary text-black hover:bg-[#dfa129]"
-          }`}
+          className={`mt-1 inline-flex h-[36px] w-full items-center justify-center overflow-hidden rounded-[8px] px-4 text-[13px] font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition-[background-color,color,box-shadow] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] ${cartButtonClasses}`}
           disabled={item.stock <= 0}
           whileTap={prefersReducedMotion || item.stock <= 0 ? undefined : { scale: 0.98 }}
           onClick={() => {
@@ -149,16 +184,24 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
 
             addToCart(item, 1);
           }}
+          title={cartButtonLabel}
+          aria-label={cartButtonLabel}
         >
-          <m.span
-            key={isInCart ? "in-cart" : "not-in-cart"}
-            initial={prefersReducedMotion ? false : { y: 4, opacity: 0.75 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.18 }}
-            className="uppercase tracking-[0.03em]"
-          >
-            {item.stock > 0 ? (isInCart ? "Remove from cart" : "Add to Cart") : "Out of Stock"}
-          </m.span>
+          <span className="relative flex h-full w-full items-center justify-center">
+            <AnimatePresence initial={false}>
+              <m.span
+                key={cartButtonLabel}
+                initial={prefersReducedMotion ? false : { y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { y: -8, opacity: 0 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 inline-flex items-center justify-center gap-2 tracking-[0.01em]"
+              >
+                {item.stock > 0 ? <CartIcon variant={cartButtonIcon} /> : null}
+                <span>{cartButtonLabel}</span>
+              </m.span>
+            </AnimatePresence>
+          </span>
         </m.button>
       </div>
     </article>

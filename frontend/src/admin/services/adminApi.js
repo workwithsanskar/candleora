@@ -19,6 +19,12 @@ const adminApi = {
     api.get("/admin/analytics/customers", { params: withDefinedParams(params) }).then(unwrap),
   getForecast: (params = {}) =>
     api.get("/admin/analytics/forecast", { params: withDefinedParams(params) }).then(unwrap),
+  getAuraOverview: (params = {}) =>
+    api.get("/admin/analytics/aura/overview", { params: withDefinedParams(params) }).then(unwrap),
+  getAuraTrainingQueue: (params = {}) =>
+    api.get("/admin/analytics/aura/training", { params: withDefinedParams(params) }).then(unwrap),
+  updateAuraTrainingItem: (id, payload) =>
+    api.put(`/admin/analytics/aura/training/${id}`, payload).then(unwrap),
   getOrders: (params = {}) =>
     api.get("/admin/orders", { params: withDefinedParams(params) }).then(unwrap),
   getOrder: (id) => api.get(`/admin/orders/${id}`).then(unwrap),

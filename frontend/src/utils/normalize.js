@@ -40,12 +40,14 @@ export function normalizeCartResponse(payload) {
   const items = (payload?.items ?? []).map((item) => ({
     id: Number(item.id),
     productId: Number(item.productId ?? item.product?.id ?? item.id),
+    slug: item.slug ?? item.product?.slug ?? "",
     productName: item.productName ?? item.name ?? item.product?.name ?? "Candle",
     imageUrl:
       item.imageUrl ??
       item.product?.imageUrl ??
       item.product?.imageUrls?.[0] ??
       fallbackImage,
+    occasionTag: item.occasionTag ?? item.product?.occasionTag ?? "",
     unitPrice: Number(item.unitPrice ?? item.price ?? item.product?.price ?? 0),
     quantity: Number(item.quantity ?? 1),
     lineTotal: Number(
@@ -69,8 +71,10 @@ export function createGuestCartItem(product, quantity) {
   return {
     id: normalized.id,
     productId: normalized.id,
+    slug: normalized.slug,
     productName: normalized.name,
     imageUrl: normalized.imageUrls[0],
+    occasionTag: normalized.occasionTag,
     unitPrice: normalized.price,
     quantity,
     lineTotal: normalized.price * quantity,

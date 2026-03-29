@@ -29,6 +29,10 @@ public abstract class IntegrationTestSupport {
         return login("demo@candleora.com", "Password123!");
     }
 
+    protected String loginAsAdmin() throws Exception {
+        return login("admin@candleora.com", "Password123!");
+    }
+
     protected String login(String email, String password) throws Exception {
         MvcResult result = mockMvc.perform(
                 MockMvcRequestBuilders.post("/api/auth/login")

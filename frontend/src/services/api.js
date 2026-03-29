@@ -99,6 +99,12 @@ export const orderApi = {
     api.post(`/orders/${orderId}/cancel`, payload).then(unwrap),
   downloadInvoice: (orderId) =>
     api.get(`/orders/${orderId}/invoice`, { responseType: "blob" }).then(unwrap),
+  downloadTrackedInvoice: (orderId, email) =>
+    api.get(`/orders/${orderId}/invoice/tracking`, {
+      params: { email },
+      responseType: "blob",
+      skipAuth: true,
+    }).then(unwrap),
 };
 
 export const couponApi = {
@@ -118,6 +124,11 @@ export const contentApi = {
   getGuides: () => api.get("/guides").then(unwrap),
   getFaqs: () => api.get("/faqs").then(unwrap),
   submitContactMessage: (payload) => api.post("/contact", payload, { skipAuth: true }).then(unwrap),
+};
+
+export const chatApi = {
+  sendMessage: (payload) => api.post("/chat", payload).then(unwrap),
+  logEvent: (payload) => api.post("/chat/events", payload).then(() => null),
 };
 
 export default api;

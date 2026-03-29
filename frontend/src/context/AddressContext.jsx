@@ -7,12 +7,17 @@ import {
   clearStoredJson,
   readStoredJson,
   SAVED_ADDRESSES_STORAGE_KEY,
+  writeStoredJson,
 } from "../utils/storage";
 
 const AddressContext = createContext(null);
 
 function normalizeValue(value) {
   return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizePhone(value) {
+  return String(value ?? "").replace(/\D/g, "");
 }
 
 function normalizeAddressPayload(address, isDefaultFallback = false) {
@@ -45,8 +50,44 @@ function buildAddressKey(address) {
   ].join("|");
 }
 
+function isLegacyAddressCompatibleWithUser(address = {}, user = null) {
+  if (!user) {
+    return false;
+  }
+
+  const addressPhone = normalizePhone(address?.phoneNumber ?? address?.phone);
+  const userPhone = normalizePhone(user?.phoneNumber);
+  if (addressPhone && userPhone && addressPhone === userPhone) {
+    return true;
+  }
+
+  const addressLine1 = normalizeValue(address?.addressLine1 ?? address?.streetAddress);
+  const userAddressLine1 = normalizeValue(user?.addressLine1);
+  const city = normalizeValue(address?.city);
+  const userCity = normalizeValue(user?.city);
+  const state = normalizeValue(address?.state);
+  const userState = normalizeValue(user?.state);
+  const postalCode = normalizeValue(address?.postalCode ?? address?.zipCode);
+  const userPostalCode = normalizeValue(user?.postalCode);
+
+  return Boolean(
+    addressLine1 &&
+      userAddressLine1 &&
+      city &&
+      userCity &&
+      state &&
+      userState &&
+      postalCode &&
+      userPostalCode &&
+      addressLine1 === userAddressLine1 &&
+      city === userCity &&
+      state === userState &&
+      postalCode === userPostalCode,
+  );
+}
+
 export function AddressProvider({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -54,16 +95,32 @@ export function AddressProvider({ children }) {
 
   const migrateLegacyAddresses = useCallback(async (currentAddresses) => {
     const legacyAddresses = readStoredJson(SAVED_ADDRESSES_STORAGE_KEY, []);
-    if (!Array.isArray(legacyAddresses) || !legacyAddresses.length) {
+    if (!Array.isArray(legacyAddresses) || !legacyAddresses.length || !user) {
+      return currentAddresses;
+    }
+
+    const compatibleLegacyAddresses = [];
+    const remainingLegacyAddresses = [];
+
+    legacyAddresses.forEach((legacyAddress) => {
+      if (isLegacyAddressCompatibleWithUser(legacyAddress, user)) {
+        compatibleLegacyAddresses.push(legacyAddress);
+        return;
+      }
+
+      remainingLegacyAddresses.push(legacyAddress);
+    });
+
+    if (!compatibleLegacyAddresses.length) {
       return currentAddresses;
     }
 
     const existingKeys = new Set(currentAddresses.map(buildAddressKey));
     let createdAny = false;
 
-    for (let index = 0; index < legacyAddresses.length; index += 1) {
+    for (let index = 0; index < compatibleLegacyAddresses.length; index += 1) {
       const payload = normalizeAddressPayload(
-        legacyAddresses[index],
+        compatibleLegacyAddresses[index],
         currentAddresses.length === 0 && index === 0,
       );
 
@@ -88,9 +145,14 @@ export function AddressProvider({ children }) {
       createdAny = true;
     }
 
-    clearStoredJson(SAVED_ADDRESSES_STORAGE_KEY);
+    if (remainingLegacyAddresses.length) {
+      writeStoredJson(SAVED_ADDRESSES_STORAGE_KEY, remainingLegacyAddresses);
+    } else {
+      clearStoredJson(SAVED_ADDRESSES_STORAGE_KEY);
+    }
+
     return createdAny ? addressApi.getAddresses() : currentAddresses;
-  }, []);
+  }, [user]);
 
   const refreshAddresses = useCallback(async () => {
     if (!isAuthenticated) {
@@ -120,7 +182,6 @@ export function AddressProvider({ children }) {
     if (!isAuthenticated) {
       setAddresses([]);
       setError("");
-      clearStoredJson(SAVED_ADDRESSES_STORAGE_KEY);
       return;
     }
 

@@ -6,6 +6,7 @@ import bookshelfImage from "../assets/designer/bookshelf-floral.png";
 import candleFixesCard from "../assets/designer/candle-fixes-card.png";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
+import Recommendations from "../components/Recommendations";
 import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
@@ -149,14 +150,15 @@ function Home() {
         <div className="absolute inset-0">
           <div className="w-full px-6 sm:px-10 lg:px-[128px] xl:px-[136px]">
             <div className="max-w-[680px] pt-[56px] text-left sm:pt-[74px] lg:w-[666px] lg:max-w-none lg:pt-[132px] xl:pt-[146px]">
-              <h1 className="font-sans text-[1.95rem] font-bold leading-[1.08] tracking-[-0.02em] text-white sm:text-[2.45rem] lg:text-[40px]">
-                <span className="block lg:whitespace-nowrap">Crafting Comfort, Redefining</span>
-                <span className="block lg:whitespace-nowrap">Spaces. Your Home, Your</span>
-                <span className="block lg:whitespace-nowrap">Signature Style!</span>
+              <h1
+                className="text-[1.95rem] font-bold leading-[1.02] tracking-normal text-white sm:text-[2.45rem] sm:leading-[1.02] lg:w-[666px] lg:text-[40px] lg:leading-[1]"
+                style={{ fontFamily: '"Oxygen", "Segoe UI", sans-serif' }}
+              >
+                Crafting Comfort, Redefining Spaces. Your Home, Your Signature Style!
               </h1>
               <Link
                 to="/shop"
-                className="mt-3 inline-flex h-[45px] min-w-[143px] items-center justify-center rounded-[5px] bg-brand-primary px-5 text-[0.95rem] font-medium text-black shadow-[0_6px_16px_rgba(243,179,61,0.28)] transition duration-200 hover:-translate-y-0.5 hover:brightness-[1.03] lg:mt-3.5"
+                className="mt-3 inline-flex h-[45px] min-w-[143px] items-center justify-center rounded-[5px] bg-white px-5 text-[16px] font-bold tracking-[0.01em] text-[#1A1A1A] shadow-[0_4px_4px_rgba(0,0,0,0.25)] lg:mt-3.5"
               >
                 Shop Now
               </Link>
@@ -228,48 +230,12 @@ function Home() {
 
       <section id="recommendations" className="container-shell py-12 sm:py-14">
         <Reveal delay={0.08}>
-          <h2 className="section-title">Recommendations</h2>
+          <h2 className="section-title">
+            The Recommendations
+          </h2>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            {recommendationCards.map((card) => (
-              <article
-                key={card.title}
-                className="mx-auto flex h-full w-full max-w-[340px] flex-col items-center text-center"
-              >
-                <Link
-                  to={card.to}
-                  className="relative block w-full overflow-hidden rounded-[16px] shadow-[0_12px_24px_rgba(51,51,51,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_32px_rgba(51,51,51,0.14)]"
-                >
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="aspect-[0.92] w-full object-cover"
-                  />
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(243,179,61,0.26)] px-4 py-2.5 backdrop-blur-[1.5px]">
-                    <h3 className="text-[1.08rem] font-semibold uppercase tracking-[0.03em] text-black sm:text-[1.18rem]">
-                      {card.title}
-                    </h3>
-                  </div>
-                </Link>
-
-                <div className="mt-3 flex min-h-[56px] w-full items-start justify-center px-2">
-                  <p className="max-w-[292px] text-[15px] leading-6 text-black/72">{card.description}</p>
-                </div>
-
-                <Link
-                  to={card.to}
-                  className="btn btn-secondary mt-auto flex h-[46px] w-full items-center justify-center gap-2 tracking-[0.08em] uppercase hover:-translate-y-0.5"
-                >
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M2.5 12C4.6 8.1 8 6.2 12 6.2C16 6.2 19.4 8.1 21.5 12C19.4 15.9 16 17.8 12 17.8C8 17.8 4.6 15.9 2.5 12Z" />
-                    <circle cx="12" cy="12" r="2.8" />
-                  </svg>
-                  View
-                </Link>
-              </article>
-            ))}
+          <div className="mt-8">
+            <Recommendations cards={recommendationCards} />
           </div>
         </Reveal>
       </section>

@@ -171,6 +171,11 @@ public class OrderService {
         return toOrderResponse(getOrderEntity(user, orderId));
     }
 
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderForTracking(Long orderId, String contactEmail) {
+        return toOrderResponse(getOrderEntityForTracking(orderId, contactEmail));
+    }
+
     public OrderResponse cancelOrder(AppUser user, Long orderId, String reason) {
         CustomerOrder order = getOrderEntity(user, orderId);
         if (!canCancel(order)) {
@@ -200,6 +205,16 @@ public class OrderService {
 
     public CustomerOrder getOrderEntity(AppUser user, Long orderId) {
         return customerOrderRepository.findByIdAndUser(orderId, user)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public CustomerOrder getOrderEntityForTracking(Long orderId, String contactEmail) {
+        if (!StringUtils.hasText(contactEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Billing email is required");
+        }
+
+        return customerOrderRepository.findByIdAndContactEmailIgnoreCase(orderId, contactEmail.trim())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     }
 
