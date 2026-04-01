@@ -13,6 +13,7 @@ public record ProductResponse(
     BigDecimal originalPrice,
     Integer discount,
     Integer stock,
+    Integer lowStockThreshold,
     String occasionTag,
     BigDecimal rating,
     String scentNotes,

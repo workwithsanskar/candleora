@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import OrderHistorySkeleton from "../components/OrderHistorySkeleton";
 import StatusView from "../components/StatusView";
 import { orderApi } from "../services/api";
 import { formatApiError, formatCurrency, formatDate, titleCase } from "../utils/format";
+import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 
 function getTrackingReference(order) {
   return String(order.gatewayOrderId || order.gatewayPaymentId || order.id || "");
@@ -164,6 +166,13 @@ function Orders() {
                 const primaryItem = getPrimaryItem(order);
                 const trackingReference = getTrackingReference(order);
                 const remainingItems = Math.max((order.items?.length ?? 0) - 1, 0);
+                const primaryItemImage = primaryItem?.imageUrl
+                  ? getResponsiveImageProps(primaryItem.imageUrl, {
+                      widths: [96, 144, 192],
+                      quality: 64,
+                      sizes: "42px",
+                    })
+                  : null;
 
                 return (
                   <article
@@ -186,7 +195,24 @@ function Orders() {
                       </div>
 
                       <div className="flex items-start gap-3">
-                        <div className="h-[62px] w-[42px] shrink-0 rounded-[2px] bg-black/20" />
+                        <div className="h-[62px] w-[42px] shrink-0 overflow-hidden rounded-[6px] bg-[#f3eee5]">
+                          {primaryItemImage ? (
+                            <img
+                              src={primaryItemImage.src}
+                              srcSet={primaryItemImage.srcSet}
+                              sizes={primaryItemImage.sizes}
+                              alt={primaryItem?.productName ?? "Ordered product"}
+                              loading="lazy"
+                              decoding="async"
+                              onError={(event) => applyImageFallback(event, fallbackProductImage)}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-[#f3eee5] text-[10px] font-semibold uppercase tracking-[0.16em] text-black/42">
+                              Item
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0 space-y-1">
                           <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                             Items

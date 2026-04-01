@@ -1,4 +1,4 @@
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import LazyProductCard from "../components/LazyProductCard";
@@ -39,13 +39,36 @@ function FilterSection({ title, children }) {
 }
 
 function Shop() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
-  const [selectedPriceRange, setSelectedPriceRange] = useState("");
+  const [selectedPriceRange, setSelectedPriceRange] = useState(searchParams.get("price") ?? "");
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
+  const searchParamsSnapshot = searchParams.toString();
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+    const trimmedSearch = search.trim();
+
+    if (trimmedSearch) {
+      nextParams.set("search", trimmedSearch);
+    }
+
+    if (category) {
+      nextParams.set("category", category);
+    }
+
+    if (selectedPriceRange) {
+      nextParams.set("price", selectedPriceRange);
+    }
+
+    const nextSnapshot = nextParams.toString();
+    if (nextSnapshot !== searchParamsSnapshot) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [category, search, searchParamsSnapshot, selectedPriceRange, setSearchParams]);
 
   const trimmedSearch = deferredSearch.trim();
   const productsQuery = useInfiniteQuery({
@@ -110,18 +133,24 @@ function Shop() {
               {priceRanges.map((range) => (
                 <label key={range.id} className="flex items-center gap-3 text-[0.96rem] leading-[1.05] text-black/82">
                   <input
-                    type="checkbox"
+                    type="radio"
+                    name="shop-price-range"
                     checked={selectedPriceRange === range.id}
-                    onChange={() =>
-                      setSelectedPriceRange((currentRange) =>
-                        currentRange === range.id ? "" : range.id,
-                      )
-                    }
+                    onChange={() => setSelectedPriceRange(range.id)}
                     className="h-4 w-4 shrink-0 accent-black"
                   />
                   <span className="whitespace-nowrap">{range.label}</span>
                 </label>
               ))}
+              {selectedPriceRange ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedPriceRange("")}
+                  className="mt-1 text-left text-sm font-medium text-black/55 transition hover:text-black"
+                >
+                  Clear price filter
+                </button>
+              ) : null}
             </div>
           </FilterSection>
         </aside>

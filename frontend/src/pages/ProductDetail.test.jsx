@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ProductDetail from "./ProductDetail";
 
-const { mockAddToCart, mockCatalogApi, mockUseAuth } = vi.hoisted(() => ({
+const { mockAddToCart, mockCatalogApi, mockUseAuth, mockStartBuyNowCheckout } = vi.hoisted(() => ({
   mockAddToCart: vi.fn(),
   mockCatalogApi: {
     getProduct: vi.fn(),
@@ -13,6 +13,7 @@ const { mockAddToCart, mockCatalogApi, mockUseAuth } = vi.hoisted(() => ({
     createProductReview: vi.fn(),
   },
   mockUseAuth: vi.fn(),
+  mockStartBuyNowCheckout: vi.fn(),
 }));
 
 vi.mock("../context/CartContext", () => ({
@@ -23,6 +24,12 @@ vi.mock("../context/CartContext", () => ({
 
 vi.mock("../context/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
+}));
+
+vi.mock("../context/CheckoutSessionContext", () => ({
+  useCheckoutSession: () => ({
+    startBuyNowCheckout: mockStartBuyNowCheckout,
+  }),
 }));
 
 vi.mock("../services/api", () => ({
@@ -50,6 +57,7 @@ describe("ProductDetail", () => {
     mockCatalogApi.getProductReviews.mockReset();
     mockCatalogApi.createProductReview.mockReset();
     mockUseAuth.mockReset();
+    mockStartBuyNowCheckout.mockReset();
 
     mockCatalogApi.getProduct.mockResolvedValue({
       id: 1,
@@ -121,6 +129,28 @@ describe("ProductDetail", () => {
     );
 
     expect(await screen.findByText("That product is unavailable")).toBeInTheDocument();
+  });
+
+  it("starts a buy-now checkout session without mutating the cart", async () => {
+    render(
+      <MemoryRouter initialEntries={["/product/1"]}>
+        <Routes>
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/checkout/address" element={<div>Checkout address page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Lavender Ember Jar" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "+" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Buy Now" })[0]);
+
+    expect(mockAddToCart).not.toHaveBeenCalled();
+    expect(mockStartBuyNowCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 1, name: "Lavender Ember Jar" }),
+      2,
+    );
+    expect(await screen.findByText("Checkout address page")).toBeInTheDocument();
   });
 
   it("locks the review form for signed-out visitors", async () => {

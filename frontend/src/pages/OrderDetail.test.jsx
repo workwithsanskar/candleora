@@ -91,10 +91,9 @@ describe("OrderDetail", () => {
     renderOrderDetail();
 
     expect(await screen.findByText("Order #101")).toBeInTheDocument();
-    expect(screen.getByText("Amber Bloom Candle")).toBeInTheDocument();
+    expect(screen.getAllByText("Amber Bloom Candle").length).toBeGreaterThan(0);
     expect(screen.getByText("Order snapshot")).toBeInTheDocument();
     expect(screen.getAllByText("Tracking reference").length).toBeGreaterThan(0);
-    expect(screen.getByText("Delivering to")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download invoice" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel order" })).toBeInTheDocument();
   });

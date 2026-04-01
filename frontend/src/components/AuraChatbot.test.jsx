@@ -1,6 +1,6 @@
 import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AuraChatbot from "./AuraChatbot";
 import { buildAuraChatStorageKey } from "../utils/storage";
@@ -85,6 +85,24 @@ describe("AuraChatbot", () => {
     }, { timeout: 2600 });
 
     expect(screen.getByText("Let's find your perfect vibe.")).toBeInTheDocument();
+  });
+
+  it("stays hidden on transactional routes like checkout and order detail", () => {
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/checkout/payment"]}>
+        <AuraChatbot />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByLabelText("Open Aura by CandleOra")).not.toBeInTheDocument();
+
+    rerender(
+      <MemoryRouter initialEntries={["/orders/12"]}>
+        <AuraChatbot />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByLabelText("Open Aura by CandleOra")).not.toBeInTheDocument();
   });
 
   it("sends messages, renders product recommendations, and persists chat state", async () => {
@@ -308,5 +326,36 @@ describe("AuraChatbot", () => {
       "href",
       "https://wa.me/918999908639",
     );
+  });
+
+  it("handles structured Aura actions without breaking legacy link actions", async () => {
+    mockChatApi.sendMessage.mockResolvedValue({
+      type: "text",
+      message: "Want to jump back into your bag?",
+      data: "Want to jump back into your bag?",
+      suggestions: ["Gift ideas"],
+      actions: [
+        { label: "Open cart", type: "open_cart", payload: {} },
+      ],
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/shop"]}>
+        <Routes>
+          <Route path="/shop" element={<AuraChatbot />} />
+          <Route path="/cart" element={<div>Cart route sentinel</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Open Aura by CandleOra"));
+
+    const input = await screen.findByLabelText("Ask Aura");
+    fireEvent.change(input, { target: { value: "Show me a shortcut" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open cart" }));
+
+    expect(await screen.findByText("Cart route sentinel")).toBeInTheDocument();
   });
 });

@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,17 @@ import org.springframework.web.server.ResponseStatusException;
 public class OrderService {
 
     private static final BigDecimal COD_LIMIT = BigDecimal.valueOf(3000);
+    private static final Set<String> SUPPORTED_PAYMENT_METHODS = Set.of(
+        "COD",
+        "UPI",
+        "CARD",
+        "WALLET",
+        "NETBANKING"
+    );
+    private static final Set<String> SUPPORTED_CHECKOUT_SOURCES = Set.of(
+        "CART",
+        "BUY_NOW"
+    );
 
     private final CustomerOrderRepository customerOrderRepository;
     private final CartItemRepository cartItemRepository;
@@ -83,7 +95,7 @@ public class OrderService {
 
         CustomerOrder savedOrder = customerOrderRepository.save(order);
         commitDirectSaleStock(savedOrder);
-        cartItemRepository.deleteByUser(user);
+        synchronizeCartAfterSuccessfulOrder(user, savedOrder);
         if (StringUtils.hasText(savedOrder.getCouponCode())) {
             couponService.incrementUsage(savedOrder.getCouponCode());
         }
@@ -149,7 +161,7 @@ public class OrderService {
         applyEstimatedDelivery(order);
 
         commitReservedStock(order);
-        cartItemRepository.deleteByUser(user);
+        synchronizeCartAfterSuccessfulOrder(user, order);
         CustomerOrder savedOrder = customerOrderRepository.save(order);
         if (StringUtils.hasText(savedOrder.getCouponCode())) {
             couponService.incrementUsage(savedOrder.getCouponCode());
@@ -236,6 +248,7 @@ public class OrderService {
         order.setLatitude(request.latitude());
         order.setLongitude(request.longitude());
         order.setPaymentMethod(paymentMethod);
+        order.setCheckoutSource(normalizeCheckoutSource(request.checkoutSource()));
 
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal subtotalAmount = BigDecimal.ZERO;
@@ -305,6 +318,26 @@ public class OrderService {
         for (OrderItem item : order.getItems()) {
             Product product = findProduct(item.getProductId());
             inventoryService.restockFromCancelledOrder(product, item.getQuantity(), order.getId());
+        }
+    }
+
+    private void synchronizeCartAfterSuccessfulOrder(AppUser user, CustomerOrder order) {
+        if (user == null || order == null || !"CART".equals(order.getCheckoutSource())) {
+            return;
+        }
+
+        for (OrderItem item : order.getItems()) {
+            Product product = findProduct(item.getProductId());
+            cartItemRepository.findByUserAndProduct(user, product).ifPresent(cartItem -> {
+                int remainingQuantity = cartItem.getQuantity() - item.getQuantity();
+                if (remainingQuantity > 0) {
+                    cartItem.setQuantity(remainingQuantity);
+                    cartItemRepository.save(cartItem);
+                    return;
+                }
+
+                cartItemRepository.delete(cartItem);
+            });
         }
     }
 
@@ -405,7 +438,24 @@ public class OrderService {
         if (!StringUtils.hasText(paymentMethod)) {
             return "COD";
         }
-        return paymentMethod.trim().toUpperCase();
+        String normalized = paymentMethod.trim().toUpperCase();
+        if (!SUPPORTED_PAYMENT_METHODS.contains(normalized)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported payment method");
+        }
+        return normalized;
+    }
+
+    private String normalizeCheckoutSource(String checkoutSource) {
+        if (!StringUtils.hasText(checkoutSource)) {
+            return "CART";
+        }
+
+        String normalized = checkoutSource.trim().toUpperCase();
+        if (!SUPPORTED_CHECKOUT_SOURCES.contains(normalized)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported checkout source");
+        }
+
+        return normalized;
     }
 
     private void validateOrderEligibility(AppUser user, CustomerOrder order) {

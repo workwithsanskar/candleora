@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect } from "react";
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminRoute from "./admin/components/AdminRoute";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
@@ -24,6 +24,8 @@ const AdminSettings = lazy(() => import("./admin/pages/Settings"));
 const CandleFixes = lazy(() => import("./pages/CandleFixes"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const CheckoutAddress = lazy(() => import("./pages/CheckoutAddress"));
+const CheckoutPayment = lazy(() => import("./pages/CheckoutPayment"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Home = lazy(() => import("./pages/Home"));
@@ -131,6 +133,30 @@ function AppShell() {
                   }
                 />
                 <Route
+                  path="/checkout/review"
+                  element={
+                    <ProtectedRoute>
+                      <Navigate to="/checkout/address" replace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/checkout/address"
+                  element={
+                    <ProtectedRoute>
+                      <CheckoutAddress />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/checkout/payment"
+                  element={
+                    <ProtectedRoute>
+                      <CheckoutPayment />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/checkout/phonepe-return"
                   element={
                     <ProtectedRoute>
@@ -175,6 +201,14 @@ function AppShell() {
                   element={
                     <ProtectedRoute>
                       <OrderDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/order-confirmation"
+                  element={
+                    <ProtectedRoute>
+                      <OrderConfirmation />
                     </ProtectedRoute>
                   }
                 />

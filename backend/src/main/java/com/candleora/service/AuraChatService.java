@@ -398,9 +398,9 @@ public class AuraChatService {
             message,
             List.of("Track order", "CandleOra story", "Gift ideas"),
             List.of(
-                new AuraChatAction("Call CandleOra", "tel:+91" + STORE_PHONE),
-                new AuraChatAction("Email CandleOra", "mailto:" + STORE_EMAIL),
-                new AuraChatAction("WhatsApp CandleOra", STORE_WHATSAPP)
+                new AuraChatAction("open_link", "Call CandleOra", "tel:+91" + STORE_PHONE),
+                new AuraChatAction("open_link", "Email CandleOra", "mailto:" + STORE_EMAIL),
+                new AuraChatAction("open_link", "WhatsApp CandleOra", STORE_WHATSAPP)
             ),
             "Support details: phone "
                 + STORE_PHONE

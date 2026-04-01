@@ -10,6 +10,7 @@ public record ProductSummaryResponse(
     BigDecimal originalPrice,
     Integer discount,
     Integer stock,
+    Integer lowStockThreshold,
     String occasionTag,
     BigDecimal rating,
     CategoryResponse category,

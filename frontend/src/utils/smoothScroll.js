@@ -2,6 +2,7 @@ import Lenis from "lenis";
 
 let lenisInstance = null;
 let rafId = null;
+let pauseLockCount = 0;
 
 function prefersReducedMotion() {
   return (
@@ -48,11 +49,17 @@ export function resizeSmoothScroll() {
 }
 
 export function pauseSmoothScroll() {
-  lenisInstance?.stop();
+  pauseLockCount += 1;
+  if (pauseLockCount === 1) {
+    lenisInstance?.stop();
+  }
 }
 
 export function resumeSmoothScroll() {
-  lenisInstance?.start();
+  pauseLockCount = Math.max(0, pauseLockCount - 1);
+  if (pauseLockCount === 0) {
+    lenisInstance?.start();
+  }
 }
 
 export function scrollToTopInstant() {
@@ -74,4 +81,5 @@ export function destroySmoothScroll() {
   lenisInstance?.destroy();
   lenisInstance = null;
   rafId = null;
+  pauseLockCount = 0;
 }

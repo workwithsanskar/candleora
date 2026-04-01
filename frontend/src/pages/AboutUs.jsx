@@ -45,14 +45,18 @@ function AboutUs() {
     <div className="bg-white">
       <section className="py-8 sm:py-10 lg:py-12">
         <div className="relative mx-auto w-full max-w-[1260px] px-3 sm:px-4 lg:px-5">
-          <div className="mx-auto flex max-w-max items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#977446]">
+          <div className="mx-auto flex max-w-max items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-brand-primary">
             <span className="h-px w-8 bg-[#d8c3a2]" />
             <span>CandleOra Story</span>
             <span className="h-px w-8 bg-[#d8c3a2]" />
           </div>
 
           <h1 className="mt-4 mx-auto w-full text-center font-display text-[clamp(2.1rem,3.1vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#242424] md:whitespace-nowrap">
-            Who We Are <span className="font-sans font-medium text-[#7c6748]">&amp;</span> What We Do
+            Who We Are{" "}
+            <span className="font-sans font-medium text-brand-primary">
+              &amp;
+            </span>{" "}
+            What We Do
           </h1>
 
           <div className="mx-auto mt-4 h-px w-[min(240px,32vw)] bg-[linear-gradient(90deg,rgba(216,195,162,0)_0%,rgba(216,195,162,0.9)_50%,rgba(216,195,162,0)_100%)]" />
@@ -61,21 +65,25 @@ function AboutUs() {
             <div className="max-w-[392px]">
               <div className="mb-4 h-px w-20 bg-[#e6d8c2]" />
               <div className="space-y-4 text-[14.5px] leading-[1.58] text-[#646464] sm:text-[15px]">
-              {aboutParagraphs.map((paragraph, index) => (
-                <p
-                  key={index}
-                  className={index === 0 ? "text-[#5f5f5f]" : ""}
-                >
-                  {paragraph}
-                </p>
-              ))}
+                {aboutParagraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className={index === 0 ? "text-[#5f5f5f]" : ""}
+                  >
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </div>
 
             <div className="mx-auto w-full max-w-[592px]">
               <div className="relative aspect-[628/418]">
                 {visualPanels.map((panel) => (
-                  <div key={panel.ariaLabel} aria-hidden="true" className={panel.className} />
+                  <div
+                    key={panel.ariaLabel}
+                    aria-hidden="true"
+                    className={panel.className}
+                  />
                 ))}
               </div>
             </div>

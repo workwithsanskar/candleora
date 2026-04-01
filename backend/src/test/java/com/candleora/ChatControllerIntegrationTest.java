@@ -251,6 +251,7 @@ class ChatControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(jsonPath("$.type").value("text"))
             .andExpect(jsonPath("$.message").value(containsString("candleora25@gmail.com")))
             .andExpect(jsonPath("$.actions[0].label").value("Call CandleOra"))
+            .andExpect(jsonPath("$.actions[0].type").value("open_link"))
             .andExpect(jsonPath("$.actions[0].href").value("tel:+918999908639"))
             .andExpect(jsonPath("$.actions[1].href").value("mailto:candleora25@gmail.com"))
             .andExpect(jsonPath("$.actions[2].href").value("https://wa.me/918999908639"));

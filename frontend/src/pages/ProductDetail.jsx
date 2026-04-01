@@ -9,6 +9,7 @@ import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useCheckoutSession } from "../context/CheckoutSessionContext";
 import { useWishlist } from "../context/WishlistContext";
 import { catalogApi } from "../services/api";
 import { formatApiError, formatCurrency, formatDate } from "../utils/format";
@@ -133,6 +134,7 @@ function ProductDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { startBuyNowCheckout } = useCheckoutSession();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -202,8 +204,8 @@ function ProductDetail() {
   };
 
   const handleBuyNow = async () => {
-    await addToCart(product, quantity);
-    navigate("/checkout");
+    startBuyNowCheckout(product, quantity);
+    navigate("/checkout/address");
   };
 
   const handleReviewChange = (event) => {
@@ -294,12 +296,18 @@ function ProductDetail() {
     `Scent notes: ${product.scentNotes}.`,
     `Estimated burn time: ${product.burnTime}.`,
   ];
+  const lowStockThreshold = Number(product.lowStockThreshold ?? 10);
+  const showLowStock = Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= lowStockThreshold;
 
   return (
     <section className="container-shell py-7 pb-28 sm:py-8 sm:pb-32 lg:pb-10">
       <div className="mb-5 flex flex-wrap items-center gap-2 text-[12px] text-black/42">
         <Link to="/" className="transition hover:text-black">
-          Shop Listing
+          Home
+        </Link>
+        <span>/</span>
+        <Link to="/shop" className="transition hover:text-black">
+          Shop
         </Link>
         <span>/</span>
         <span className="text-black/62">{product.name}</span>
@@ -395,6 +403,12 @@ function ProductDetail() {
           <div className="rounded-[18px] border border-black/10 bg-white px-4 py-3">
             <p className="text-sm leading-6 text-black/72">{product.description}</p>
           </div>
+
+          {showLowStock ? (
+            <div className="rounded-[16px] border border-[#f1d28d] bg-[#fff6dd] px-4 py-3 text-sm font-medium text-[#1A1A1A]">
+              Only {product.stock} left in stock.
+            </div>
+          ) : null}
 
           <ul className="space-y-1.5 text-sm leading-[1.55] text-black/70">
             {detailBullets.map((detail) => (
@@ -697,15 +711,26 @@ function ProductDetail() {
           <div className="rounded-full border border-black/10 px-3 py-2 text-sm font-semibold text-black">
             Qty {quantity}
           </div>
-          <m.button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={product.stock <= 0}
-            whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.97 }}
-            className="btn btn-secondary min-w-[160px] rounded-full disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
-          </m.button>
+          <div className="flex items-center gap-2">
+            <m.button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={product.stock <= 0}
+              whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.97 }}
+              className="btn btn-outline min-w-[132px] rounded-full px-4 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Add to Cart
+            </m.button>
+            <m.button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={product.stock <= 0}
+              whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.97 }}
+              className="btn btn-secondary min-w-[132px] rounded-full px-4 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {product.stock > 0 ? "Buy Now" : "Out of Stock"}
+            </m.button>
+          </div>
         </div>
       </m.div>
     </section>

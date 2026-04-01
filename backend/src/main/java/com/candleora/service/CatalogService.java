@@ -167,6 +167,7 @@ public class CatalogService {
             product.getOriginalPrice(),
             product.getDiscount(),
             product.getStock(),
+            product.getLowStockThreshold(),
             product.getOccasionTag(),
             product.getRating(),
             product.getScentNotes(),
@@ -190,6 +191,7 @@ public class CatalogService {
             product.getOriginalPrice(),
             product.getDiscount(),
             product.getStock(),
+            product.getLowStockThreshold(),
             product.getOccasionTag(),
             product.getRating(),
             new CategoryResponse(

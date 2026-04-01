@@ -1,6 +1,8 @@
 import { PHONEPE_ENABLED } from "./payments";
 
 export const accountFormDefaults = {
+  firstName: "",
+  lastName: "",
   name: "",
   email: "",
   password: "",
@@ -20,9 +22,13 @@ export const accountFormDefaults = {
 };
 
 export function createAccountForm(user = {}) {
+  const { firstName, lastName } = splitName(user?.name);
+
   return {
     ...accountFormDefaults,
-    name: user?.name ?? "",
+    firstName,
+    lastName,
+    name: user?.name ?? buildFullName(firstName, lastName),
     email: user?.email ?? "",
     phoneNumber: user?.phoneNumber ?? "",
     alternatePhoneNumber: user?.alternatePhoneNumber ?? "",
@@ -52,7 +58,7 @@ export function createCheckoutForm(user = {}) {
     city: user?.city ?? "",
     state: user?.state ?? "",
     postalCode: user?.postalCode ?? "",
-    country: user?.country ?? "",
+    country: user?.country ?? "India",
     locationLabel: user?.locationLabel ?? "",
     latitude: normalizeNumberForForm(user?.latitude),
     longitude: normalizeNumberForForm(user?.longitude),
@@ -88,7 +94,7 @@ export function mergeCheckoutFormWithUser(draft = {}, user = {}) {
 
 export function buildSignupPayload(form) {
   return {
-    name: form.name,
+    name: resolveAccountName(form),
     email: form.email,
     password: form.password,
     ...buildSharedProfilePayload(form),
@@ -98,7 +104,7 @@ export function buildSignupPayload(form) {
 export function buildGooglePayload(form, credential) {
   return {
     credential,
-    name: form.name,
+    name: resolveAccountName(form),
     ...buildSharedProfilePayload(form),
   };
 }
@@ -106,7 +112,7 @@ export function buildGooglePayload(form, credential) {
 export function buildPhonePayload(form, idToken, phoneNumber = "") {
   return {
     idToken,
-    name: form.name,
+    name: resolveAccountName(form),
     email: form.email || null,
     phoneNumber: phoneNumber || form.phoneNumber || null,
     ...buildSharedProfilePayload(form),
@@ -115,8 +121,20 @@ export function buildPhonePayload(form, idToken, phoneNumber = "") {
 
 export function buildProfilePayload(form) {
   return {
-    name: form.name,
-    ...buildSharedProfilePayload(form),
+    name: resolveAccountName(form),
+    phoneNumber: form.phoneNumber,
+    alternatePhoneNumber: form.alternatePhoneNumber || null,
+    addressLine1: form.addressLine1 || null,
+    addressLine2: form.addressLine2 || null,
+    city: form.city || null,
+    state: form.state || null,
+    postalCode: form.postalCode || null,
+    country: form.country || null,
+    gender: form.gender || null,
+    dateOfBirth: form.dateOfBirth || null,
+    locationLabel: form.locationLabel || null,
+    latitude: normalizeNumber(form.latitude),
+    longitude: normalizeNumber(form.longitude),
   };
 }
 
@@ -141,19 +159,43 @@ export function buildCheckoutPayload(form, items) {
   };
 }
 
+export function splitName(name = "") {
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) {
+    return {
+      firstName: "",
+      lastName: "",
+    };
+  }
+
+  const [firstName, ...rest] = trimmed.split(/\s+/);
+  return {
+    firstName,
+    lastName: rest.join(" "),
+  };
+}
+
+export function buildFullName(firstName = "", lastName = "") {
+  return [String(firstName ?? "").trim(), String(lastName ?? "").trim()].filter(Boolean).join(" ");
+}
+
+function resolveAccountName(form) {
+  return buildFullName(form?.firstName, form?.lastName) || String(form?.name ?? "").trim();
+}
+
 function buildSharedProfilePayload(form) {
   return {
-    phoneNumber: form.phoneNumber,
-    alternatePhoneNumber: form.alternatePhoneNumber,
-    addressLine1: form.addressLine1,
-    addressLine2: form.addressLine2,
-    city: form.city,
-    state: form.state,
-    postalCode: form.postalCode,
-    country: form.country,
-    gender: form.gender,
+    phoneNumber: form.phoneNumber || null,
+    alternatePhoneNumber: form.alternatePhoneNumber || null,
+    addressLine1: form.addressLine1 || null,
+    addressLine2: form.addressLine2 || null,
+    city: form.city || null,
+    state: form.state || null,
+    postalCode: form.postalCode || null,
+    country: form.country || null,
+    gender: form.gender || null,
     dateOfBirth: form.dateOfBirth || null,
-    locationLabel: form.locationLabel,
+    locationLabel: form.locationLabel || null,
     latitude: normalizeNumber(form.latitude),
     longitude: normalizeNumber(form.longitude),
   };

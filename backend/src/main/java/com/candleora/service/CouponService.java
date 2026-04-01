@@ -3,6 +3,7 @@ package com.candleora.service;
 import com.candleora.dto.coupon.AdminCouponRequest;
 import com.candleora.dto.coupon.AdminCouponUpdateRequest;
 import com.candleora.dto.coupon.CouponAdminResponse;
+import com.candleora.dto.coupon.CouponOfferResponse;
 import com.candleora.dto.coupon.CouponQuoteResponse;
 import com.candleora.dto.order.OrderRequestItem;
 import com.candleora.entity.AppUser;
@@ -20,6 +21,7 @@ import com.candleora.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -69,6 +71,16 @@ public class CouponService {
             quote.totalAmount(),
             quote.message()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<CouponOfferResponse> listVisibleOffers(AppUser user) {
+        return couponRepository.findAll().stream()
+            .filter(this::isOfferCurrentlyVisible)
+            .filter(coupon -> canShowOfferToUser(coupon, user))
+            .sorted(Comparator.comparing(Coupon::getEndsAt, Comparator.nullsLast(Comparator.naturalOrder())))
+            .map(this::toOfferResponse)
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -450,6 +462,109 @@ public class CouponService {
             parseCategorySlugsAsList(coupon.getTargetCategorySlugs()),
             parseProductIdsAsList(coupon.getTargetProductIds())
         );
+    }
+
+    private CouponOfferResponse toOfferResponse(Coupon coupon) {
+        return new CouponOfferResponse(
+            coupon.getCode(),
+            buildOfferTitle(coupon),
+            buildOfferDescription(coupon),
+            buildOfferEligibilityHint(coupon),
+            coupon.getEndsAt(),
+            buildOfferExpiryText(coupon)
+        );
+    }
+
+    private boolean isOfferCurrentlyVisible(Coupon coupon) {
+        if (!coupon.isActive()) {
+          return false;
+        }
+
+        Instant now = Instant.now();
+        if (coupon.getStartsAt() != null && now.isBefore(coupon.getStartsAt())) {
+            return false;
+        }
+
+        if (coupon.getEndsAt() != null && now.isAfter(coupon.getEndsAt())) {
+            return false;
+        }
+
+        if (coupon.getUsageLimit() != null) {
+            int used = coupon.getUsageCount() == null ? 0 : coupon.getUsageCount();
+            if (used >= coupon.getUsageLimit()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean canShowOfferToUser(Coupon coupon, AppUser user) {
+        if (user == null) {
+            return true;
+        }
+
+        if (coupon.isFirstOrderOnly()) {
+            long orderCount = customerOrderRepository.countByUserAndStatusNotAndPaymentStatusNot(
+                user,
+                OrderStatus.CANCELLED,
+                PaymentStatus.FAILED
+            );
+            if (orderCount > 0) {
+                return false;
+            }
+        }
+
+        if (coupon.isOneUsePerCustomer()) {
+            return !customerOrderRepository.existsByUserAndCouponCodeIgnoreCaseAndStatusNotAndPaymentStatusNot(
+                user,
+                coupon.getCode(),
+                OrderStatus.CANCELLED,
+                PaymentStatus.FAILED
+            );
+        }
+
+        return true;
+    }
+
+    private String buildOfferTitle(Coupon coupon) {
+        if (coupon.getType() == CouponType.PERCENTAGE) {
+            return "Save " + coupon.getValue().stripTrailingZeros().toPlainString() + "% instantly";
+        }
+
+        return "Save Rs. " + coupon.getValue().stripTrailingZeros().toPlainString() + " on your order";
+    }
+
+    private String buildOfferDescription(Coupon coupon) {
+        return switch (coupon.getScope()) {
+            case ALL_PRODUCTS -> "Valid across the CandleOra collection.";
+            case CATEGORIES -> "Valid on selected CandleOra categories.";
+            case PRODUCTS -> "Valid on selected CandleOra products.";
+        };
+    }
+
+    private String buildOfferEligibilityHint(Coupon coupon) {
+        List<String> hints = new ArrayList<>();
+
+        if (coupon.getMinOrderAmount() != null) {
+            hints.add("Min order Rs. " + coupon.getMinOrderAmount().stripTrailingZeros().toPlainString());
+        }
+        if (coupon.isFirstOrderOnly()) {
+            hints.add("First order only");
+        }
+        if (coupon.isOneUsePerCustomer()) {
+            hints.add("One use per customer");
+        }
+
+        return hints.isEmpty() ? "Apply during cart or checkout." : String.join(" | ", hints);
+    }
+
+    private String buildOfferExpiryText(Coupon coupon) {
+        if (coupon.getEndsAt() == null) {
+            return "Limited-time offer";
+        }
+
+        return "Ends soon";
     }
 
     private String normalizeCode(String code) {

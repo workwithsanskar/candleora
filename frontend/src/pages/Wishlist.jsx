@@ -225,7 +225,7 @@ function Wishlist() {
 
                         <div className="space-y-2">
                           <Link to={getProductPath(item)} className="block">
-                            <h2 className="font-display text-[2.05rem] font-semibold leading-[1.02] tracking-[-0.03em] text-black sm:text-[2.35rem]">
+                            <h2 className="text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.03em] text-black transition hover:underline hover:underline-offset-4 sm:text-[1.35rem]">
                               {item.name}
                             </h2>
                           </Link>
@@ -242,7 +242,7 @@ function Wishlist() {
                               {formatCurrency(item.originalPrice)}
                             </span>
                           ) : null}
-                          <span className="text-[2rem] font-semibold leading-none text-black">
+                          <span className="text-[1.55rem] font-semibold leading-none text-black">
                             {formatCurrency(item.price)}
                           </span>
                           {savings > 0 ? (
@@ -287,7 +287,7 @@ function Wishlist() {
 
           <aside className="h-fit rounded-[28px] border border-black/10 bg-[#fff9ee] p-5 shadow-[0_18px_34px_rgba(0,0,0,0.05)] xl:sticky xl:top-6">
             <p className="eyebrow">Wishlist summary</p>
-            <h2 className="mt-3 font-display text-[2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-black">
+            <h2 className="panel-title mt-3">
               {items.length} saved item{items.length > 1 ? "s" : ""}
             </h2>
             <p className="mt-3 text-sm leading-6 text-black/62">

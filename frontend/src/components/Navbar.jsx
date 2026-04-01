@@ -228,7 +228,7 @@ function Navbar() {
     closeMenus();
   };
 
-  const previewWishlistItems = useMemo(() => wishlistItems, [wishlistItems]);
+  const previewWishlistItems = useMemo(() => wishlistItems.slice(0, 3), [wishlistItems]);
 
   return (
     <header
@@ -358,7 +358,7 @@ function Navbar() {
                   <div className="space-y-5">
                     <div
                       onWheelCapture={handleQuickPanelWheel}
-                      className="mini-cart-scroll-view stealth-scrollbar max-h-[318px] overflow-y-auto pr-3"
+                      className="mini-cart-scroll-view stealth-scrollbar max-h-[252px] overflow-y-auto pr-3"
                     >
                       <div className="space-y-4">
                         {previewWishlistItems.map((item) => (
@@ -381,7 +381,7 @@ function Navbar() {
                               <Link
                                 to={getProductPath(item)}
                                 onClick={closeMenus}
-                                className="block truncate text-sm font-medium text-black"
+                                className="block truncate text-sm font-medium text-black transition hover:underline hover:underline-offset-4"
                               >
                                 {item.name}
                               </Link>

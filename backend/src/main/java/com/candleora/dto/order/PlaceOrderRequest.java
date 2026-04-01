@@ -21,6 +21,7 @@ public record PlaceOrderRequest(
     Double longitude,
     String couponCode,
     @NotBlank String paymentMethod,
-    @Valid List<OrderRequestItem> items
+    @Valid List<OrderRequestItem> items,
+    String checkoutSource
 ) {
 }

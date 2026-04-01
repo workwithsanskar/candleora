@@ -98,6 +98,9 @@ public class CustomerOrder {
     @Column(nullable = false)
     private String paymentMethod;
 
+    @Column(length = 32)
+    private String checkoutSource;
+
     @Column
     private String gatewayOrderId;
 
@@ -312,6 +315,14 @@ public class CustomerOrder {
 
     public String getGatewayOrderId() {
         return gatewayOrderId;
+    }
+
+    public String getCheckoutSource() {
+        return checkoutSource;
+    }
+
+    public void setCheckoutSource(String checkoutSource) {
+        this.checkoutSource = checkoutSource;
     }
 
     public void setGatewayOrderId(String gatewayOrderId) {

@@ -196,22 +196,43 @@ public class AuthService {
         if (hasPhoneNumberChanged(user.getPhoneNumber(), request.phoneNumber())) {
             user.setPhoneVerified(false);
         }
-        applyProfileFields(
-            user,
-            request.phoneNumber(),
-            request.alternatePhoneNumber(),
-            request.addressLine1(),
-            request.addressLine2(),
-            request.city(),
-            request.state(),
-            request.postalCode(),
-            request.country(),
-            request.gender(),
-            request.dateOfBirth(),
-            request.locationLabel(),
-            request.latitude(),
-            request.longitude()
-        );
+        user.setPhoneNumber(trimToNull(request.phoneNumber()));
+        if (request.alternatePhoneNumber() != null) {
+            user.setAlternatePhoneNumber(trimToNull(request.alternatePhoneNumber()));
+        }
+        if (request.addressLine1() != null) {
+            user.setAddressLine1(trimToNull(request.addressLine1()));
+        }
+        if (request.addressLine2() != null) {
+            user.setAddressLine2(trimToNull(request.addressLine2()));
+        }
+        if (request.city() != null) {
+            user.setCity(trimToNull(request.city()));
+        }
+        if (request.state() != null) {
+            user.setState(trimToNull(request.state()));
+        }
+        if (request.postalCode() != null) {
+            user.setPostalCode(trimToNull(request.postalCode()));
+        }
+        if (request.country() != null) {
+            user.setCountry(trimToNull(request.country()));
+        }
+        if (request.gender() != null) {
+            user.setGender(trimToNull(request.gender()));
+        }
+        if (request.dateOfBirth() != null) {
+            user.setDateOfBirth(request.dateOfBirth());
+        }
+        if (request.locationLabel() != null) {
+            user.setLocationLabel(trimToNull(request.locationLabel()));
+        }
+        if (request.latitude() != null) {
+            user.setLatitude(request.latitude());
+        }
+        if (request.longitude() != null) {
+            user.setLongitude(request.longitude());
+        }
         return toUserResponse(appUserRepository.save(user));
     }
 

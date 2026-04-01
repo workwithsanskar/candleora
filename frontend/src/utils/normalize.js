@@ -20,6 +20,7 @@ export function normalizeProduct(product) {
     originalPrice: Number(product?.originalPrice ?? product?.price ?? 0),
     discount: Number(product?.discount ?? 0),
     stock: Number(product?.stock ?? 0),
+    lowStockThreshold: Number(product?.lowStockThreshold ?? 10),
     occasionTag: product?.occasionTag ?? "Relaxation",
     rating: Number(product?.rating ?? 4.7),
     scentNotes: product?.scentNotes ?? "Warm signature fragrance",
@@ -49,6 +50,9 @@ export function normalizeCartResponse(payload) {
       fallbackImage,
     occasionTag: item.occasionTag ?? item.product?.occasionTag ?? "",
     unitPrice: Number(item.unitPrice ?? item.price ?? item.product?.price ?? 0),
+    originalUnitPrice: Number(item.originalUnitPrice ?? item.product?.originalPrice ?? item.unitPrice ?? item.price ?? item.product?.price ?? 0),
+    stock: Number(item.stock ?? item.product?.stock ?? 0),
+    lowStockThreshold: Number(item.lowStockThreshold ?? item.product?.lowStockThreshold ?? 10),
     quantity: Number(item.quantity ?? 1),
     lineTotal: Number(
       item.lineTotal ??
@@ -75,7 +79,9 @@ export function createGuestCartItem(product, quantity) {
     productName: normalized.name,
     imageUrl: normalized.imageUrls[0],
     occasionTag: normalized.occasionTag,
+    stock: normalized.stock,
     unitPrice: normalized.price,
+    originalUnitPrice: normalized.originalPrice,
     quantity,
     lineTotal: normalized.price * quantity,
   };

@@ -22,7 +22,7 @@ function TypingIndicator() {
   );
 }
 
-function ChatBubble({ message, isTyping = false, children = null }) {
+function ChatBubble({ message, isTyping = false, children = null, onAction }) {
   const isUser = message.role === "user";
   const hasRichContent = Boolean(children);
   const bubbleClassName = isUser
@@ -54,7 +54,7 @@ function ChatBubble({ message, isTyping = false, children = null }) {
         ) : (
           <>
             {message.content ? <p className="text-sm leading-6 text-inherit">{message.content}</p> : null}
-            <MessageActions actions={message.actions} />
+            <MessageActions actions={message.actions} onAction={onAction} />
             {children ? <div className="mt-3 space-y-3">{children}</div> : null}
           </>
         )}
@@ -69,13 +69,16 @@ ChatBubble.propTypes = {
   message: PropTypes.shape({
     actions: PropTypes.arrayOf(
       PropTypes.shape({
-        href: PropTypes.string.isRequired,
+        href: PropTypes.string,
         label: PropTypes.string.isRequired,
+        type: PropTypes.string,
+        payload: PropTypes.object,
       }),
     ),
     content: PropTypes.string,
     role: PropTypes.oneOf(["assistant", "user"]).isRequired,
   }).isRequired,
+  onAction: PropTypes.func,
 };
 
 export default ChatBubble;

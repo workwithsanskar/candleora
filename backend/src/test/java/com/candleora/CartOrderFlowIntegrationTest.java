@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -82,5 +83,103 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
+    @Test
+    void orderRejectsUnsupportedPaymentMethod() throws Exception {
+        String token = loginAsDemoUser();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/orders")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "shippingName", "Demo Customer",
+                        "phone", "9999999999",
+                        "addressLine1", "123 Candle Street",
+                        "city", "Delhi",
+                        "state", "Delhi",
+                        "postalCode", "110001",
+                        "paymentMethod", "PAYPAL",
+                        "items", List.of(Map.of(
+                            "productId", 1,
+                            "quantity", 1
+                        ))
+                    )))
+            )
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Unsupported payment method"));
+    }
+
+    @Test
+    void buyNowOrderDoesNotClearExistingCartItems() throws Exception {
+        String token = loginAsDemoUser();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/cart/items")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "productId", 1,
+                        "quantity", 2
+                    )))
+            )
+            .andExpect(status().isOk());
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/cart/items")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "productId", 2,
+                        "quantity", 1
+                    )))
+            )
+            .andExpect(status().isOk());
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/orders")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "shippingName", "Demo Customer",
+                        "phone", "9999999999",
+                        "addressLine1", "123 Candle Street",
+                        "city", "Delhi",
+                        "state", "Delhi",
+                        "postalCode", "110001",
+                        "paymentMethod", "COD",
+                        "checkoutSource", "BUY_NOW",
+                        "items", List.of(Map.of(
+                            "productId", 1,
+                            "quantity", 1
+                        ))
+                    )))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CONFIRMED"))
+            .andExpect(jsonPath("$.items.length()").value(1))
+            .andExpect(jsonPath("$.items[0].productId").value(1));
+
+        MvcResult cartResult = mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/cart")
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isOk())
+            .andReturn();
+
+        JsonNode cartPayload = objectMapper.readTree(cartResult.getResponse().getContentAsString());
+        assertEquals(2, cartPayload.path("items").size());
+        assertEquals(2, findQuantityForProduct(cartPayload.path("items"), 1));
+        assertEquals(1, findQuantityForProduct(cartPayload.path("items"), 2));
+    }
+
+    private int findQuantityForProduct(JsonNode items, int productId) {
+        for (JsonNode item : items) {
+            if (item.path("productId").asInt() == productId) {
+                return item.path("quantity").asInt();
+            }
+        }
+        return -1;
     }
 }

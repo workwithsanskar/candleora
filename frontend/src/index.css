@@ -6,16 +6,19 @@
 
 @layer base {
   :root {
-    --color-brand-primary: 243 179 61;
+    --color-brand-primary: 255 162 10;
     --color-brand-secondary: 255 255 255;
-    --color-brand-accent: 243 179 61;
+    --color-brand-accent: 241 184 90;
     --color-brand-dark: 0 0 0;
     --color-brand-light: 255 255 255;
     --color-brand-muted: 107 107 107;
     --color-brand-surface: 255 255 255;
     --color-brand-blush: 255 255 255;
-    --color-brand-olive: 46 125 50;
+    --color-brand-olive: 2 120 8;
     --color-brand-cocoa: 0 0 0;
+    --color-checkout-primary: 255 162 10;
+    --color-checkout-highlight: 241 184 90;
+    --color-checkout-success: 2 120 8;
     color: rgb(var(--color-brand-dark));
     background: rgb(var(--color-brand-surface));
     font-family: "Poppins", "Segoe UI", sans-serif;
@@ -137,7 +140,7 @@
   }
 
   .btn-primary {
-    @apply btn bg-yellow-500 text-white hover:bg-yellow-600;
+    @apply btn bg-[#FFA20A] text-[#1A1A1A] hover:bg-[#f29900];
   }
 
   .btn-secondary {
@@ -186,5 +189,98 @@
   .mini-cart-scroll-track,
   .mini-cart-scroll-thumb {
     display: none;
+  }
+
+  .checkout-surface {
+    @apply rounded-[24px] border shadow-[0_18px_36px_rgba(26,26,26,0.04)];
+    border-color: rgba(241, 184, 90, 0.24);
+    background: #fffaf3;
+  }
+
+  .checkout-panel {
+    @apply rounded-[24px] border bg-white shadow-[0_16px_34px_rgba(26,26,26,0.05)];
+    border-color: rgba(241, 184, 90, 0.3);
+  }
+
+  .checkout-soft-panel {
+    @apply rounded-[20px] border;
+    border-color: rgba(241, 184, 90, 0.34);
+    background: #fff7e8;
+  }
+
+  .checkout-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em];
+    color: #a56a00;
+  }
+
+  .checkout-banner {
+    @apply rounded-[18px] border text-[#1A1A1A];
+    border-color: rgba(241, 184, 90, 0.56);
+    background: #fff1d8;
+  }
+
+  .checkout-banner-success {
+    @apply rounded-[18px] border;
+    border-color: rgba(2, 120, 8, 0.18);
+    background: #eef9ec;
+    color: #027808;
+  }
+
+  .checkout-input {
+    @apply h-[50px] w-full rounded-full border bg-white px-5 text-[15px] text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-[#FFA20A] focus:ring-2 focus:ring-[#FFA20A]/15;
+    border-color: rgba(241, 184, 90, 0.38);
+  }
+
+  .checkout-textarea {
+    @apply w-full rounded-[18px] border bg-white px-5 py-4 text-[15px] text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-[#FFA20A] focus:ring-2 focus:ring-[#FFA20A]/15;
+    border-color: rgba(241, 184, 90, 0.38);
+  }
+
+  .checkout-action-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-[#FFA20A] px-6 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:bg-[#f29900] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .checkout-action-secondary {
+    @apply inline-flex items-center justify-center rounded-full border bg-white px-6 py-3 text-sm font-semibold text-[#1A1A1A] transition hover:border-[#FFA20A] hover:bg-[#fff6e5] disabled:cursor-not-allowed disabled:opacity-60;
+    border-color: rgba(241, 184, 90, 0.45);
+  }
+
+  .checkout-action-inline {
+    @apply inline-flex items-center justify-center rounded-full transition;
+  }
+
+  .checkout-mobile-sticky {
+    @apply fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(26,26,26,0.08)] backdrop-blur md:hidden;
+    border-top-color: rgba(241, 184, 90, 0.34);
+  }
+
+  .checkout-modal-scroll {
+    @apply overflow-y-auto scroll-smooth overscroll-contain;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .checkout-modal-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modal-scroll-region {
+    scroll-padding-top: 1rem;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .modal-shell-scroll {
+    max-height: calc(100svh - 32px);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  @media (min-width: 640px) {
+    .modal-shell-scroll {
+      max-height: calc(100svh - 48px);
+    }
   }
 }

@@ -6,6 +6,7 @@ import App from "./App";
 import { AddressProvider } from "./context/AddressContext";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { CheckoutSessionProvider } from "./context/CheckoutSessionContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import "./index.css";
@@ -28,18 +29,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <AddressProvider>
             <WishlistProvider>
               <CartProvider>
-                <App />
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 3000,
-                    style: {
-                      background: "#2f241d",
-                      color: "#fffaf5",
-                      borderRadius: "18px",
-                    },
-                  }}
-                />
+                <CheckoutSessionProvider>
+                  <App />
+                  <Toaster
+                    position="top-right"
+                    toastOptions={{
+                      duration: 3000,
+                      style: {
+                        background: "#2f241d",
+                        color: "#fffaf5",
+                        borderRadius: "18px",
+                      },
+                    }}
+                  />
+                </CheckoutSessionProvider>
               </CartProvider>
             </WishlistProvider>
           </AddressProvider>

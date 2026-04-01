@@ -31,7 +31,7 @@ describe("Orders", () => {
         cancelDeadline: "2999-12-31T23:59:59.000Z",
         estimatedDeliveryStart: "2026-04-01T00:00:00.000Z",
         estimatedDeliveryEnd: "2026-04-03T00:00:00.000Z",
-        items: [{ id: 1, productName: "Amber Bloom Candle", quantity: 1 }],
+        items: [{ id: 1, productName: "Amber Bloom Candle", quantity: 1, imageUrl: "https://example.com/candle.jpg" }],
       },
     ]);
   });
@@ -59,5 +59,6 @@ describe("Orders", () => {
     expect(await screen.findByText("Order History")).toBeInTheDocument();
     expect(screen.getByText("Amber Bloom Candle")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel order" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Amber Bloom Candle" })).toBeInTheDocument();
   });
 });

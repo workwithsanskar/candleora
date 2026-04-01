@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatBubble from "./aura/ChatBubble";
 import CollectionCard from "./aura/CollectionCard";
 import OrderCard from "./aura/OrderCard";
@@ -21,6 +21,11 @@ const DEFAULT_SUGGESTIONS = ["Gift ideas", "Track order", "What's in my cart"];
 const WELCOME_COPY = "Hi, I'm Aura \u2728 Looking for the perfect candle, your cart, or help with an order?";
 const EMPTY_STATE_COPY = "Let's find your perfect vibe.";
 const ERROR_COPY = "Something went wrong... but I'm still here to help \u2728";
+const HIDDEN_ROUTE_PREFIXES = [
+  "/checkout",
+  "/order-confirmation",
+];
+const HIDDEN_EXACT_ROUTES = new Set(["/login", "/signup", "/verify-email"]);
 
 function buildMessage(payload) {
   return {
@@ -143,7 +148,20 @@ function buildWishlistSummaryFromState(items) {
   };
 }
 
+function shouldHideAura(pathname) {
+  if (HIDDEN_EXACT_ROUTES.has(pathname)) {
+    return true;
+  }
+
+  if (pathname.startsWith("/orders/")) {
+    return true;
+  }
+
+  return HIDDEN_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 function AuraChatbot() {
+  const navigate = useNavigate();
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
   const { isAuthenticated, user } = useAuth();
@@ -161,6 +179,7 @@ function AuraChatbot() {
   const [messages, setMessages] = useState(() => readInitialMessages(chatStorageKey));
   const [hydratedStorageKey, setHydratedStorageKey] = useState(chatStorageKey);
   const messagesRef = useRef(messages);
+  const isHiddenForRoute = shouldHideAura(location.pathname);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -189,6 +208,12 @@ function AuraChatbot() {
       setMessages(nextMessages);
     });
   }, [chatStorageKey, hydratedStorageKey]);
+
+  useEffect(() => {
+    if (isHiddenForRoute && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isHiddenForRoute, isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -332,6 +357,45 @@ function AuraChatbot() {
     }, 0);
   };
 
+  const handleStructuredAction = (action) => {
+    const actionType = String(action?.type ?? "").trim().toLowerCase();
+    const payload = action?.payload ?? {};
+
+    switch (actionType) {
+      case "open_cart":
+        navigate("/cart");
+        return;
+      case "open_checkout_step":
+        navigate(`/checkout/${payload.step ?? "review"}`);
+        return;
+      case "view_product":
+        if (payload.slug) {
+          navigate(`/product/${payload.slug}`);
+          return;
+        }
+        if (payload.productId) {
+          navigate(`/product/${payload.productId}`);
+          return;
+        }
+        navigate("/shop");
+        return;
+      case "view_order":
+        if (payload.orderId) {
+          navigate(`/orders/${payload.orderId}`);
+          return;
+        }
+        navigate("/orders");
+        return;
+      case "apply_coupon":
+        navigate("/cart");
+        return;
+      default:
+        if (action?.href?.startsWith("/")) {
+          navigate(action.href);
+        }
+    }
+  };
+
   const sendMessage = async (rawMessage) => {
     const message = rawMessage.trim();
     if (!message || isTyping) {
@@ -446,6 +510,10 @@ function AuraChatbot() {
         exit: { opacity: 0, y: 14, scale: 0.97 },
         transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
       };
+
+  if (isHiddenForRoute) {
+    return null;
+  }
 
   return (
     <>
@@ -565,7 +633,7 @@ function AuraChatbot() {
                 ) : null}
 
                 {messages.map((message) => (
-                  <ChatBubble key={message.id} message={message}>
+                  <ChatBubble key={message.id} message={message} onAction={handleStructuredAction}>
                     {message.type === "products" && Array.isArray(message.data)
                       ? message.data.map((product) => (
                           <ProductCard

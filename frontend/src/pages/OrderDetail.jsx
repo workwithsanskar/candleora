@@ -11,7 +11,6 @@ import {
   formatDate,
   formatDateTime,
   formatDateRange,
-  formatTimeRemaining,
   titleCase,
 } from "../utils/format";
 
@@ -43,17 +42,22 @@ const orderFlow = [
   },
 ];
 
+const paymentValueLabels = {
+  COD: "Cash on delivery",
+  UPI: "UPI",
+  NETBANKING: "Net banking",
+  CARD: "Card",
+  WALLET: "Wallet",
+  PHONEPE: "PhonePe",
+  RAZORPAY: "Razorpay",
+};
+
 const actionButtonClass =
   "inline-flex min-h-[52px] items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatPaymentProviderLabel(provider) {
   const normalized = String(provider ?? "").toUpperCase();
-
-  if (normalized === "COD") {
-    return "Cash on delivery";
-  }
-
-  return titleCase(normalized);
+  return paymentValueLabels[normalized] || titleCase(normalized);
 }
 
 function formatPaymentStatusLabel(status, provider) {
@@ -253,11 +257,6 @@ function OrderDetail() {
     return new Date(order.cancelDeadline).getTime() > currentTime;
   }, [currentTime, order?.canCancel, order?.cancelDeadline]);
 
-  const cancelTimeRemaining = useMemo(
-    () => formatTimeRemaining(order?.cancelDeadline, currentTime),
-    [currentTime, order?.cancelDeadline],
-  );
-
   const handleDownloadInvoice = async () => {
     if (!order?.invoiceNumber) {
       return;
@@ -353,27 +352,10 @@ function OrderDetail() {
   const orderItems = Array.isArray(order.items) ? order.items : [];
   const itemCount = orderItems.reduce((count, item) => count + Number(item.quantity ?? 0), 0);
   const trackingReference = getTrackingReference(order);
-  const paymentProviderLabel = formatPaymentProviderLabel(order.paymentProvider);
   const paymentStatusLabel = formatPaymentStatusLabel(order.paymentStatus, order.paymentProvider);
   const deliveryRange = formatDateRange(order.estimatedDeliveryStart, order.estimatedDeliveryEnd);
-  const locationSummary =
-    order.locationLabel || [order.city, order.state, order.country].filter(Boolean).join(", ");
-  const addressSummary = [
-    order.addressLine1,
-    order.addressLine2,
-    order.city,
-    order.state,
-    order.postalCode,
-    order.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
-  const currentStep = activeStep >= 0 ? orderFlow[activeStep] : null;
-  const nextStep =
-    activeStep >= 0 && activeStep < orderFlow.length - 1 ? orderFlow[activeStep + 1] : null;
   const progressPercent =
     activeStep >= 0 ? (activeStep / Math.max(orderFlow.length - 1, 1)) * 100 : 0;
-  const reachedStepCount = activeStep >= 0 ? activeStep + 1 : 0;
   const orderSummary =
     order.status === "CANCELLED"
       ? `Cancelled on ${formatDateTime(order.cancelledAt || order.createdAt)}.`
@@ -387,7 +369,7 @@ function OrderDetail() {
   const showCancelActions = order.status !== "CANCELLED" && liveCanCancel;
 
   return (
-    <section className="bg-white py-8 sm:py-10">
+    <section className="bg-white py-6 sm:py-8">
       <div className="container-shell">
         <Link
           to="/orders"
@@ -401,89 +383,81 @@ function OrderDetail() {
 
         <m.div
           {...surfaceMotion}
-          className="mt-5 overflow-hidden rounded-[34px] border border-black/10 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
+          className="mt-4 overflow-hidden rounded-[34px] border border-black/10 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
         >
-          <div className="grid xl:grid-cols-[minmax(0,1.16fr)_340px]">
-            <div className="px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-              <span
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusMeta.pillClass}`.trim()}
-              >
-                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-current" />
-                {statusMeta.label}
-              </span>
+          <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_370px]">
+            <div className="px-6 py-6 sm:px-8 sm:py-7 lg:px-10 lg:py-8">
+              <div className="max-w-3xl">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusMeta.pillClass}`.trim()}
+                >
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-current" />
+                  {statusMeta.label}
+                </span>
 
-              <div className="mt-6 max-w-3xl space-y-4">
-                <div>
+                <div className="mt-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
-                    Order detail
+                    Tracking
                   </p>
-                  <h1 className="mt-3 font-display text-[clamp(2.2rem,5vw,4.4rem)] leading-[0.95] tracking-[-0.045em] text-brand-dark">
-                    Order #{order.id}
-                  </h1>
+                  <h1 className="mt-3 page-title">Order #{order.id}</h1>
                 </div>
 
-                <div className="max-w-2xl space-y-3">
+                <div className="mt-4 max-w-2xl space-y-2.5">
                   <p className="text-lg font-semibold leading-8 text-brand-dark">{statusMeta.headline}</p>
-                  <p className="text-sm leading-7 text-black/62 sm:text-base">{statusMeta.summary}</p>
-                  <p className="text-sm leading-7 text-black/52">{orderSummary}</p>
+                  <p className="text-sm leading-6 text-black/58 sm:text-base">{orderSummary}</p>
                 </div>
-              </div>
 
-              <div className="mt-7 flex flex-wrap gap-2.5">
-                <span className="rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  {itemCount} item{itemCount === 1 ? "" : "s"}
-                </span>
-                <span className="rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  {paymentStatusLabel}
-                </span>
-                {order.invoiceNumber ? (
-                  <span className="rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                    Invoice {order.invoiceNumber}
-                  </span>
-                ) : null}
-                {order.couponCode ? (
-                  <span className="rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                    Coupon {order.couponCode}
-                  </span>
-                ) : null}
-              </div>
+                <div className="mt-6 grid gap-3 rounded-[26px] border border-black/8 bg-[#fffdf7] px-5 py-4 sm:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                      Placed
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-brand-dark">{formatDate(order.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                      Estimated delivery
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-brand-dark">{deliveryRange}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                      Payment
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-brand-dark">{paymentStatusLabel}</p>
+                  </div>
+                </div>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {order.invoiceNumber ? (
-                  <button
-                    type="button"
-                    className={`${actionButtonClass} border border-[#e8b13d] bg-brand-primary text-brand-dark hover:bg-[#f0ad15]`}
-                    onClick={handleDownloadInvoice}
-                    disabled={isDownloadingInvoice}
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  {order.invoiceNumber ? (
+                    <button
+                      type="button"
+                      className={`${actionButtonClass} border border-[#e8b13d] bg-brand-primary text-brand-dark hover:bg-[#f0ad15]`}
+                      onClick={handleDownloadInvoice}
+                      disabled={isDownloadingInvoice}
+                    >
+                      {isDownloadingInvoice ? "Preparing invoice..." : "Download invoice"}
+                    </button>
+                  ) : null}
+
+                  <Link
+                    to="/shop"
+                    className={`${actionButtonClass} border border-black/12 bg-white text-brand-dark hover:bg-black/[0.03]`}
                   >
-                    {isDownloadingInvoice ? "Preparing invoice..." : "Download invoice"}
-                  </button>
-                ) : null}
+                    Continue shopping
+                  </Link>
+                </div>
 
-                <Link
-                  to="/shop"
-                  className={`${actionButtonClass} border border-black/12 bg-white text-brand-dark hover:bg-black/[0.03]`}
-                >
-                  Continue shopping
-                </Link>
-
-                <Link
-                  to="/orders"
-                  className={`${actionButtonClass} border border-black/12 bg-white text-brand-dark hover:bg-black/[0.03]`}
-                >
-                  View all orders
-                </Link>
+                {downloadError ? <p className="mt-4 text-sm text-danger">{downloadError}</p> : null}
               </div>
-
-              {downloadError ? <p className="mt-4 text-sm text-danger">{downloadError}</p> : null}
             </div>
 
-            <aside className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 xl:border-l xl:border-t-0">
+            <aside className="border-t border-black/8 bg-white px-6 py-6 sm:px-8 sm:py-7 xl:border-l xl:border-t-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
                 Order snapshot
               </p>
 
-              <div className="mt-4 rounded-[28px] border border-black/8 bg-white px-5 py-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)]">
+              <div className="mt-3 rounded-[28px] border border-black/8 bg-white px-6 py-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)]">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-black/54">Total paid</p>
@@ -501,67 +475,41 @@ function OrderDetail() {
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-4">
+                <div className="mt-5 space-y-3.5">
                   <DetailRow label="Placed" value={formatDateTime(order.createdAt)} />
-                  <DetailRow label="Payment" value={paymentStatusLabel} />
-                  <DetailRow label="Provider" value={paymentProviderLabel} />
+                  <DetailRow label="Status" value={statusMeta.label} />
                   <DetailRow label="Delivery" value={deliveryRange} />
-                  <DetailRow label="Reference" value={trackingReference} />
+                  <DetailRow label="Tracking reference" value={trackingReference} />
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[24px] border border-black/8 bg-white px-5 py-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                  What happens now
-                </p>
-                <p className="mt-3 text-base font-semibold text-brand-dark">{currentStep?.label || statusMeta.label}</p>
-                <p className="mt-2 text-sm leading-7 text-black/62">
-                  {order.status === "CANCELLED"
-                    ? cancellationSummary
-                    : currentStep?.copy || "This order will continue updating here as each milestone changes."}
-                </p>
-                {showCancelActions ? (
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-danger/80">
-                    {cancelTimeRemaining}
-                  </p>
-                ) : null}
-              </div>
             </aside>
           </div>
 
-          <div className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 lg:px-10">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="border-t border-black/8 bg-white px-6 py-6 sm:px-8 sm:py-7 lg:px-10">
+            <div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
                   Progress
                 </p>
                 <p className="mt-2 text-lg font-semibold text-brand-dark">Delivery and fulfillment timeline</p>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-black/58">
-                  The current stage is highlighted so you can see exactly where this order sits in the CandleOra fulfillment flow.
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-black/58">
+                  The active step is highlighted so you can quickly see where the order sits right now.
                 </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-full border border-black/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  Tracking reference {trackingReference}
-                </span>
-                <span className="rounded-full border border-black/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  Estimated {deliveryRange}
-                </span>
               </div>
             </div>
 
             {order.status === "CANCELLED" ? (
-              <div className="mt-6 rounded-[28px] border border-danger/18 bg-[#fff7f7] px-5 py-5 sm:px-6">
+              <div className="mt-5 rounded-[28px] border border-danger/18 bg-[#fff7f7] px-5 py-5 sm:px-6">
                 <p className="text-lg font-semibold text-brand-dark">This order was cancelled.</p>
-                <p className="mt-2 text-sm leading-7 text-black/62">
+                <p className="mt-2 text-sm leading-6 text-black/62">
                   {cancellationSummary}
                   {order.cancelledAt ? ` Cancelled on ${formatDateTime(order.cancelledAt)}.` : ""}
                 </p>
               </div>
             ) : (
-              <div className="mt-6 space-y-6">
-                <div className="hidden rounded-[28px] border border-black/8 bg-white px-6 py-7 lg:block">
+              <div className="mt-5 space-y-5">
+                <div className="hidden rounded-[28px] border border-black/8 bg-white px-6 py-6 lg:block">
                   <div className="relative">
                     <div className="absolute left-[48px] right-[48px] top-[22px] h-px bg-black/10" />
                     <div
@@ -602,7 +550,7 @@ function OrderDetail() {
                               </span>
                             </div>
 
-                            <div className="mt-5 text-center">
+                            <div className="mt-4 text-center">
                               <p
                                 className={`text-sm font-semibold ${
                                   current || completed ? "text-brand-dark" : "text-black/45"
@@ -610,7 +558,7 @@ function OrderDetail() {
                               >
                                 {step.label}
                               </p>
-                              <p className="mx-auto mt-2 max-w-[150px] text-xs leading-6 text-black/48">
+                              <p className="mx-auto mt-1.5 max-w-[150px] text-xs leading-5 text-black/48">
                                 {step.copy}
                               </p>
                             </div>
@@ -629,7 +577,7 @@ function OrderDetail() {
                     return (
                       <article
                         key={step.key}
-                        className={`rounded-[22px] border bg-white px-4 py-4 ${
+                        className={`rounded-[22px] border bg-white px-4 py-3.5 ${
                           current
                             ? "border-brand-primary shadow-[0_0_0_4px_rgba(243,179,61,0.14)]"
                             : "border-black/8"
@@ -645,252 +593,133 @@ function OrderDetail() {
                             >
                               {step.label}
                             </p>
-                            <p className="mt-2 text-sm leading-6 text-black/55">{step.copy}</p>
+                            <p className="mt-1.5 text-sm leading-5 text-black/55">{step.copy}</p>
                           </div>
                         </div>
                       </article>
                     );
                   })}
                 </div>
-
-                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-                  <div className="rounded-[26px] border border-black/8 bg-white px-5 py-5 sm:px-6">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                          Current milestone
-                        </p>
-                        <p className="mt-3 text-xl font-semibold text-brand-dark">{currentStep?.label || statusMeta.label}</p>
-                      </div>
-                      <span className="inline-flex w-fit items-center rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                        Stage {reachedStepCount} of {orderFlow.length}
-                      </span>
-                    </div>
-
-                    <p className="mt-4 max-w-3xl text-sm leading-7 text-black/62">
-                      {currentStep?.copy || "This order will keep updating here as CandleOra moves it through the fulfillment flow."}
-                    </p>
-
-                    <div className="mt-5 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-[20px] border border-black/8 bg-white px-4 py-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
-                          Right now
-                        </p>
-                        <p className="mt-3 text-sm leading-7 text-black/62">
-                          The order is currently marked as <span className="font-semibold text-brand-dark">{statusMeta.label}</span>.
-                        </p>
-                      </div>
-
-                      <div className="rounded-[20px] border border-black/8 bg-white px-4 py-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
-                          Next up
-                        </p>
-                        <p className="mt-3 text-sm leading-7 text-black/62">
-                          {nextStep
-                            ? `The next visible update here will be ${nextStep.label.toLowerCase()}.`
-                            : "This is the final milestone in the fulfillment flow."}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[26px] border border-black/8 bg-white px-5 py-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                      Tracking reference
-                    </p>
-                    <p className="mt-3 break-all text-lg font-semibold text-brand-dark">{trackingReference}</p>
-                    <div className="mt-5 space-y-4">
-                      <DetailRow label="Current status" value={statusMeta.label} />
-                      <DetailRow label="Payment" value={paymentStatusLabel} />
-                      <DetailRow label="Estimate" value={deliveryRange} />
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
           </div>
 
-          <div className="grid xl:grid-cols-[minmax(0,1.18fr)_340px]">
-            <div className="border-t border-black/8 px-6 py-8 sm:px-8 lg:px-10">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
-                    Items
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-brand-dark">Order ledger</p>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-black/58">
-                    Every product in this purchase is listed with quantity, unit price, and the saved order total.
-                  </p>
+          <div className="border-t border-black/8 px-6 py-6 sm:px-8 sm:py-7 lg:px-10">
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_330px]">
+              <div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
+                      Items
+                    </p>
+                    <p className="mt-2 panel-title">Order ledger</p>
+                  </div>
+                  <span className="inline-flex w-fit items-center rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
+                    {itemCount} unit{itemCount === 1 ? "" : "s"}
+                  </span>
                 </div>
-                <span className="inline-flex w-fit items-center rounded-full border border-black/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  {itemCount} unit{itemCount === 1 ? "" : "s"}
-                </span>
-              </div>
 
-              {orderItems.length ? (
-                <div className="mt-6 overflow-hidden rounded-[28px] border border-black/8 bg-white">
-                  <div className="divide-y divide-black/8">
-                    {orderItems.map((item) => {
-                      const itemImage = getResponsiveImageProps(item.imageUrl, {
-                        widths: [160, 240, 320],
-                        quality: 68,
-                        sizes: "96px",
-                      });
+                {orderItems.length ? (
+                  <div className="mt-5 overflow-hidden rounded-[28px] border border-black/8 bg-white">
+                    <div className="divide-y divide-black/8">
+                      {orderItems.map((item) => {
+                        const itemImage = getResponsiveImageProps(item.imageUrl, {
+                          widths: [160, 240, 320],
+                          quality: 68,
+                          sizes: "96px",
+                        });
 
-                      return (
-                        <article
-                          key={item.id}
-                          className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-center lg:justify-between"
-                        >
-                          <div className="flex min-w-0 items-center gap-4">
-                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[22px] bg-[#f5efe4]">
-                              {item.imageUrl ? (
-                                <img
-                                  src={itemImage.src}
-                                  srcSet={itemImage.srcSet}
-                                  sizes={itemImage.sizes}
-                                  alt={item.productName}
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(event) => applyImageFallback(event, fallbackProductImage)}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center bg-[#f5efe4] text-sm font-semibold uppercase tracking-[0.14em] text-black/45">
-                                  Candle
+                        return (
+                          <article
+                            key={item.id}
+                            className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-4.5 lg:flex-row lg:items-center lg:justify-between"
+                          >
+                            <div className="flex min-w-0 items-center gap-4">
+                              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[22px] bg-[#f5efe4]">
+                                {item.imageUrl ? (
+                                  <img
+                                    src={itemImage.src}
+                                    srcSet={itemImage.srcSet}
+                                    sizes={itemImage.sizes}
+                                    alt={item.productName}
+                                    loading="lazy"
+                                    decoding="async"
+                                    onError={(event) => applyImageFallback(event, fallbackProductImage)}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-[#f5efe4] text-sm font-semibold uppercase tracking-[0.14em] text-black/45">
+                                    Candle
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-lg font-semibold text-brand-dark">
+                                  {item.productName}
+                                </p>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-black/55">
+                                  <span className="rounded-full border border-black/10 px-3 py-1">
+                                    Qty {item.quantity}
+                                  </span>
+                                  <span>{formatCurrency(item.price)} each</span>
                                 </div>
-                              )}
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="truncate text-lg font-semibold text-brand-dark">
-                                {item.productName}
-                              </p>
-                              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-black/55">
-                                <span className="rounded-full border border-black/10 px-3 py-1">
-                                  Qty {item.quantity}
-                                </span>
-                                <span>{formatCurrency(item.price)} each</span>
                               </div>
                             </div>
-                          </div>
 
-                          <span className="text-xl font-semibold text-brand-dark lg:pl-4">
-                            {formatCurrency(Number(item.price) * Number(item.quantity ?? 1))}
-                          </span>
-                        </article>
-                      );
-                    })}
-                  </div>
-
-                  <div className="border-t border-black/8 bg-white px-5 py-5">
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-                      <div className="space-y-3 text-sm text-black/62">
-                        <DetailRow
-                          label="Subtotal"
-                          value={formatCurrency(order.subtotalAmount ?? order.totalAmount)}
-                        />
-                        {order.discountAmount ? (
-                          <DetailRow
-                            label="Discount"
-                            value={`-${formatCurrency(order.discountAmount)}`}
-                            valueClassName="text-success"
-                          />
-                        ) : null}
-                        <DetailRow label="Shipping" value="Included" />
-                      </div>
-
-                      <div className="rounded-[24px] border border-black/8 bg-white px-5 py-5">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                          Final total
-                        </p>
-                        <p className="mt-3 text-3xl font-semibold leading-none text-brand-dark">
-                          {formatCurrency(order.totalAmount)}
-                        </p>
-                        <p className="mt-3 text-xs leading-6 text-black/45">
-                          This saved total stays attached to the order record for invoices, support, and future reference.
-                        </p>
-                      </div>
+                            <span className="text-xl font-semibold text-brand-dark lg:pl-4">
+                              {formatCurrency(Number(item.price) * Number(item.quantity ?? 1))}
+                            </span>
+                          </article>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-6 rounded-[24px] border border-dashed border-black/12 px-5 py-8 text-sm leading-7 text-black/58">
-                  Order items will appear here as soon as the record is available.
-                </div>
-              )}
-            </div>
-
-            <aside className="border-t border-black/8 bg-white px-6 py-8 sm:px-8 xl:border-l">
-              <div className="space-y-4">
-                <div className="rounded-[24px] border border-black/8 bg-white px-5 py-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/42">
-                    Delivering to
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-brand-dark">{order.shippingName}</p>
-                  <div className="mt-4 space-y-3 text-sm leading-7 text-black/62">
-                    <p>{addressSummary}</p>
-                    {locationSummary ? <p>Pinned location: {locationSummary}</p> : null}
-                    <p>Phone: {order.phone}</p>
-                    {order.alternatePhoneNumber ? <p>Alternate phone: {order.alternatePhoneNumber}</p> : null}
-                    <p>Email: {order.contactEmail}</p>
-                    <p>Estimate: {deliveryRange}</p>
+                ) : (
+                  <div className="mt-5 rounded-[24px] border border-dashed border-black/12 px-5 py-7 text-sm leading-6 text-black/58">
+                    Order items will appear here as soon as the record is available.
                   </div>
-                </div>
-
-                <div className="rounded-[24px] border border-black/8 bg-white px-5 py-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/42">
-                    Payment record
-                  </p>
-                  <div className="mt-4 space-y-3 text-sm leading-7 text-black/62">
-                    <DetailRow label="Provider" value={paymentProviderLabel} />
-                    <DetailRow label="Status" value={paymentStatusLabel} />
-                    <DetailRow label="Method" value={order.paymentMethod || "Saved at checkout"} />
-                    {order.couponCode ? <DetailRow label="Coupon" value={order.couponCode} /> : null}
-                    {order.gatewayOrderId ? <DetailRow label="Gateway order" value={order.gatewayOrderId} /> : null}
-                    {order.gatewayPaymentId ? <DetailRow label="Gateway payment" value={order.gatewayPaymentId} /> : null}
-                  </div>
-                </div>
-
-                <div
-                  className={`rounded-[24px] border px-5 py-5 ${
-                    order.status === "CANCELLED"
-                      ? "border-danger/18 bg-[#fff7f7]"
-                      : "border-black/8 bg-white"
-                  }`}
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/42">
-                    Support and changes
-                  </p>
-                  <p className="mt-3 text-base font-semibold text-brand-dark">
-                    {order.status === "CANCELLED" ? "Cancellation saved" : "Need to change something?"}
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-black/62">{cancellationSummary}</p>
-                  {order.status !== "CANCELLED" ? (
-                    <p className="mt-2 text-sm leading-7 text-black/62">
-                      Return or replacement requests can be raised within 7 days after delivery.
-                    </p>
-                  ) : null}
-                  {showCancelActions ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-danger/20 px-5 py-3 text-sm font-semibold text-danger transition duration-200 hover:bg-danger hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={handleCancelOrder}
-                      disabled={isCancelling}
-                    >
-                      {isCancelling ? "Cancelling..." : "Cancel order"}
-                    </button>
-                  ) : null}
-                  <Link
-                    to="/contact"
-                    className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-black/12 px-5 py-3 text-sm font-semibold text-brand-dark transition duration-200 hover:bg-black/[0.03]"
-                  >
-                    Contact support
-                  </Link>
-                  {cancelError ? <p className="mt-3 text-sm text-danger">{cancelError}</p> : null}
-                </div>
+                )}
               </div>
-            </aside>
+
+              <aside
+                className={`rounded-[24px] border px-5 py-5 self-start ${
+                  order.status === "CANCELLED"
+                    ? "border-danger/18 bg-[#fff7f7]"
+                    : "border-black/8 bg-white"
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-black/42">
+                  Support and changes
+                </p>
+                <p className="mt-3 text-base font-semibold text-brand-dark">
+                  {order.status === "CANCELLED" ? "Cancellation saved" : "Need to change something?"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-black/62">{cancellationSummary}</p>
+                {order.status !== "CANCELLED" ? (
+                  <p className="mt-2 text-sm leading-6 text-black/62">
+                    Return or replacement requests can be raised within 7 days after delivery.
+                  </p>
+                ) : null}
+                {showCancelActions ? (
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-danger/20 px-5 py-3 text-sm font-semibold text-danger transition duration-200 hover:bg-danger hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={handleCancelOrder}
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? "Cancelling..." : "Cancel order"}
+                  </button>
+                ) : null}
+                <Link
+                  to="/contact"
+                  className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-black/12 px-5 py-3 text-sm font-semibold text-brand-dark transition duration-200 hover:bg-black/[0.03]"
+                >
+                  Contact support
+                </Link>
+                {cancelError ? <p className="mt-3 text-sm text-danger">{cancelError}</p> : null}
+              </aside>
+            </div>
           </div>
         </m.div>
       </div>

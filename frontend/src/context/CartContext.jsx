@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
 import { cartApi } from "../services/api";
@@ -25,57 +25,61 @@ export function CartProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const [cart, setCart] = useState(emptyCart);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [error, setError] = useState("");
+
+  const refreshCart = useCallback(async () => {
+    setError("");
+    setHasHydrated(false);
+    setIsLoading(true);
+
+    try {
+      if (isAuthenticated) {
+        const guestItems = readStoredJson(GUEST_CART_STORAGE_KEY, []);
+        if (guestItems.length) {
+          await cartApi.syncCart({
+            items: guestItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            })),
+          });
+          clearStoredJson(GUEST_CART_STORAGE_KEY);
+        }
+
+        const remoteCart = await cartApi.getCart();
+        setCart(normalizeCartResponse(remoteCart));
+        return normalizeCartResponse(remoteCart);
+      }
+
+      const guestCart = normalizeCartResponse({
+        items: readStoredJson(GUEST_CART_STORAGE_KEY, []),
+      });
+      setCart(guestCart);
+      return guestCart;
+    } catch (cartError) {
+      const nextError = formatApiError(cartError);
+      setError(nextError);
+      toast.error(nextError);
+      throw cartError;
+    } finally {
+      setIsLoading(false);
+      setHasHydrated(true);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const hydrateCart = async () => {
-      setError("");
-      setIsLoading(true);
-
-      try {
-        if (isAuthenticated) {
-          const guestItems = readStoredJson(GUEST_CART_STORAGE_KEY, []);
-          if (guestItems.length) {
-            await cartApi.syncCart({
-              items: guestItems.map((item) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-              })),
-            });
-            clearStoredJson(GUEST_CART_STORAGE_KEY);
-          }
-
-          const remoteCart = await cartApi.getCart();
-          if (isMounted) {
-            setCart(normalizeCartResponse(remoteCart));
-          }
-        } else if (isMounted) {
-          setCart(
-            normalizeCartResponse({
-              items: readStoredJson(GUEST_CART_STORAGE_KEY, []),
-            }),
-          );
-        }
-      } catch (cartError) {
-        if (isMounted) {
-          setError(formatApiError(cartError));
-          toast.error(formatApiError(cartError));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    refreshCart().catch(() => {
+      if (!isMounted) {
+        return;
       }
-    };
-
-    hydrateCart();
+    });
 
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated]);
+  }, [refreshCart]);
 
   const syncGuestCart = (nextItems) => {
     writeStoredJson(GUEST_CART_STORAGE_KEY, nextItems);
@@ -155,11 +159,13 @@ export function CartProvider({ children }) {
         grandTotal: cart.grandTotal,
         cartCount,
         isLoading,
+        hasHydrated,
         error,
         addToCart,
         updateQuantity,
         removeFromCart,
         clearCart,
+        refreshCart,
       }}
     >
       {children}

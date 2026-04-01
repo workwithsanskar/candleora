@@ -109,6 +109,7 @@ export const orderApi = {
 
 export const couponApi = {
   validate: (payload) => api.post("/coupons/validate", payload).then(unwrap),
+  getOffers: () => api.get("/coupons/offers").then(unwrap),
 };
 
 export const paymentApi = {
