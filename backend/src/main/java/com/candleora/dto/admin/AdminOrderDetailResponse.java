@@ -1,6 +1,7 @@
 package com.candleora.dto.admin;
 
 import com.candleora.dto.order.OrderItemResponse;
+import com.candleora.dto.order.OrderTrackingEventResponse;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -23,6 +24,11 @@ public record AdminOrderDetailResponse(
     Instant createdAt,
     LocalDate estimatedDeliveryStart,
     LocalDate estimatedDeliveryEnd,
+    String trackingNumber,
+    String courierName,
+    String trackingUrl,
+    Instant deliveredAt,
+    Instant adminReviewedAt,
     Instant cancelledAt,
     String cancellationReason,
     String addressLine1,
@@ -31,6 +37,7 @@ public record AdminOrderDetailResponse(
     String state,
     String postalCode,
     String country,
-    List<OrderItemResponse> items
+    List<OrderItemResponse> items,
+    List<OrderTrackingEventResponse> trackingEvents
 ) {
 }

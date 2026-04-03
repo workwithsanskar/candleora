@@ -11,8 +11,9 @@ import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCheckoutSession } from "../context/CheckoutSessionContext";
-import { catalogApi, couponApi } from "../services/api";
-import { formatApiError, formatCurrency } from "../utils/format";
+import { useCouponFlow } from "../hooks/useCouponFlow";
+import { catalogApi } from "../services/api";
+import { formatCurrency } from "../utils/format";
 import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath } from "../utils/normalize";
 
@@ -28,9 +29,19 @@ function Cart() {
     clearCoupon,
   } = useCheckoutSession();
   const [recommendations, setRecommendations] = useState([]);
-  const [couponCode, setCouponCode] = useState(() => session.coupon?.code ?? "");
-  const [couponError, setCouponError] = useState("");
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const {
+    couponCode,
+    setCouponCode,
+    couponError,
+    isApplyingCoupon,
+    handleCouponApply,
+    handleCouponRemove,
+  } = useCouponFlow({
+    session,
+    items,
+    applyCoupon,
+    clearCoupon,
+  });
 
   useEffect(() => {
     if (!items.length) {
@@ -44,10 +55,6 @@ function Cart() {
 
     startCartCheckout(items);
   }, [items, session.source, startCartCheckout, syncCartItems]);
-
-  useEffect(() => {
-    setCouponCode(session.coupon?.code ?? "");
-  }, [session.coupon?.code]);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,39 +94,6 @@ function Cart() {
         total: grandTotal,
         savings: 0,
       };
-
-  const handleCouponApply = async (rawCode = couponCode) => {
-    const code = String(rawCode ?? "").trim();
-    if (!code) {
-      setCouponError("Enter a coupon code to apply.");
-      return;
-    }
-
-    setCouponError("");
-    setIsApplyingCoupon(true);
-
-    try {
-      const response = await couponApi.validate({
-        code,
-        items: items.map((item) => ({
-          productId: Number(item.productId),
-          quantity: Number(item.quantity ?? 1),
-        })),
-      });
-      applyCoupon(response.code, response);
-      setCouponCode(response.code);
-    } catch (applyError) {
-      setCouponError(formatApiError(applyError));
-    } finally {
-      setIsApplyingCoupon(false);
-    }
-  };
-
-  const handleCouponRemove = () => {
-    clearCoupon();
-    setCouponCode("");
-    setCouponError("");
-  };
 
   const handleProceed = () => {
     if (!items.length) {
@@ -190,71 +164,93 @@ function Cart() {
             {items.map((item) => (
               <article
                 key={item.id}
-                className="checkout-panel grid gap-4 p-5 sm:grid-cols-[24px_120px_minmax(0,1fr)_170px] sm:items-start"
+                className="overflow-hidden rounded-[28px] border border-black/10 bg-white p-4 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-5"
               >
-                <button
-                  type="button"
-                  onClick={() => removeFromCart(item.id)}
-                  className="text-2xl leading-none text-black/52 transition hover:text-danger"
-                  aria-label={`Remove ${item.productName} from bag`}
-                >
-                  &times;
-                </button>
+                <div className="grid gap-5 md:grid-cols-[24px_170px_minmax(0,1fr)_136px] md:items-start">
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(item.id)}
+                    className="text-2xl leading-none text-black/52 transition hover:text-danger"
+                    aria-label={`Remove ${item.productName} from bag`}
+                  >
+                    &times;
+                  </button>
 
-                <Link
-                  to={getProductPath({ id: item.productId, name: item.productName })}
-                  className="overflow-hidden rounded-[22px] bg-[#F2ECE2]"
-                >
-                  <img
-                    {...getResponsiveImageProps(item.imageUrl, {
-                      widths: [180, 270, 360],
-                      quality: 64,
-                      sizes: "120px",
-                    })}
-                    alt={item.productName}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(event) => applyImageFallback(event, fallbackImage)}
-                    className="aspect-square h-full w-full object-cover"
-                  />
-                </Link>
-
-                <div className="min-w-0 space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/40">
-                      CandleOra
-                    </p>
-                    <Link
-                      to={getProductPath({ id: item.productId, name: item.productName })}
-                      className="mt-2 block text-[1.35rem] font-semibold leading-tight tracking-[-0.03em] text-[#1A1A1A] sm:text-[1.55rem]"
-                    >
-                      {item.productName}
-                    </Link>
-                    <p className="mt-3 text-sm text-[#027808]">Get it within 3-6 delivery days</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <QuantityControl
-                      value={item.quantity}
-                      compact
-                      onDecrease={() => updateQuantity(item.id, Number(item.quantity) - 1)}
-                      onIncrease={() => updateQuantity(item.id, Number(item.quantity) + 1)}
+                  <Link
+                    to={getProductPath({ id: item.productId, name: item.productName })}
+                    className="self-start overflow-hidden rounded-[22px] bg-[#F2ECE2]"
+                  >
+                    <img
+                      {...getResponsiveImageProps(item.imageUrl, {
+                        widths: [220, 320, 420],
+                        quality: 64,
+                        sizes: "(min-width: 1024px) 170px, 120px",
+                      })}
+                      alt={item.productName}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(event) => applyImageFallback(event, fallbackImage)}
+                      className="aspect-[0.92] h-full w-full object-cover"
                     />
-                    <p className="rounded-full border border-[#f2d29a] px-4 py-2 text-sm text-black/62">
-                      Unit price {formatCurrency(item.unitPrice)}
-                    </p>
-                  </div>
-                </div>
+                  </Link>
 
-                <div className="space-y-2 text-left sm:text-right">
-                  <p className="text-[2.5rem] font-semibold leading-none tracking-[-0.05em] text-[#1A1A1A]">
-                    {formatCurrency(item.lineTotal)}
-                  </p>
-                  {Number(item.originalUnitPrice ?? item.unitPrice) > Number(item.unitPrice) ? (
-                    <p className="text-sm text-black/40 line-through">
-                      {formatCurrency(item.originalUnitPrice)}
+                  <div className="flex min-w-0 flex-col justify-between gap-5">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-brand-primary/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-black">
+                          {item.occasionTag || "CandleOra"}
+                        </span>
+                        <span
+                          className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                            item.stock > 0
+                              ? "bg-[#eef7ee] text-[#2d7d32]"
+                              : "bg-[#fff1f1] text-[#c62828]"
+                          }`}
+                        >
+                          {item.stock > 0 ? "In stock" : "Out of stock"}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Link
+                          to={getProductPath({ id: item.productId, name: item.productName })}
+                          className="block"
+                        >
+                          <h2 className="text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.03em] text-black transition hover:underline hover:underline-offset-4 sm:text-[1.35rem]">
+                            {item.productName}
+                          </h2>
+                        </Link>
+                        <p className="max-w-[520px] text-sm leading-6 text-black/62">
+                          {item.stock > 0
+                            ? "Get it within 3-6 delivery days."
+                            : "This item is currently unavailable, but it will stay in your bag until stock returns."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <QuantityControl
+                        value={item.quantity}
+                        compact
+                        onDecrease={() => updateQuantity(item.id, Number(item.quantity) - 1)}
+                        onIncrease={() => updateQuantity(item.id, Number(item.quantity) + 1)}
+                      />
+                      <p className="inline-flex h-[42px] items-center rounded-full border border-[#f2d29a] bg-white px-4 text-sm text-black/62">
+                        Unit price {formatCurrency(item.unitPrice)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-left md:text-right">
+                    <p className="text-[2.15rem] font-semibold leading-none tracking-[-0.05em] text-[#1A1A1A]">
+                      {formatCurrency(item.lineTotal)}
                     </p>
-                  ) : null}
+                    {Number(item.originalUnitPrice ?? item.unitPrice) > Number(item.unitPrice) ? (
+                      <p className="text-sm text-black/40 line-through">
+                        {formatCurrency(item.originalUnitPrice)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             ))}
@@ -270,6 +266,7 @@ function Cart() {
             onCouponCodeChange={setCouponCode}
             onApplyCoupon={handleCouponApply}
             onRemoveCoupon={handleCouponRemove}
+            subtotalAmount={effectiveSummary.subtotal}
           />
 
           <CheckoutPriceSummary

@@ -56,6 +56,11 @@ public class OrderController {
         return orderService.getOrder(((UserPrincipal) authentication.getPrincipal()).getUser(), orderId);
     }
 
+    @GetMapping("/{orderId}/tracking")
+    public OrderResponse getTrackedOrder(@PathVariable Long orderId, @RequestParam("email") String email) {
+        return orderService.getOrderForTracking(orderId, email);
+    }
+
     @PostMapping("/{orderId}/cancel")
     public OrderResponse cancelOrder(
         Authentication authentication,

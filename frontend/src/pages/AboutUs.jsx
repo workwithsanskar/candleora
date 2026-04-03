@@ -61,7 +61,7 @@ function AboutUs() {
 
           <div className="mx-auto mt-4 h-px w-[min(240px,32vw)] bg-[linear-gradient(90deg,rgba(216,195,162,0)_0%,rgba(216,195,162,0.9)_50%,rgba(216,195,162,0)_100%)]" />
 
-          <div className="mt-6 grid gap-6 sm:mt-7 sm:gap-7 lg:mt-8 lg:grid-cols-[minmax(0,392px)_minmax(480px,592px)] lg:items-center lg:justify-center lg:gap-[42px]">
+          <div className="balanced-split-layout mt-6 grid gap-6 sm:mt-7 sm:gap-7 lg:mt-8 lg:grid-cols-[minmax(0,392px)_minmax(480px,592px)] lg:justify-center lg:gap-[42px]">
             <div className="max-w-[392px]">
               <div className="mb-4 h-px w-20 bg-[#e6d8c2]" />
               <div className="space-y-4 text-[14.5px] leading-[1.58] text-[#646464] sm:text-[15px]">
@@ -76,8 +76,8 @@ function AboutUs() {
               </div>
             </div>
 
-            <div className="mx-auto w-full max-w-[592px]">
-              <div className="relative aspect-[628/418]">
+            <div className="balanced-split-media mx-auto w-full max-w-[592px]">
+              <div className="balanced-split-frame relative aspect-[628/418] lg:aspect-auto lg:min-h-[420px]">
                 {visualPanels.map((panel) => (
                   <div
                     key={panel.ariaLabel}

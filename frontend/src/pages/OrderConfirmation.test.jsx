@@ -73,7 +73,7 @@ describe("OrderConfirmation", () => {
     });
   });
 
-  it("renders the confirmation success surface with invoice and follow-up actions intact", async () => {
+  it("renders the thank-you modal with clear next-step actions", async () => {
     render(
       <MemoryRouter initialEntries={["/order-confirmation/101"]}>
         <Routes>
@@ -82,11 +82,14 @@ describe("OrderConfirmation", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Your order is confirmed.")).toBeInTheDocument();
-    expect(screen.getAllByText("Delivering to").length).toBeGreaterThan(0);
-    expect(screen.getByText("Amber Bloom Candle")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download invoice" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel order" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Track order" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Thank you!" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/your order has been confirmed and it is on the way/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to Homepage" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Check Order Details" })).toHaveAttribute(
+      "href",
+      "/orders/101",
+    );
   });
 });

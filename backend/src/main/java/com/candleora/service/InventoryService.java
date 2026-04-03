@@ -7,6 +7,7 @@ import com.candleora.entity.ProductInventoryMovement;
 import com.candleora.repository.ProductInventoryMovementRepository;
 import com.candleora.repository.ProductRepository;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,10 @@ public class InventoryService {
             .toList();
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public AdminInventoryMovementResponse adjustOnHandStock(Long productId, int adjustment, String note) {
         if (adjustment == 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Adjustment cannot be zero");
@@ -71,6 +76,10 @@ public class InventoryService {
         return toMovementResponse(movementRepository.save(movement));
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public void reserveForPendingOrder(Product product, int quantity, Long orderId) {
         validateAvailableStock(product, quantity);
         int nextReserved = safeReserved(product) + quantity;
@@ -79,6 +88,10 @@ public class InventoryService {
         logMovement(product, InventoryMovementType.RESERVATION_CREATED, 0, quantity, "ORDER", orderId, "Reserved for pending payment");
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public void releasePendingReservation(Product product, int quantity, Long orderId, String note) {
         int currentReserved = safeReserved(product);
         int released = Math.min(quantity, currentReserved);
@@ -99,6 +112,10 @@ public class InventoryService {
         );
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public void commitDirectSale(Product product, int quantity, Long orderId) {
         validateAvailableStock(product, quantity);
         product.setStock(safeOnHand(product) - quantity);
@@ -114,6 +131,10 @@ public class InventoryService {
         );
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public void commitReservedOrder(Product product, int quantity, Long orderId) {
         int currentReserved = safeReserved(product);
         int currentStock = safeOnHand(product);
@@ -147,6 +168,10 @@ public class InventoryService {
         );
     }
 
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
     public void restockFromCancelledOrder(Product product, int quantity, Long orderId) {
         product.setStock(safeOnHand(product) + quantity);
         productRepository.save(product);
@@ -158,6 +183,84 @@ public class InventoryService {
             "ORDER",
             orderId,
             "Restocked after order cancellation"
+        );
+    }
+
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
+    public void reserveForReplacement(Product product, int quantity, Long replacementRequestId) {
+        validateAvailableStock(product, quantity);
+        product.setReservedStock(safeReserved(product) + quantity);
+        productRepository.save(product);
+        logMovement(
+            product,
+            InventoryMovementType.REPLACEMENT_RESERVED,
+            0,
+            quantity,
+            "REPLACEMENT",
+            replacementRequestId,
+            "Reserved stock for approved replacement"
+        );
+    }
+
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
+    public void releaseReplacementReservation(Product product, int quantity, Long replacementRequestId, String note) {
+        int currentReserved = safeReserved(product);
+        int released = Math.min(quantity, currentReserved);
+        if (released <= 0) {
+            return;
+        }
+
+        product.setReservedStock(currentReserved - released);
+        productRepository.save(product);
+        logMovement(
+            product,
+            InventoryMovementType.REPLACEMENT_RELEASED,
+            0,
+            -released,
+            "REPLACEMENT",
+            replacementRequestId,
+            note
+        );
+    }
+
+    @CacheEvict(
+        cacheNames = {"catalogProductPages", "catalogProductDetail", "catalogRelatedProducts"},
+        allEntries = true
+    )
+    public void commitReplacement(Product product, int quantity, Long replacementRequestId) {
+        int currentReserved = safeReserved(product);
+        int currentStock = safeOnHand(product);
+
+        if (currentStock < quantity) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "On-hand stock is no longer sufficient for " + product.getName()
+            );
+        }
+
+        int reservedDelta = 0;
+        if (currentReserved > 0) {
+            int consumedReserved = Math.min(quantity, currentReserved);
+            product.setReservedStock(currentReserved - consumedReserved);
+            reservedDelta = -consumedReserved;
+        }
+
+        product.setStock(currentStock - quantity);
+        productRepository.save(product);
+        logMovement(
+            product,
+            InventoryMovementType.REPLACEMENT_COMMITTED,
+            -quantity,
+            reservedDelta,
+            "REPLACEMENT",
+            replacementRequestId,
+            "Committed stock for shipped replacement"
         );
     }
 

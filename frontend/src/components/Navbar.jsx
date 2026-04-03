@@ -467,7 +467,7 @@ function Navbar() {
                               <Link
                                 to="/cart"
                                 onClick={closeMenus}
-                                className="block truncate text-sm font-medium text-black"
+                                className="block truncate text-sm font-medium text-black transition hover:underline hover:underline-offset-4"
                               >
                                 {item.productName}
                               </Link>

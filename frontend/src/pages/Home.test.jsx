@@ -90,6 +90,8 @@ describe("Home", () => {
 
     expect(screen.queryByRole("link", { name: /^Occasion Picks$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /^Candle Fixes$/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Occasion Picks$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Candle Fixes$/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View Occasion Picks" })).toHaveAttribute("href", "/occasion-picks");
     expect(screen.getByRole("link", { name: "View Candle Fixes" })).toHaveAttribute("href", "/candle-fixes");
     expect(screen.getByText("Not sure which candle suits your celebration?")).toBeInTheDocument();

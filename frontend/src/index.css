@@ -135,6 +135,22 @@
     @apply text-body leading-7 text-brand-muted;
   }
 
+  .balanced-split-layout {
+    @apply lg:items-stretch;
+  }
+
+  .balanced-split-media {
+    @apply lg:h-full;
+  }
+
+  .balanced-split-frame {
+    @apply lg:h-full;
+  }
+
+  .balanced-split-visual {
+    @apply w-full object-cover lg:h-full;
+  }
+
   .btn {
     @apply inline-flex items-center justify-center rounded-[12px] px-6 py-3 text-base font-semibold transition duration-200;
   }

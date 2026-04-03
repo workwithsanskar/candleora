@@ -1,26 +1,34 @@
 package com.candleora.service;
 
 import com.candleora.dto.order.OrderItemResponse;
+import com.candleora.dto.order.OrderReplacementResponse;
 import com.candleora.dto.order.OrderRequestItem;
 import com.candleora.dto.order.OrderResponse;
+import com.candleora.dto.order.OrderTrackingEventResponse;
 import com.candleora.dto.order.PlaceOrderRequest;
 import com.candleora.entity.AppUser;
 import com.candleora.entity.CartItem;
 import com.candleora.entity.CustomerOrder;
 import com.candleora.entity.OrderItem;
 import com.candleora.entity.OrderStatus;
+import com.candleora.entity.OrderTrackingEvent;
 import com.candleora.entity.PaymentProvider;
 import com.candleora.entity.PaymentStatus;
 import com.candleora.entity.Product;
+import com.candleora.entity.ReplacementRequest;
 import com.candleora.repository.CartItemRepository;
 import com.candleora.repository.CustomerOrderRepository;
 import com.candleora.repository.ProductRepository;
+import com.candleora.repository.ReplacementRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +41,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class OrderService {
 
     private static final BigDecimal COD_LIMIT = BigDecimal.valueOf(3000);
+    private static final List<OrderStatus> TRACKING_FLOW = List.of(
+        OrderStatus.PENDING_PAYMENT,
+        OrderStatus.CONFIRMED,
+        OrderStatus.SHIPPED,
+        OrderStatus.OUT_FOR_DELIVERY,
+        OrderStatus.DELIVERED
+    );
     private static final Set<String> SUPPORTED_PAYMENT_METHODS = Set.of(
         "COD",
         "UPI",
@@ -48,6 +63,7 @@ public class OrderService {
     private final CustomerOrderRepository customerOrderRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final ReplacementRepository replacementRepository;
     private final InventoryService inventoryService;
     private final InvoiceService invoiceService;
     private final OrderNotificationService orderNotificationService;
@@ -59,6 +75,7 @@ public class OrderService {
         CustomerOrderRepository customerOrderRepository,
         CartItemRepository cartItemRepository,
         ProductRepository productRepository,
+        ReplacementRepository replacementRepository,
         InventoryService inventoryService,
         InvoiceService invoiceService,
         OrderNotificationService orderNotificationService,
@@ -69,6 +86,7 @@ public class OrderService {
         this.customerOrderRepository = customerOrderRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.replacementRepository = replacementRepository;
         this.inventoryService = inventoryService;
         this.invoiceService = invoiceService;
         this.orderNotificationService = orderNotificationService;
@@ -359,6 +377,7 @@ public class OrderService {
     private OrderResponse toOrderResponse(CustomerOrder order) {
         Instant cancelDeadline = getCancellationDeadline(order);
         boolean canCancel = canCancel(order);
+        boolean canReplace = canReplace(order);
 
         BigDecimal subtotalAmount = order.getSubtotalAmount() != null
             ? order.getSubtotalAmount()
@@ -366,6 +385,7 @@ public class OrderService {
         BigDecimal discountAmount = order.getDiscountAmount() != null
             ? order.getDiscountAmount()
             : BigDecimal.ZERO;
+        Map<Long, OrderReplacementResponse> replacements = buildReplacementSummaryMap(order);
 
         return new OrderResponse(
             order.getId(),
@@ -409,7 +429,14 @@ public class OrderService {
                     item.getQuantity(),
                     item.getPrice()
                 ))
-                .toList()
+                .toList(),
+            order.getTrackingNumber(),
+            order.getCourierName(),
+            order.getTrackingUrl(),
+            order.getDeliveredAt(),
+            buildTrackingEvents(order),
+            canReplace,
+            replacements
         );
     }
 
@@ -490,7 +517,7 @@ public class OrderService {
         order.setTotalAmount(quote.totalAmount());
     }
 
-    private boolean canCancel(CustomerOrder order) {
+    public boolean canCancel(CustomerOrder order) {
         if (order == null || order.getCreatedAt() == null) {
             return false;
         }
@@ -511,12 +538,90 @@ public class OrderService {
         return deadline != null && Instant.now().isBefore(deadline);
     }
 
+    public boolean canReplace(CustomerOrder order) {
+        if (order == null || order.getDeliveredAt() == null) {
+            return false;
+        }
+
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            return false;
+        }
+
+        return order.getDeliveredAt()
+            .plus(Duration.ofDays(3))
+            .isAfter(Instant.now());
+    }
+
     private Instant getCancellationDeadline(CustomerOrder order) {
         if (order == null || order.getCreatedAt() == null) {
             return null;
         }
 
         return order.getCreatedAt().plus(Duration.ofMinutes(cancellationWindowMinutes));
+    }
+
+    private Map<Long, OrderReplacementResponse> buildReplacementSummaryMap(CustomerOrder order) {
+        Map<Long, OrderReplacementResponse> replacements = new LinkedHashMap<>();
+        for (ReplacementRequest request : replacementRepository.findByOrderIdOrderByRequestedAtDesc(order.getId())) {
+            replacements.putIfAbsent(request.getOrderItemId(), toReplacementSummary(request));
+        }
+        return replacements;
+    }
+
+    private OrderReplacementResponse toReplacementSummary(ReplacementRequest request) {
+        List<String> proofAssetUrls = resolveProofAssetUrls(request);
+        return new OrderReplacementResponse(
+            request.getId(),
+            request.getOrderItemId(),
+            request.getProductId(),
+            request.getProductName(),
+            request.getProductImageUrl(),
+            request.getReason(),
+            request.getCustomerNote(),
+            request.getStatus().name(),
+            request.getRequestedAt(),
+            request.getApprovedAt(),
+            request.getProofImageUrl(),
+            proofAssetUrls,
+            request.getAdminNote(),
+            request.getIsFraudSuspected(),
+            request.getPickupReference(),
+            request.getPickupStatus()
+        );
+    }
+
+    private List<String> resolveProofAssetUrls(ReplacementRequest request) {
+        if (StringUtils.hasText(request.getProofAssetUrls())) {
+            return request.getProofAssetUrls().lines()
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+        }
+
+        if (StringUtils.hasText(request.getProofImageUrl())) {
+            return List.of(request.getProofImageUrl().trim());
+        }
+
+        return List.of();
+    }
+
+    private List<OrderTrackingEventResponse> buildTrackingEvents(CustomerOrder order) {
+        return order.getTrackingEvents().stream()
+            .sorted(Comparator
+                .comparingInt((OrderTrackingEvent event) -> trackingStepIndex(event.getStatus()))
+                .thenComparing(OrderTrackingEvent::getEventTimestamp, Comparator.nullsLast(Comparator.naturalOrder()))
+            )
+            .map(event -> new OrderTrackingEventResponse(
+                event.getStatus().name(),
+                event.getDetail(),
+                event.getEventTimestamp()
+            ))
+            .toList();
+    }
+
+    private int trackingStepIndex(OrderStatus status) {
+        return TRACKING_FLOW.indexOf(status);
     }
 
     private record OrderLine(Product product, Integer quantity) {

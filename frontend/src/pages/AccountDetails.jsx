@@ -7,13 +7,20 @@ import PrimaryButton from "../components/checkout/PrimaryButton";
 import SavedAddressCard from "../components/checkout/SavedAddressCard";
 import SecondaryButton from "../components/checkout/SecondaryButton";
 import InputField from "../components/checkout/InputField";
-import SelectField from "../components/checkout/SelectField";
+import CandleSelectControl from "../components/CandleSelectControl";
 import StatusView from "../components/StatusView";
 import { useAddresses } from "../context/AddressContext";
 import { useAuth } from "../context/AuthContext";
 import { buildProfilePayload, createAccountForm } from "../utils/account";
 import { buildLegacyProfileAddressDraft } from "../utils/addressBook";
 import { formatApiError } from "../utils/format";
+
+const GENDER_OPTIONS = [
+  { value: "", label: "Prefer not to say" },
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Other" },
+];
 
 function AccountDetails() {
   const { user, refreshProfile, updateProfile } = useAuth();
@@ -242,18 +249,14 @@ function AccountDetails() {
                 />
               </InputField>
 
-              <SelectField label="Gender">
-                <select
+              <InputField label="Gender">
+                <CandleSelectControl
                   value={form.gender || ""}
-                  onChange={(event) => handleChange("gender", event.target.value)}
-                  className="checkout-input appearance-none pr-10"
-                >
-                  <option value="">Prefer not to say</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </SelectField>
+                  onChange={(nextValue) => handleChange("gender", nextValue)}
+                  options={GENDER_OPTIONS}
+                  placeholder="Prefer not to say"
+                />
+              </InputField>
 
               <InputField label="Date of birth">
                 <input

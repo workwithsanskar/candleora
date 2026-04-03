@@ -174,6 +174,51 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
         assertEquals(1, findQuantityForProduct(cartPayload.path("items"), 2));
     }
 
+    @Test
+    void cancellingOrderRefreshesCatalogStock() throws Exception {
+        String token = loginAsDemoUser();
+
+        int initialStock = getCatalogStock(1);
+
+        MvcResult orderResult = mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/orders")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "shippingName", "Demo Customer",
+                        "phone", "9999999999",
+                        "addressLine1", "123 Candle Street",
+                        "city", "Delhi",
+                        "state", "Delhi",
+                        "postalCode", "110001",
+                        "paymentMethod", "COD",
+                        "items", List.of(Map.of(
+                            "productId", 1,
+                            "quantity", 1
+                        ))
+                    )))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CONFIRMED"))
+            .andReturn();
+
+        long orderId = objectMapper.readTree(orderResult.getResponse().getContentAsString()).path("id").asLong();
+        assertEquals(initialStock - 1, getCatalogStock(1));
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/orders/{orderId}/cancel", orderId)
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(Map.of(
+                        "reason", "Changed my mind"
+                    )))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        assertEquals(initialStock, getCatalogStock(1));
+    }
+
     private int findQuantityForProduct(JsonNode items, int productId) {
         for (JsonNode item : items) {
             if (item.path("productId").asInt() == productId) {
@@ -181,5 +226,13 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
             }
         }
         return -1;
+    }
+
+    private int getCatalogStock(int productId) throws Exception {
+        MvcResult productResult = mockMvc.perform(MockMvcRequestBuilders.get("/api/products/{id}", productId))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        return objectMapper.readTree(productResult.getResponse().getContentAsString()).path("stock").asInt();
     }
 }

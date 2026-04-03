@@ -151,8 +151,8 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
       </div>
 
       <div className="space-y-[2px] pt-1.5 text-center">
-        <Link to={productPath}>
-          <h3 className="line-clamp-1 min-h-[22px] font-sans text-[15px] font-medium leading-[1.15] text-black">
+        <Link to={productPath} className="group/title block">
+          <h3 className="line-clamp-1 min-h-[22px] font-sans text-[15px] font-medium leading-[1.15] text-black transition group-hover/title:underline group-hover/title:underline-offset-4">
             {item.name}
           </h3>
         </Link>

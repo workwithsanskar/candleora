@@ -6,13 +6,13 @@ function Pagination({ page, totalPages, onPageChange }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[24px] border border-black/10 bg-white px-4 py-3 shadow-sm">
+    <div className="flex flex-col gap-3 rounded-[24px] border border-black/10 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-brand-muted">
         Page <span className="font-medium text-brand-dark">{page + 1}</span> of{" "}
         <span className="font-medium text-brand-dark">{totalPages}</span>
       </p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         <button
           type="button"
           className="rounded-2xl border border-black/10 px-4 py-2 text-sm text-brand-dark transition disabled:cursor-not-allowed disabled:opacity-50 hover:border-black/20"

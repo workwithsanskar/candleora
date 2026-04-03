@@ -36,6 +36,9 @@ public class ContactMessage {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column
+    private LocalDateTime adminReviewedAt;
+
     public Long getId() {
         return id;
     }
@@ -82,5 +85,13 @@ public class ContactMessage {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getAdminReviewedAt() {
+        return adminReviewedAt;
+    }
+
+    public void setAdminReviewedAt(LocalDateTime adminReviewedAt) {
+        this.adminReviewedAt = adminReviewedAt;
     }
 }

@@ -1,7 +1,16 @@
 import PropTypes from "prop-types";
+import CandleSelectControl from "./CandleSelectControl";
 
 const inputClassName =
   "h-[48px] w-full rounded-[16px] border border-black/12 bg-white px-4 text-[15px] text-black outline-none transition placeholder:text-black/35 focus:border-black/35 focus:ring-2 focus:ring-[#f3b33d]/20";
+
+const GENDER_OPTIONS = [
+  { value: "", label: "Select gender" },
+  { value: "Female", label: "Female" },
+  { value: "Male", label: "Male" },
+  { value: "Non-binary", label: "Non-binary" },
+  { value: "Prefer not to say", label: "Prefer not to say" },
+];
 
 function LabelText({ label, required = false }) {
   return (
@@ -27,20 +36,6 @@ function Section({ title, children }) {
       <h3 className="border-b border-black/8 pb-2 text-[15px] font-semibold text-black">{title}</h3>
       <div className="grid gap-3 sm:grid-cols-2">{children}</div>
     </div>
-  );
-}
-
-function SelectChevron() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 text-black/45"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M6 9L12 15L18 9" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 
@@ -124,23 +119,13 @@ function AccountProfileFields({
         </Field>
 
         <Field label="Gender">
-          <div className="relative">
-            <select
-              name="gender"
-              value={form.gender}
-              onChange={onChange}
-              className={`${inputClassName} appearance-none pr-11`}
-            >
-              <option value="">Select gender</option>
-              <option value="Female">Female</option>
-              <option value="Male">Male</option>
-              <option value="Non-binary">Non-binary</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-              <SelectChevron />
-            </div>
-          </div>
+          <CandleSelectControl
+            value={form.gender}
+            onChange={(nextValue) => onChange({ target: { name: "gender", value: nextValue } })}
+            options={GENDER_OPTIONS}
+            placeholder="Select gender"
+            buttonClassName="!h-[48px] !rounded-[16px] !border-black/12 !bg-white focus-visible:!border-black/35 focus-visible:!ring-[#f3b33d]/20"
+          />
         </Field>
 
         <Field label="Date of birth">

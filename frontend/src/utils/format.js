@@ -102,6 +102,7 @@ export function titleCase(value) {
 export function formatApiError(error) {
   const payload = error?.response?.data;
   const status = error?.response?.status;
+  const isAxiosRequest = Boolean(error?.config);
   const firebaseCode =
     typeof error?.code === "string" && error.code.startsWith("auth/")
       ? error.code
@@ -126,6 +127,18 @@ export function formatApiError(error) {
   }
 
   if (!error?.response) {
+    if (/cloudinary cloud name is not configured/i.test(message)) {
+      return "Proof uploads are not configured yet. Add VITE_CLOUDINARY_CLOUD_NAME to frontend/.env and try again.";
+    }
+
+    if (!isAxiosRequest && /proof upload failed|failed to fetch|networkerror when attempting to fetch/i.test(message)) {
+      return "We couldn't upload your proof files right now. Please check the Cloudinary setup and try again.";
+    }
+
+    if (!isAxiosRequest && message) {
+      return message;
+    }
+
     return "We couldn't reach CandleOra right now. The backend may be unavailable or waking up. Please try again in a moment.";
   }
 

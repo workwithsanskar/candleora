@@ -15,11 +15,12 @@ const emptyForm = {
   message: "",
 };
 
-const fieldLabelClassName = "text-[0.82rem] font-semibold uppercase tracking-[0.08em] text-black/68";
+const fieldLabelClassName =
+  "text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-black/68";
 const fieldInputClassName =
-  "h-[56px] w-full rounded-[22px] border border-black/15 bg-white px-5 text-[0.98rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+  "h-[48px] w-full rounded-[20px] border border-black/15 bg-white px-6 py-2.5 text-[0.94rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
 const fieldTextareaClassName =
-  "min-h-[108px] w-full rounded-[22px] border border-black/15 bg-white px-5 py-4 text-[0.98rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+  "min-h-[76px] w-full rounded-[20px] border border-black/15 bg-white px-6 py-3.5 text-[0.94rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
 
 function buildInitialForm(user) {
   return {
@@ -112,50 +113,53 @@ function ContactUs() {
 
   return (
     <div className="bg-white">
-      <section className="container-shell py-6 sm:py-8">
-        <div className="mx-auto max-w-[1140px] overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
-          <div className="bg-black px-6 py-3.5 sm:px-8 lg:px-9">
-            <h1 className="font-display text-heading-md font-semibold text-white">
+      <section className="mx-auto w-full max-w-[1520px] px-4 py-2.5 sm:px-6 sm:py-3.5 lg:px-10 lg:py-4">
+        <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
+          <div className="bg-black px-6 py-2.5 sm:px-8 lg:px-10 lg:py-3">
+            <h1 className="font-display text-[1.8rem] font-semibold leading-[1.05] text-white sm:text-[1.95rem]">
               Get In Touch With Us
             </h1>
           </div>
 
-          <div className="grid gap-5 px-6 py-5 sm:px-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-7 lg:px-9 lg:py-6">
-            <div className="space-y-4">
-              <div className="border-b border-black/10 pb-3">
-                <p className="text-base font-medium text-black">Phone Number</p>
-                <p className="mt-1 text-[0.98rem] leading-6 text-black/68">8999908639</p>
+          <div className="grid gap-3.5 px-6 py-3.5 sm:px-8 lg:grid-cols-[0.52fr_1.48fr] lg:gap-7 lg:px-10 lg:py-4">
+            <div className="space-y-2.5 pt-0.5">
+              <div className="border-b border-black/10 pb-2">
+                <p className="text-[0.98rem] font-medium text-black">Phone Number</p>
+                <p className="mt-0.5 text-[0.92rem] leading-5 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-3">
-                <p className="text-base font-medium text-black">Email Address</p>
-                <p className="mt-1 text-[0.98rem] leading-6 text-black/68">candleora25@gmail.com</p>
+              <div className="border-b border-black/10 pb-2">
+                <p className="text-[0.98rem] font-medium text-black">Email Address</p>
+                <p className="mt-0.5 text-[0.93rem] leading-5.5 text-black/68">
+                  candleora25@gmail.com
+                </p>
               </div>
 
               <div>
-                <p className="text-base font-medium text-black">Location</p>
-                <p className="mt-1 max-w-[340px] text-[0.98rem] leading-6 text-black/68">
+                <p className="text-[0.98rem] font-medium text-black">Location</p>
+                <p className="mt-0.5 max-w-[360px] text-[0.92rem] leading-5 text-black/68">
                   Nagpur, Maharashtra, India
                 </p>
               </div>
             </div>
 
             <div>
-              <div className="max-w-[620px]">
-                <h2 className="font-display text-heading-md font-semibold text-black">
+              <div className="max-w-[840px]">
+                <h2 className="font-display text-[1.7rem] font-semibold leading-[1.05] text-black sm:text-[1.85rem]">
                   Send us a message
                 </h2>
-                <p className="mt-1.5 max-w-[620px] text-sm leading-6 text-black/62">
+                <p className="mt-0.5 max-w-[760px] text-[0.9rem] leading-5 text-black/62">
                   Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
-                </p>
-                <p className="mt-2 text-[0.82rem] font-medium tracking-[0.02em] text-black/48">
-                  All fields below are required so we can reach you properly.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1.5">
+              <form
+                onSubmit={handleSubmit}
+                className="mt-2.5 rounded-[22px] border border-black/8 bg-[#fffdfa] p-3.5 sm:p-4 lg:p-4.5"
+              >
+                <div className="space-y-2.5">
+                <div className="grid gap-2.5 md:grid-cols-2">
+                  <label className="space-y-0.5">
                     <span className={fieldLabelClassName}>Your name *</span>
                     <input
                       type="text"
@@ -166,7 +170,7 @@ function ContactUs() {
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-1.5">
+                  <label className="space-y-0.5">
                     <span className={fieldLabelClassName}>Email address *</span>
                     <input
                       type="email"
@@ -179,8 +183,8 @@ function ContactUs() {
                   </label>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1.5">
+                <div className="grid gap-2.5 md:grid-cols-2">
+                  <label className="space-y-0.5">
                     <span className={fieldLabelClassName}>Phone number *</span>
                     <input
                       type="tel"
@@ -191,7 +195,7 @@ function ContactUs() {
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-1.5">
+                  <label className="space-y-0.5">
                     <span className={fieldLabelClassName}>Subject *</span>
                     <input
                       type="text"
@@ -204,10 +208,10 @@ function ContactUs() {
                   </label>
                 </div>
 
-                <label className="space-y-1.5">
+                <label className="space-y-0.5">
                   <span className={fieldLabelClassName}>Message *</span>
                   <textarea
-                    rows="3"
+                    rows="2"
                     name="message"
                     value={form.message}
                     onChange={handleChange}
@@ -219,9 +223,14 @@ function ContactUs() {
                 {error && <p className="text-sm font-semibold text-danger">{error}</p>}
                 {statusMessage && <p className="text-sm font-semibold text-success">{statusMessage}</p>}
 
-                <button type="submit" disabled={isSubmitting} className="btn btn-primary rounded-[12px] disabled:opacity-60">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary rounded-[12px] px-7 py-2.5 text-[0.94rem] disabled:opacity-60"
+                >
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
+                </div>
               </form>
             </div>
           </div>

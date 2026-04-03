@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useOutletContext } from "react-router-dom";
+import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
@@ -42,6 +43,26 @@ const blankAdjustmentValues = {
   note: "",
 };
 
+const INVENTORY_FILTER_OPTIONS = [
+  { value: "", label: "All products" },
+  { value: "in-stock", label: "Healthy stock" },
+  { value: "low-stock", label: "Low stock" },
+  { value: "out-of-stock", label: "Out of stock" },
+  { value: "reserved", label: "Reserved stock" },
+  { value: "hidden", label: "Hidden" },
+];
+
+const PRODUCT_FORM_ID = "admin-product-form";
+const ADMIN_FORM_SECTION_CLASS =
+  "rounded-[26px] border border-black/8 bg-[#fffaf3] p-3.5 shadow-[0_12px_28px_rgba(23,18,15,0.04)] sm:p-4";
+const ADMIN_FORM_SECTION_TITLE_CLASS =
+  "text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted";
+const ADMIN_FORM_SECTION_COPY_CLASS = "mt-1 text-[13px] leading-5 text-brand-muted";
+const ADMIN_FORM_TEXTAREA_CLASS =
+  `${FILTER_FIELD_CLASS} stealth-scrollbar h-auto min-h-[72px] resize-none py-2.5 leading-6`;
+const ADMIN_FORM_TOGGLE_CARD_CLASS =
+  "inline-flex items-center gap-3 rounded-[20px] border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark";
+
 function Products() {
   const { search } = useOutletContext();
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -58,6 +79,8 @@ function Products() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { isSubmitting },
   } = useForm({
     defaultValues: blankFormValues,
@@ -87,6 +110,8 @@ function Products() {
       resetAdjustment(blankAdjustmentValues);
     }
   }, [inventoryProduct, resetAdjustment]);
+
+  const selectedCategoryId = watch("categoryId");
 
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
@@ -241,6 +266,17 @@ function Products() {
     ];
   }, [productsQuery.data]);
 
+  const categoryOptions = useMemo(
+    () => [
+      { value: "", label: "All categories" },
+      ...((categoriesQuery.data ?? []).map((item) => ({
+        value: item.slug,
+        label: item.name,
+      }))),
+    ],
+    [categoriesQuery.data],
+  );
+
   const columns = useMemo(
     () => [
       {
@@ -385,26 +421,22 @@ function Products() {
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Category</label>
-          <select className={FILTER_FIELD_CLASS} value={category} onChange={(event) => setCategory(event.target.value)}>
-            <option value="">All categories</option>
-            {(categoriesQuery.data ?? []).map((item) => (
-              <option key={item.id} value={item.slug}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          <AdminSelect
+            value={category}
+            onChange={setCategory}
+            options={categoryOptions}
+            placeholder="All categories"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Inventory</label>
-          <select className={FILTER_FIELD_CLASS} value={stock} onChange={(event) => setStock(event.target.value)}>
-            <option value="">All products</option>
-            <option value="in-stock">Healthy stock</option>
-            <option value="low-stock">Low stock</option>
-            <option value="out-of-stock">Out of stock</option>
-            <option value="reserved">Reserved stock</option>
-            <option value="hidden">Hidden</option>
-          </select>
+          <AdminSelect
+            value={stock}
+            onChange={setStock}
+            options={INVENTORY_FILTER_OPTIONS}
+            placeholder="All products"
+          />
         </div>
       </FiltersBar>
 
@@ -445,12 +477,13 @@ function Products() {
           setEditingProduct(null);
         }}
         title={editingProduct ? `Edit ${editingProduct.name}` : "Add product"}
-        size="lg"
+        size="xl"
+        align="top"
         footer={
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              className={SECONDARY_BUTTON_CLASS}
+              className={`${SECONDARY_BUTTON_CLASS} min-w-[116px]`}
               onClick={() => {
                 setModalOpen(false);
                 setEditingProduct(null);
@@ -458,114 +491,185 @@ function Products() {
             >
               Cancel
             </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={isSubmitting} onClick={onSubmit}>
+            <button
+              type="submit"
+              form={PRODUCT_FORM_ID}
+              className={`${PRIMARY_BUTTON_CLASS} min-w-[148px]`}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Saving..." : editingProduct ? "Save product" : "Create product"}
             </button>
           </div>
         }
       >
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className={FILTER_LABEL_CLASS}>Product name</label>
-            <input className={FILTER_FIELD_CLASS} {...register("name")} />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Category</label>
-            <select className={FILTER_FIELD_CLASS} {...register("categoryId")}>
-              <option value="">Select a category</option>
-              {(categoriesQuery.data ?? []).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Slug</label>
-            <input className={FILTER_FIELD_CLASS} {...register("slug")} placeholder="auto-generated-if-left-empty" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>SKU</label>
-            <input className={FILTER_FIELD_CLASS} {...register("sku")} placeholder="auto-generated-if-left-empty" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Low-stock threshold</label>
-            <input type="number" className={FILTER_FIELD_CLASS} {...register("lowStockThreshold")} />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Price</label>
-            <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("price")} />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Original price</label>
-            <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("originalPrice")} />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Cost price</label>
-            <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("costPrice")} />
-          </div>
-
-          {!editingProduct ? (
-            <div className="flex flex-col gap-2">
-              <label className={FILTER_LABEL_CLASS}>Opening stock</label>
-              <input type="number" className={FILTER_FIELD_CLASS} {...register("stock")} />
+        <form id={PRODUCT_FORM_ID} className="space-y-3" onSubmit={onSubmit}>
+          <section className={ADMIN_FORM_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Catalog identity</p>
+                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
+                  Name the listing, place it in the right collection, and keep the customer-facing identifiers clean.
+                </p>
+              </div>
+              <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
+                {editingProduct ? "Editing live listing" : "New listing"}
+              </span>
             </div>
-          ) : (
-            <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Inventory snapshot</p>
-              <p className="mt-3 text-sm font-medium text-brand-dark">
-                On hand {editingProduct.stock} · Reserved {editingProduct.reservedStock}
-              </p>
-              <p className="mt-1 text-sm text-brand-muted">
-                Available {editingProduct.availableStock} · Threshold {editingProduct.lowStockThreshold}
-              </p>
-              <p className="mt-3 text-xs leading-5 text-brand-muted">
-                Use the dedicated inventory control action from the table to create logged stock adjustments.
-              </p>
+
+            <div className="mt-3 grid gap-3 lg:grid-cols-12">
+              <div className="flex flex-col gap-2 lg:col-span-12">
+                <label className={FILTER_LABEL_CLASS}>Product name</label>
+                <input className={FILTER_FIELD_CLASS} {...register("name")} />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className={FILTER_LABEL_CLASS}>Category</label>
+                <AdminSelect
+                  value={selectedCategoryId || ""}
+                  onChange={(value) => setValue("categoryId", value, { shouldDirty: true })}
+                  options={[
+                    { value: "", label: "Select a category" },
+                    ...((categoriesQuery.data ?? []).map((item) => ({
+                      value: String(item.id),
+                      label: item.name,
+                    }))),
+                  ]}
+                  placeholder="Select a category"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className={FILTER_LABEL_CLASS}>Slug</label>
+                <input className={FILTER_FIELD_CLASS} {...register("slug")} placeholder="auto-generated-if-left-empty" />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className={FILTER_LABEL_CLASS}>SKU</label>
+                <input className={FILTER_FIELD_CLASS} {...register("sku")} placeholder="auto-generated-if-left-empty" />
+              </div>
             </div>
-          )}
+          </section>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Occasion tag</label>
-            <input className={FILTER_FIELD_CLASS} {...register("occasionTag")} placeholder="Signature" />
+          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+            <section className={ADMIN_FORM_SECTION_CLASS}>
+              <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Commerce setup</p>
+              <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
+                Align pricing, thresholds, and stock before this product appears in the live catalog.
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Price</label>
+                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("price")} />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Original price</label>
+                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("originalPrice")} />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Cost price</label>
+                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("costPrice")} />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Low-stock threshold</label>
+                  <input type="number" className={FILTER_FIELD_CLASS} {...register("lowStockThreshold")} />
+                </div>
+
+                {!editingProduct ? (
+                  <div className="flex flex-col gap-2 sm:col-span-2">
+                    <label className={FILTER_LABEL_CLASS}>Opening stock</label>
+                    <input type="number" className={FILTER_FIELD_CLASS} {...register("stock")} />
+                  </div>
+                ) : (
+                  <div className="rounded-[24px] border border-black/8 bg-white p-4 sm:col-span-2">
+                    <p className={FILTER_LABEL_CLASS}>Inventory snapshot</p>
+                    <div className="mt-2.5 grid gap-3 sm:grid-cols-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">On hand</p>
+                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.stock}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">Reserved</p>
+                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.reservedStock}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">Available</p>
+                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.availableStock}</p>
+                      </div>
+                    </div>
+                    <p className="mt-2.5 text-xs leading-5 text-brand-muted">
+                      Logged stock changes should be made from the inventory workspace, not from this edit form.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className={ADMIN_FORM_SECTION_CLASS}>
+              <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Presentation details</p>
+              <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
+                Shape the way the listing reads on the storefront with concise merchandising details.
+              </p>
+
+              <div className="mt-3 grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className={FILTER_LABEL_CLASS}>Occasion tag</label>
+                    <input className={FILTER_FIELD_CLASS} {...register("occasionTag")} placeholder="Signature" />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className={FILTER_LABEL_CLASS}>Burn time</label>
+                    <input className={FILTER_FIELD_CLASS} {...register("burnTime")} placeholder="35-40 hours" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Scent notes</label>
+                  <input className={FILTER_FIELD_CLASS} {...register("scentNotes")} placeholder="Vanilla, amber, sandalwood" />
+                </div>
+
+                <label className={ADMIN_FORM_TOGGLE_CARD_CLASS}>
+                  <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("visible")} />
+                  Product is visible on the storefront
+                </label>
+              </div>
+            </section>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Burn time</label>
-            <input className={FILTER_FIELD_CLASS} {...register("burnTime")} placeholder="35-40 hours" />
-          </div>
+          <section className={ADMIN_FORM_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Story and media</p>
+                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
+                  Keep the description crisp and the media URLs ready for the catalog feed and merchandising blocks.
+                </p>
+              </div>
+              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                Copy + assets
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className={FILTER_LABEL_CLASS}>Scent notes</label>
-            <input className={FILTER_FIELD_CLASS} {...register("scentNotes")} placeholder="Vanilla, amber, sandalwood" />
-          </div>
+            <div className="mt-3 grid gap-3 xl:grid-cols-[0.96fr_1.04fr]">
+              <div className="flex flex-col gap-2">
+                <label className={FILTER_LABEL_CLASS}>Description</label>
+                <textarea rows="2" className={ADMIN_FORM_TEXTAREA_CLASS} {...register("description")} />
+              </div>
 
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className={FILTER_LABEL_CLASS}>Description</label>
-            <textarea rows="4" className={`${FILTER_FIELD_CLASS} h-auto min-h-[120px] py-3`} {...register("description")} />
-          </div>
-
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className={FILTER_LABEL_CLASS}>Image URLs</label>
-            <textarea
-              rows="5"
-              className={`${FILTER_FIELD_CLASS} h-auto min-h-[140px] py-3`}
-              {...register("imageUrls")}
-              placeholder="One image URL per line"
-            />
-          </div>
-
-          <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark md:col-span-2">
-            <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("visible")} />
-            Product is visible on the storefront
-          </label>
+              <div className="flex flex-col gap-2">
+                <label className={FILTER_LABEL_CLASS}>Image URLs</label>
+                <textarea
+                  rows="2"
+                  className={ADMIN_FORM_TEXTAREA_CLASS}
+                  {...register("imageUrls")}
+                  placeholder="One image URL per line"
+                />
+              </div>
+            </div>
+          </section>
         </form>
       </Modal>
 
@@ -573,9 +677,9 @@ function Products() {
         open={Boolean(inventoryProduct)}
         onClose={() => setInventoryProduct(null)}
         title={inventoryProduct ? `Inventory for ${inventoryProduct.name}` : "Inventory control"}
-        size="lg"
+        size="xl"
         footer={
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setInventoryProduct(null)}>
               Close
             </button>
@@ -586,22 +690,22 @@ function Products() {
         }
       >
         {inventoryProduct ? (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <InventoryCard label="On hand" value={inventoryProduct.stock} hint="Total units physically held" />
               <InventoryCard label="Reserved" value={inventoryProduct.reservedStock} hint="Held for pending payment" />
               <InventoryCard label="Available" value={inventoryProduct.availableStock} hint="Units sellable right now" />
               <InventoryCard label="Threshold" value={inventoryProduct.lowStockThreshold} hint="Low-stock trigger" />
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-              <div className="rounded-[24px] border border-black/8 bg-[#fbf7f0] p-5">
-                <h3 className="font-display text-2xl font-semibold text-brand-dark">Manual adjustment</h3>
-                <p className="mt-2 text-sm leading-6 text-brand-muted">
+            <div className="grid gap-3 xl:grid-cols-[0.76fr_1.24fr]">
+              <div className="rounded-[24px] border border-black/8 bg-[#fbf7f0] p-3.5">
+                <h3 className="font-display text-[1.75rem] font-semibold leading-none text-brand-dark">Manual adjustment</h3>
+                <p className="mt-1.5 text-sm leading-6 text-brand-muted">
                   Use positive numbers to add stock and negative numbers to remove damaged, missing, or counted units.
                 </p>
 
-                <form className="mt-5 space-y-4" onSubmit={onAdjustInventory}>
+                <form className="mt-3 space-y-2.5" onSubmit={onAdjustInventory}>
                   <div className="flex flex-col gap-2">
                     <label className={FILTER_LABEL_CLASS}>Adjustment amount</label>
                     <input
@@ -615,8 +719,8 @@ function Products() {
                   <div className="flex flex-col gap-2">
                     <label className={FILTER_LABEL_CLASS}>Reason</label>
                     <textarea
-                      rows="4"
-                      className={`${FILTER_FIELD_CLASS} h-auto min-h-[120px] py-3`}
+                      rows="3"
+                      className={`${FILTER_FIELD_CLASS} h-auto min-h-[74px] py-3`}
                       {...registerAdjustment("note")}
                       placeholder="Cycle count correction, damage write-off, supplier restock..."
                     />
@@ -625,12 +729,17 @@ function Products() {
               </div>
 
               <div className="rounded-[24px] border border-black/8 bg-white">
-                <div className="border-b border-black/8 px-5 py-4">
-                  <h3 className="font-display text-2xl font-semibold text-brand-dark">Movement history</h3>
+                <div className="border-b border-black/8 px-4 py-2.5">
+                  <h3 className="font-display text-[1.75rem] font-semibold leading-none text-brand-dark">Movement history</h3>
                   <p className="mt-1 text-sm text-brand-muted">Latest 25 inventory events for this product.</p>
                 </div>
 
-                <div className="max-h-[420px] overflow-y-auto px-5 py-4">
+                <div
+                  className="mini-cart-scroll-view stealth-scrollbar max-h-[272px] overflow-y-auto overscroll-contain scroll-smooth px-4 py-3"
+                  data-lenis-prevent="true"
+                  data-lenis-prevent-wheel="true"
+                  data-lenis-prevent-touch="true"
+                >
                   {inventoryHistoryQuery.isLoading ? (
                     <div className="space-y-3">
                       {Array.from({ length: 5 }).map((_, index) => (
@@ -640,7 +749,7 @@ function Products() {
                   ) : inventoryHistoryQuery.data?.length ? (
                     <div className="space-y-3">
                       {inventoryHistoryQuery.data.map((movement) => (
-                        <article key={movement.id} className="rounded-[22px] border border-black/8 bg-[#fcfaf6] p-4">
+                        <article key={movement.id} className="rounded-[22px] border border-black/8 bg-[#fcfaf6] p-3">
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                               <p className="font-medium text-brand-dark">{formatMovementType(movement.type)}</p>
@@ -721,10 +830,10 @@ function Products() {
 
 function InventoryCard({ label, value, hint }) {
   return (
-    <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+    <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">{label}</p>
-      <p className="mt-3 font-display text-3xl font-semibold text-brand-dark">{value}</p>
-      <p className="mt-2 text-sm text-brand-muted">{hint}</p>
+      <p className="mt-2 font-display text-[1.8rem] font-semibold leading-none text-brand-dark">{value}</p>
+      <p className="mt-1.5 text-xs leading-5 text-brand-muted">{hint}</p>
     </div>
   );
 }
@@ -795,3 +904,4 @@ function deltaClassName(value) {
 }
 
 export default Products;
+

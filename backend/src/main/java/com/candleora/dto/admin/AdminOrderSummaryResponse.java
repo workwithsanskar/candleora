@@ -12,6 +12,7 @@ public record AdminOrderSummaryResponse(
     String paymentStatus,
     String paymentMethod,
     int itemsCount,
-    Instant createdAt
+    Instant createdAt,
+    Instant adminReviewedAt
 ) {
 }

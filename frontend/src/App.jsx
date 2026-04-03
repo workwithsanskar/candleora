@@ -9,6 +9,8 @@ import RouteLoader from "./components/RouteLoader";
 import ScrollToTop from "./components/ScrollToTop";
 import { destroySmoothScroll, initSmoothScroll, resizeSmoothScroll } from "./utils/smoothScroll";
 
+const ENABLE_AURA_CHATBOT = false;
+
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const AccountDetails = lazy(() => import("./pages/AccountDetails"));
 const AuraChatbot = lazy(() => import("./components/AuraChatbot"));
@@ -17,7 +19,10 @@ const AdminAnalytics = lazy(() => import("./admin/pages/Analytics"));
 const AdminCustomers = lazy(() => import("./admin/pages/Customers"));
 const AdminCustomerDetail = lazy(() => import("./admin/pages/CustomerDetail"));
 const AdminDashboard = lazy(() => import("./admin/pages/Dashboard"));
+const AdminContactMessages = lazy(() => import("./admin/pages/ContactMessages"));
 const AdminOrders = lazy(() => import("./admin/pages/Orders"));
+const AdminReplacements = lazy(() => import("./admin/pages/Replacements"));
+const AdminReplacementDetail = lazy(() => import("./admin/pages/ReplacementDetail"));
 const AdminProducts = lazy(() => import("./admin/pages/Products"));
 const AdminCoupons = lazy(() => import("./admin/pages/Coupons"));
 const AdminSettings = lazy(() => import("./admin/pages/Settings"));
@@ -97,6 +102,9 @@ function AppShell() {
                 >
                   <Route index element={<AdminDashboard />} />
                   <Route path="orders" element={<AdminOrders />} />
+                  <Route path="contact-messages" element={<AdminContactMessages />} />
+                  <Route path="replacements" element={<AdminReplacements />} />
+                  <Route path="replacements/:replacementId" element={<AdminReplacementDetail />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="customers" element={<AdminCustomers />} />
@@ -180,14 +188,8 @@ function AppShell() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/track"
-                  element={
-                    <ProtectedRoute>
-                      <TrackOrder />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/track" element={<TrackOrder />} />
+                <Route path="/track/:id" element={<OrderDetail readOnly />} />
                 <Route
                   path="/orders"
                   element={
@@ -227,9 +229,11 @@ function AppShell() {
         </AnimatePresence>
 
         {!isAdminRoute ? (
-          <Suspense fallback={null}>
-            <AuraChatbot />
-          </Suspense>
+          ENABLE_AURA_CHATBOT ? (
+            <Suspense fallback={null}>
+              <AuraChatbot />
+            </Suspense>
+          ) : null
         ) : null}
 
         {!isAdminRoute ? <Footer /> : null}

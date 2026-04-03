@@ -73,7 +73,7 @@ function Login() {
 
   return (
     <section className="container-shell py-8 sm:py-10 lg:py-10">
-      <div className="mx-auto max-w-[1120px] overflow-hidden rounded-[18px] border border-[#e4ddd6] bg-white shadow-[0_20px_48px_rgba(42,28,18,0.07)] lg:grid lg:grid-cols-[0.98fr_1.02fr]">
+      <div className="balanced-split-layout mx-auto max-w-[1120px] overflow-hidden rounded-[18px] border border-[#e4ddd6] bg-white shadow-[0_20px_48px_rgba(42,28,18,0.07)] lg:grid lg:grid-cols-[0.98fr_1.02fr]">
         <div className="bg-white px-6 py-7 sm:px-9 sm:py-8 lg:px-10 lg:py-9">
           <div className="mx-auto max-w-[500px]">
             <div>
@@ -181,11 +181,11 @@ function Login() {
           </div>
         </div>
 
-        <div className="relative hidden min-h-[560px] border-l border-[#e8dfd6] lg:block">
+        <div className="balanced-split-media relative hidden min-h-[560px] border-l border-[#e8dfd6] lg:block">
           <img
             src={heroImage}
             alt="CandleOra candle arrangement"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="balanced-split-visual absolute inset-0"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[rgba(22,15,10,0.42)] via-[rgba(22,15,10,0.08)] to-[rgba(22,15,10,0.18)]" />
           <div className="absolute left-8 top-8 max-w-[320px]">

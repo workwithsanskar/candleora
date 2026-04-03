@@ -29,13 +29,7 @@ function Recommendations({ cards }) {
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.16)_0%,rgba(8,8,8,0.42)_100%)]" />
 
           <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 py-6 text-center text-white sm:px-8">
-            <div className="-mx-6 w-[calc(100%+3rem)] bg-black/42 py-3 backdrop-blur-[1px] sm:-mx-8 sm:w-[calc(100%+4rem)]">
-              <h3 className="text-[1.2rem] font-semibold uppercase tracking-[0.02em] text-white sm:text-[1.35rem] lg:text-[1.5rem]">
-                {card.title}
-              </h3>
-            </div>
-
-            <p className="mt-4 max-w-[16rem] text-[0.92rem] leading-[1.55] text-white/92 sm:max-w-[19rem] sm:text-[0.98rem]">
+            <p className="max-w-[16rem] text-[0.92rem] leading-[1.55] text-white/92 sm:max-w-[19rem] sm:text-[0.98rem]">
               {card.description}
             </p>
 

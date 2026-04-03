@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import CouponCodePanel from "../components/checkout/CouponCodePanel";
 import CheckoutTimerBanner from "../components/checkout/CheckoutTimerBanner";
 import PrimaryButton from "../components/checkout/PrimaryButton";
 import StickyCTA from "../components/checkout/StickyCTA";
@@ -7,6 +8,7 @@ import StatusView from "../components/StatusView";
 import { useAddresses } from "../context/AddressContext";
 import { useCart } from "../context/CartContext";
 import { useCheckoutSession } from "../context/CheckoutSessionContext";
+import { useCouponFlow } from "../hooks/useCouponFlow";
 import { orderApi, paymentApi } from "../services/api";
 import { formatApiError, formatCurrency } from "../utils/format";
 import { loadRazorpayScript } from "../utils/razorpay";
@@ -147,6 +149,8 @@ function CheckoutPayment() {
     hasActiveSession,
     session,
     startCartCheckout,
+    applyCoupon,
+    clearCoupon,
     setPaymentMethod,
     setWhatsappOptIn,
     refreshPromotions,
@@ -154,8 +158,22 @@ function CheckoutPayment() {
     rememberCompletedOrder,
     resetSession,
   } = useCheckoutSession();
+  const {
+    couponCode,
+    setCouponCode,
+    couponError,
+    isApplyingCoupon,
+    handleCouponApply,
+    handleCouponRemove,
+  } = useCouponFlow({
+    session,
+    items: session.items,
+    applyCoupon,
+    clearCoupon,
+  });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirectingToConfirmation, setIsRedirectingToConfirmation] = useState(false);
   const [openPanels, setOpenPanels] = useState({
     delivery: true,
     items: false,
@@ -163,6 +181,10 @@ function CheckoutPayment() {
   });
 
   useEffect(() => {
+    if (isRedirectingToConfirmation) {
+      return;
+    }
+
     if (hasActiveSession && session.items.length) {
       return;
     }
@@ -177,9 +199,21 @@ function CheckoutPayment() {
     }
 
     navigate("/cart", { replace: true });
-  }, [cartItems, hasActiveSession, hasHydrated, navigate, session.items.length, startCartCheckout]);
+  }, [
+    cartItems,
+    hasActiveSession,
+    hasHydrated,
+    isRedirectingToConfirmation,
+    navigate,
+    session.items.length,
+    startCartCheckout,
+  ]);
 
   useEffect(() => {
+    if (isRedirectingToConfirmation) {
+      return;
+    }
+
     if (!session.addressCompleted || !session.addressId) {
       navigate("/checkout/address", { replace: true });
       return;
@@ -188,7 +222,14 @@ function CheckoutPayment() {
     if (!session.paymentMethod) {
       setPaymentMethod("UPI");
     }
-  }, [navigate, session.addressCompleted, session.addressId, session.paymentMethod, setPaymentMethod]);
+  }, [
+    isRedirectingToConfirmation,
+    navigate,
+    session.addressCompleted,
+    session.addressId,
+    session.paymentMethod,
+    setPaymentMethod,
+  ]);
 
   const selectedAddress = useMemo(
     () => addresses.find((address) => String(address.id) === String(session.addressId)) ?? null,
@@ -242,6 +283,23 @@ function CheckoutPayment() {
       [key]: !current[key],
     }));
 
+  const proceedToOrderConfirmation = (order) => {
+    const confirmedOrderId = Number(order?.id ?? 0);
+
+    if (!confirmedOrderId) {
+      throw new Error("The order confirmation page needs a valid order id.");
+    }
+
+    setIsRedirectingToConfirmation(true);
+    rememberCompletedOrder(confirmedOrderId);
+    navigate(`/order-confirmation/${confirmedOrderId}`, {
+      replace: true,
+      state: { orderId: confirmedOrderId },
+    });
+    resetSession();
+    void refreshCart().catch(() => null);
+  };
+
   const placeOrder = async () => {
     if (!selectedAddress) {
       navigate("/checkout/address");
@@ -261,13 +319,7 @@ function CheckoutPayment() {
 
       if (!isOnlineSelected) {
         const order = await orderApi.createOrder(payload);
-        rememberCompletedOrder(order.id);
-        await refreshCart().catch(() => null);
-        resetSession();
-        navigate(`/order-confirmation/${order.id}`, {
-          replace: true,
-          state: { orderId: order.id },
-        });
+        proceedToOrderConfirmation(order);
         return;
       }
 
@@ -302,13 +354,7 @@ function CheckoutPayment() {
               razorpaySignature: response.razorpay_signature,
             });
 
-            rememberCompletedOrder(order.id);
-            await refreshCart().catch(() => null);
-            resetSession();
-            navigate(`/order-confirmation/${order.id}`, {
-              replace: true,
-              state: { orderId: order.id },
-            });
+            proceedToOrderConfirmation(order);
           } catch (verifyError) {
             setError(formatApiError(verifyError));
             setIsSubmitting(false);
@@ -327,6 +373,17 @@ function CheckoutPayment() {
       setIsSubmitting(false);
     }
   };
+
+  if (isRedirectingToConfirmation) {
+    return (
+      <section className="container-shell py-16">
+        <StatusView
+          title="Opening your confirmation"
+          message="Taking you to the order confirmation page now."
+        />
+      </section>
+    );
+  }
 
   if (!hasActiveSession || !session.items.length || (!selectedAddress && !isAddressesLoading)) {
     return (
@@ -480,6 +537,21 @@ function CheckoutPayment() {
               <p>{selectedAddress.phoneNumber}</p>
             </div>
           </SidePanel>
+
+          <CouponCodePanel
+            couponCode={couponCode}
+            isApplying={isApplyingCoupon}
+            couponError={couponError}
+            appliedCoupon={
+              session.coupon?.quote
+                ? { code: session.coupon.code, message: session.coupon.quote.message }
+                : null
+            }
+            onCouponCodeChange={setCouponCode}
+            onApplyCoupon={handleCouponApply}
+            onRemoveCoupon={handleCouponRemove}
+            subtotalAmount={session.priceSummary.subtotal}
+          />
 
           <SidePanel
             title={`Items (${session.items.length})`}

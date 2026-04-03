@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useOutletContext } from "react-router-dom";
+import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
@@ -39,6 +40,16 @@ const DURATION_MODE_OPTIONS = [
   { value: "CUSTOM", label: "Custom schedule" },
 ];
 const PAGE_SIZE = 8;
+const COUPON_FORM_ID = "admin-coupon-form";
+const COUPON_MODAL_SECTION_CLASS =
+  "rounded-[26px] border border-black/8 bg-[#fffaf3] p-3.5 shadow-[0_12px_28px_rgba(23,18,15,0.04)] sm:p-4";
+const COUPON_MODAL_SECTION_TITLE_CLASS =
+  "text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted";
+const COUPON_MODAL_SECTION_COPY_CLASS = "mt-1 text-[13px] leading-5 text-brand-muted";
+const COUPON_MULTISELECT_CLASS =
+  `${FILTER_FIELD_CLASS} stealth-scrollbar h-auto min-h-[96px] resize-none py-2.5`;
+const COUPON_TOGGLE_CARD_CLASS =
+  "inline-flex items-center gap-3 rounded-[20px] border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark";
 
 const blankFormValues = {
   code: "",
@@ -58,6 +69,19 @@ const blankFormValues = {
   productIds: [],
 };
 
+const COUPON_TYPE_FILTER_OPTIONS = [
+  { value: "ALL", label: "All coupon types" },
+  ...COUPON_TYPE_OPTIONS.map((option) => ({
+    value: option,
+    label: formatCouponType(option),
+  })),
+];
+
+const COUPON_STATUS_FILTER_OPTIONS = COUPON_STATUS_OPTIONS.map((option) => ({
+  value: option,
+  label: option === "ALL" ? "All statuses" : formatCouponStatus(option),
+}));
+
 function Coupons() {
   const { search } = useOutletContext();
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -73,6 +97,7 @@ function Coupons() {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { isSubmitting },
   } = useForm({
@@ -387,25 +412,22 @@ function Coupons() {
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Type</label>
-          <select className={FILTER_FIELD_CLASS} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            <option value="ALL">All coupon types</option>
-            {COUPON_TYPE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {formatCouponType(option)}
-              </option>
-            ))}
-          </select>
+          <AdminSelect
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={COUPON_TYPE_FILTER_OPTIONS}
+            placeholder="All coupon types"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Status</label>
-          <select className={FILTER_FIELD_CLASS} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            {COUPON_STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option === "ALL" ? "All statuses" : formatCouponStatus(option)}
-              </option>
-            ))}
-          </select>
+          <AdminSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={COUPON_STATUS_FILTER_OPTIONS}
+            placeholder="All statuses"
+          />
         </div>
       </FiltersBar>
 
@@ -439,12 +461,13 @@ function Coupons() {
           setEditingCoupon(null);
         }}
         title={editingCoupon ? `Edit ${editingCoupon.code}` : "Create coupon"}
-        size="lg"
+        size="xl"
+        align="top"
         footer={
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              className={SECONDARY_BUTTON_CLASS}
+              className={`${SECONDARY_BUTTON_CLASS} min-w-[116px]`}
               onClick={() => {
                 setModalOpen(false);
                 setEditingCoupon(null);
@@ -452,163 +475,218 @@ function Coupons() {
             >
               Cancel
             </button>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={isSubmitting} onClick={onSubmit}>
+            <button
+              type="submit"
+              form={COUPON_FORM_ID}
+              className={`${PRIMARY_BUTTON_CLASS} min-w-[150px]`}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Saving..." : editingCoupon ? "Save coupon" : "Create coupon"}
             </button>
           </div>
         }
       >
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Coupon code</label>
-            <input className={FILTER_FIELD_CLASS} {...register("code")} placeholder="SUMMER15" />
-          </div>
+        <form id={COUPON_FORM_ID} className="space-y-3" onSubmit={onSubmit}>
+          <section className={COUPON_MODAL_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Offer structure</p>
+                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
+                  Define the headline offer first, then decide where this campaign should be allowed to run.
+                </p>
+              </div>
+              <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
+                {editingCoupon ? "Editing live campaign" : "New campaign"}
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Discount type</label>
-            <select className={FILTER_FIELD_CLASS} {...register("type")}>
-              {COUPON_TYPE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {formatCouponType(option)}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="mt-3 grid gap-3 lg:grid-cols-12">
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className={FILTER_LABEL_CLASS}>Coupon code</label>
+                <input className={FILTER_FIELD_CLASS} {...register("code")} placeholder="SUMMER15" />
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Applies to</label>
-            <select className={FILTER_FIELD_CLASS} {...register("scope")}>
-              {COUPON_SCOPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex flex-col gap-2 lg:col-span-3">
+                <label className={FILTER_LABEL_CLASS}>Discount type</label>
+                <AdminSelect
+                  value={couponType}
+                  onChange={(value) => setValue("type", value, { shouldDirty: true })}
+                  options={COUPON_TYPE_OPTIONS.map((option) => ({
+                    value: option,
+                    label: formatCouponType(option),
+                  }))}
+                  placeholder="Select type"
+                />
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>
-              {couponType === "PERCENTAGE" ? "Discount percentage" : "Discount amount"}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              className={FILTER_FIELD_CLASS}
-              {...register("value")}
-              placeholder={couponType === "PERCENTAGE" ? "15" : "250"}
-            />
-          </div>
+              <div className="flex flex-col gap-2 lg:col-span-3">
+                <label className={FILTER_LABEL_CLASS}>Applies to</label>
+                <AdminSelect
+                  value={couponScope}
+                  onChange={(value) => setValue("scope", value, { shouldDirty: true })}
+                  options={COUPON_SCOPE_OPTIONS}
+                  placeholder="Select scope"
+                />
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Minimum order amount</label>
-            <input
-              type="number"
-              step="0.01"
-              className={FILTER_FIELD_CLASS}
-              {...register("minOrderAmount")}
-              placeholder="1500"
-            />
-          </div>
+              <div className="flex flex-col gap-2 lg:col-span-2">
+                <label className={FILTER_LABEL_CLASS}>
+                  {couponType === "PERCENTAGE" ? "Discount %" : "Discount value"}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={FILTER_FIELD_CLASS}
+                  {...register("value")}
+                  placeholder={couponType === "PERCENTAGE" ? "15" : "250"}
+                />
+              </div>
+            </div>
+          </section>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Maximum discount</label>
-            <input
-              type="number"
-              step="0.01"
-              className={FILTER_FIELD_CLASS}
-              {...register("maxDiscount")}
-              disabled={couponType !== "PERCENTAGE"}
-              placeholder={couponType === "PERCENTAGE" ? "500" : "Available for percentage coupons"}
-            />
-          </div>
+          <section className={COUPON_MODAL_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Guardrails and timing</p>
+                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
+                  Set the cart threshold, cap the reward, and choose how long the offer should stay active.
+                </p>
+              </div>
+              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                Rules + schedule
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <label className={FILTER_LABEL_CLASS}>Usage limit</label>
-            <input type="number" className={FILTER_FIELD_CLASS} {...register("usageLimit")} placeholder="200" />
-          </div>
+            <div className="mt-3 grid gap-3 lg:grid-cols-12">
+              <div className="flex flex-col gap-2 lg:col-span-3">
+                <label className={FILTER_LABEL_CLASS}>Minimum order amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={FILTER_FIELD_CLASS}
+                  {...register("minOrderAmount")}
+                  placeholder="1500"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-3">
+                <label className={FILTER_LABEL_CLASS}>Maximum discount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={FILTER_FIELD_CLASS}
+                  {...register("maxDiscount")}
+                  disabled={couponType !== "PERCENTAGE"}
+                  placeholder={couponType === "PERCENTAGE" ? "500" : "Available for percentage coupons"}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-2">
+                <label className={FILTER_LABEL_CLASS}>Usage limit</label>
+                <input type="number" className={FILTER_FIELD_CLASS} {...register("usageLimit")} placeholder="200" />
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className={FILTER_LABEL_CLASS}>Coupon duration</label>
+                <AdminSelect
+                  value={durationMode}
+                  onChange={(value) => setValue("durationMode", value, { shouldDirty: true })}
+                  options={DURATION_MODE_OPTIONS}
+                  placeholder="Select duration"
+                />
+              </div>
+
+              {durationMode === "CUSTOM" ? (
+                <>
+                  <div className="flex flex-col gap-2 lg:col-span-6">
+                    <label className={FILTER_LABEL_CLASS}>Starts at</label>
+                    <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("startsAt")} />
+                  </div>
+
+                  <div className="flex flex-col gap-2 lg:col-span-6">
+                    <label className={FILTER_LABEL_CLASS}>Ends at</label>
+                    <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("endsAt")} />
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-[24px] border border-black/8 bg-white p-4 lg:col-span-12">
+                  <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Schedule preview</p>
+                  <p className="mt-1.5 text-sm leading-6 text-brand-dark">{describeDurationMode(durationMode)}</p>
+                </div>
+              )}
+            </div>
+          </section>
 
           {couponScope === "CATEGORIES" ? (
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className={FILTER_LABEL_CLASS}>Eligible categories</label>
-              <select
-                multiple
-                className={`${FILTER_FIELD_CLASS} h-auto min-h-[150px] py-3`}
-                {...register("categorySlugs")}
-              >
-                {(categoriesQuery.data ?? []).map((category) => (
-                  <option key={category.slug} value={category.slug}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-brand-muted">Hold Ctrl or Cmd to select multiple categories.</p>
-            </div>
+            <section className={COUPON_MODAL_SECTION_CLASS}>
+              <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Targeted categories</p>
+              <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
+                Select the collections this coupon can unlock. Hold Ctrl or Cmd to choose multiple categories.
+              </p>
+
+              <div className="mt-3 flex flex-col gap-2">
+                <label className={FILTER_LABEL_CLASS}>Eligible categories</label>
+                <select multiple className={COUPON_MULTISELECT_CLASS} {...register("categorySlugs")}>
+                  {(categoriesQuery.data ?? []).map((category) => (
+                    <option key={category.slug} value={category.slug}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
           ) : null}
 
           {couponScope === "PRODUCTS" ? (
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className={FILTER_LABEL_CLASS}>Eligible products</label>
-              <select
-                multiple
-                className={`${FILTER_FIELD_CLASS} h-auto min-h-[180px] py-3`}
-                {...register("productIds")}
-              >
-                {(productOptionsQuery.data?.content ?? []).map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-brand-muted">Choose which candles or accessories can trigger this coupon.</p>
-            </div>
+            <section className={COUPON_MODAL_SECTION_CLASS}>
+              <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Targeted products</p>
+              <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
+                Choose the specific candles or accessories that should trigger this offer for customers.
+              </p>
+
+              <div className="mt-3 flex flex-col gap-2">
+                <label className={FILTER_LABEL_CLASS}>Eligible products</label>
+                <select multiple className={COUPON_MULTISELECT_CLASS} {...register("productIds")}>
+                  {(productOptionsQuery.data?.content ?? []).map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
           ) : null}
 
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className={FILTER_LABEL_CLASS}>Coupon duration</label>
-            <select className={FILTER_FIELD_CLASS} {...register("durationMode")}>
-              {DURATION_MODE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {durationMode === "CUSTOM" ? (
-            <>
-              <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Starts at</label>
-                <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("startsAt")} />
+          <section className={COUPON_MODAL_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Campaign rules</p>
+                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
+                  Turn on only the restrictions you want the checkout to enforce for this discount.
+                </p>
               </div>
-
-              <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Ends at</label>
-                <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("endsAt")} />
-              </div>
-            </>
-          ) : (
-            <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4 md:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Schedule preview</p>
-              <p className="mt-2 text-sm leading-6 text-brand-dark">{describeDurationMode(durationMode)}</p>
+              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                Checkout behavior
+              </span>
             </div>
-          )}
 
-          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
-            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark">
-              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("active")} />
-              Coupon is active
-            </label>
+            <div className="mt-3 grid gap-3 xl:grid-cols-3">
+              <label className={COUPON_TOGGLE_CARD_CLASS}>
+                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("active")} />
+                Coupon is active
+              </label>
 
-            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark">
-              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("firstOrderOnly")} />
-              First order only
-            </label>
+              <label className={COUPON_TOGGLE_CARD_CLASS}>
+                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("firstOrderOnly")} />
+                First order only
+              </label>
 
-            <label className="inline-flex items-center gap-3 rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-3 text-sm text-brand-dark md:col-span-2">
-              <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("oneUsePerCustomer")} />
-              Limit this coupon to one successful redemption per customer
-            </label>
-          </div>
+              <label className={COUPON_TOGGLE_CARD_CLASS}>
+                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("oneUsePerCustomer")} />
+                Limit this coupon to one successful redemption per customer
+              </label>
+            </div>
+          </section>
         </form>
       </Modal>
 
@@ -925,3 +1003,4 @@ function trimNumericValue(value) {
 }
 
 export default Coupons;
+

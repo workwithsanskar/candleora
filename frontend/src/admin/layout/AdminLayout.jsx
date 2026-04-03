@@ -6,6 +6,8 @@ import Topbar from "../components/Topbar";
 const titles = {
   "/admin": "Dashboard",
   "/admin/orders": "Orders",
+  "/admin/contact-messages": "Contact inbox",
+  "/admin/replacements": "Replacements",
   "/admin/products": "Products",
   "/admin/coupons": "Coupons",
   "/admin/customers": "Customers",
@@ -15,6 +17,7 @@ const titles = {
 
 const placeholders = {
   "/admin/orders": "Search orders by ID, customer, or email",
+  "/admin/contact-messages": "Search messages by name, email, phone, or subject",
   "/admin/products": "Search products by name, SKU, slug, or description",
   "/admin/coupons": "Search coupons by code or campaign status",
   "/admin/customers": "Search customers by name, email, or phone",
@@ -34,6 +37,10 @@ function AdminLayout() {
       return "Customer profile";
     }
 
+    if (location.pathname.startsWith("/admin/replacements/")) {
+      return "Review replacement";
+    }
+
     return titles[location.pathname] ?? "Admin";
   }, [location.pathname]);
   const placeholder = useMemo(() => {
@@ -44,6 +51,7 @@ function AdminLayout() {
     return placeholders[location.pathname] ?? "Search this workspace";
   }, [location.pathname]);
   const search = searchParams.get("q") ?? "";
+  const searchEnabled = Boolean(placeholders[location.pathname]);
 
   const handleSearchChange = (value) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -56,19 +64,20 @@ function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen md:flex">
+    <div className="min-h-screen md:grid md:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[272px_minmax(0,1fr)]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <Topbar
           title={title}
           placeholder={placeholder}
           searchValue={search}
           onSearchChange={handleSearchChange}
           onOpenSidebar={() => setSidebarOpen(true)}
+          searchEnabled={searchEnabled}
         />
 
-        <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8">
+        <main className="flex-1 px-4 py-5 sm:px-6 lg:px-6 xl:px-8">
           <Outlet context={{ search }} />
         </main>
       </div>

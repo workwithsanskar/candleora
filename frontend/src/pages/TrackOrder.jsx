@@ -24,14 +24,8 @@ function TrackOrder() {
     setError("");
 
     try {
-      const order = await orderApi.getOrder(trimmedOrderId);
-
-      if (String(order?.contactEmail ?? "").trim().toLowerCase() !== trimmedEmail) {
-        setError("That billing email does not match the selected order.");
-        return;
-      }
-
-      navigate(`/orders/${order.id}`);
+      const order = await orderApi.getTrackedOrder(trimmedOrderId, trimmedEmail);
+      navigate(`/track/${order.id}?email=${encodeURIComponent(trimmedEmail)}`);
     } catch (trackError) {
       setError(formatApiError(trackError));
     } finally {

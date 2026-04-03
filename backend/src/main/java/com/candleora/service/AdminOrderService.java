@@ -1,13 +1,17 @@
 package com.candleora.service;
 
 import com.candleora.dto.admin.AdminOrderDetailResponse;
+import com.candleora.dto.admin.AdminOrderTrackingEventRequest;
+import com.candleora.dto.admin.AdminOrderTrackingUpdateRequest;
 import com.candleora.dto.admin.AdminOrderStatusUpdateRequest;
 import com.candleora.dto.admin.AdminOrderSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
 import com.candleora.dto.order.OrderItemResponse;
+import com.candleora.dto.order.OrderTrackingEventResponse;
 import com.candleora.entity.CustomerOrder;
 import com.candleora.entity.OrderItem;
 import com.candleora.entity.OrderStatus;
+import com.candleora.entity.OrderTrackingEvent;
 import com.candleora.entity.PaymentStatus;
 import com.candleora.entity.Product;
 import com.candleora.repository.CustomerOrderRepository;
@@ -16,7 +20,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +41,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class AdminOrderService {
 
     private static final int MAX_PAGE_SIZE = 50;
+    private static final List<OrderStatus> TRACKING_FLOW = List.of(
+        OrderStatus.PENDING_PAYMENT,
+        OrderStatus.CONFIRMED,
+        OrderStatus.SHIPPED,
+        OrderStatus.OUT_FOR_DELIVERY,
+        OrderStatus.DELIVERED
+    );
 
     private final CustomerOrderRepository customerOrderRepository;
     private final ProductRepository productRepository;
@@ -55,10 +70,11 @@ public class AdminOrderService {
         String status,
         LocalDate startDate,
         LocalDate endDate,
+        Boolean reviewed,
         int page,
         int size
     ) {
-        Specification<CustomerOrder> specification = buildSpecification(search, status, startDate, endDate);
+        Specification<CustomerOrder> specification = buildSpecification(search, status, startDate, endDate, reviewed);
         Page<AdminOrderSummaryResponse> orderPage = customerOrderRepository.findAll(
             specification,
             PageRequest.of(
@@ -76,9 +92,16 @@ public class AdminOrderService {
         return toDetail(findOrder(id));
     }
 
+    public AdminOrderDetailResponse markReviewed(Long id) {
+        CustomerOrder order = findOrder(id);
+        applyAdminReviewed(order);
+        return toDetail(customerOrderRepository.save(order));
+    }
+
     @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
     public AdminOrderDetailResponse updateStatus(Long id, AdminOrderStatusUpdateRequest request) {
         CustomerOrder order = findOrder(id);
+        applyAdminReviewed(order);
         OrderStatus nextStatus = parseStatus(request.status());
         OrderStatus previousStatus = order.getStatus();
 
@@ -115,6 +138,14 @@ public class AdminOrderService {
             order.setCancellationReason(null);
         }
 
+        if (nextStatus == OrderStatus.DELIVERED) {
+            if (order.getDeliveredAt() == null) {
+                order.setDeliveredAt(Instant.now());
+            }
+        } else {
+            order.setDeliveredAt(null);
+        }
+
         if (isActiveStatus(nextStatus) && order.getEstimatedDeliveryStart() == null) {
             applyEstimatedDelivery(order);
         }
@@ -123,11 +154,27 @@ public class AdminOrderService {
         return toDetail(customerOrderRepository.save(order));
     }
 
+    @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
+    public AdminOrderDetailResponse updateTracking(Long id, AdminOrderTrackingUpdateRequest request) {
+        CustomerOrder order = findOrder(id);
+        applyAdminReviewed(order);
+
+        order.setTrackingNumber(trimToNull(request.trackingNumber()));
+        order.setCourierName(trimToNull(request.courierName()));
+        order.setTrackingUrl(trimToNull(request.trackingUrl()));
+
+        syncTrackingEvents(order, request.events());
+        advanceStatusFromTracking(order);
+
+        return toDetail(customerOrderRepository.save(order));
+    }
+
     private Specification<CustomerOrder> buildSpecification(
         String search,
         String status,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        Boolean reviewed
     ) {
         Specification<CustomerOrder> specification = Specification.where(null);
 
@@ -172,6 +219,16 @@ public class AdminOrderService {
             );
         }
 
+        if (Boolean.TRUE.equals(reviewed)) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                criteriaBuilder.isNotNull(root.get("adminReviewedAt"))
+            );
+        } else if (Boolean.FALSE.equals(reviewed)) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                criteriaBuilder.isNull(root.get("adminReviewedAt"))
+            );
+        }
+
         return specification;
     }
 
@@ -186,6 +243,14 @@ public class AdminOrderService {
         } catch (RuntimeException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status");
         }
+    }
+
+    private OrderStatus parseTrackingStatus(String status) {
+        OrderStatus parsedStatus = parseStatus(status);
+        if (!TRACKING_FLOW.contains(parsedStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported tracking step");
+        }
+        return parsedStatus;
     }
 
     private boolean isActiveStatus(OrderStatus status) {
@@ -227,6 +292,80 @@ public class AdminOrderService {
         }
     }
 
+    private void syncTrackingEvents(CustomerOrder order, List<AdminOrderTrackingEventRequest> events) {
+        Set<OrderStatus> retainedStatuses = new HashSet<>();
+
+        if (events != null) {
+            for (AdminOrderTrackingEventRequest eventRequest : events) {
+                OrderStatus status = parseTrackingStatus(eventRequest.status());
+                String detail = trimToNull(eventRequest.detail());
+                Instant timestamp = eventRequest.timestamp();
+
+                if (detail == null && timestamp == null) {
+                    continue;
+                }
+
+                retainedStatuses.add(status);
+                OrderTrackingEvent trackingEvent = order.getTrackingEvents().stream()
+                    .filter(existingEvent -> existingEvent.getStatus() == status)
+                    .findFirst()
+                    .orElseGet(() -> {
+                        OrderTrackingEvent createdEvent = new OrderTrackingEvent();
+                        createdEvent.setOrder(order);
+                        createdEvent.setStatus(status);
+                        order.getTrackingEvents().add(createdEvent);
+                        return createdEvent;
+                    });
+
+                trackingEvent.setDetail(detail);
+                trackingEvent.setEventTimestamp(timestamp);
+            }
+        }
+
+        order.getTrackingEvents().removeIf(event -> !retainedStatuses.contains(event.getStatus()));
+    }
+
+    private void advanceStatusFromTracking(CustomerOrder order) {
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return;
+        }
+
+        OrderStatus highestTrackedStatus = order.getTrackingEvents().stream()
+            .filter(event -> event.getEventTimestamp() != null)
+            .map(OrderTrackingEvent::getStatus)
+            .filter(TRACKING_FLOW::contains)
+            .max(Comparator.comparingInt(this::trackingStepIndex))
+            .orElse(null);
+
+        if (
+            highestTrackedStatus != null &&
+            trackingStepIndex(highestTrackedStatus) > trackingStepIndex(order.getStatus())
+        ) {
+            order.setStatus(highestTrackedStatus);
+        }
+
+        order.getTrackingEvents().stream()
+            .filter(event -> event.getStatus() == OrderStatus.DELIVERED)
+            .map(OrderTrackingEvent::getEventTimestamp)
+            .filter(timestamp -> timestamp != null)
+            .findFirst()
+            .ifPresent(order::setDeliveredAt);
+    }
+
+    private int trackingStepIndex(OrderStatus status) {
+        return TRACKING_FLOW.indexOf(status);
+    }
+
+    private String trimToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private void applyAdminReviewed(CustomerOrder order) {
+        if (order.getAdminReviewedAt() == null) {
+            order.setAdminReviewedAt(Instant.now());
+        }
+    }
+
     private AdminOrderSummaryResponse toSummary(CustomerOrder order) {
         return new AdminOrderSummaryResponse(
             order.getId(),
@@ -237,7 +376,8 @@ public class AdminOrderService {
             order.getPaymentStatus().name(),
             order.getPaymentMethod(),
             order.getItems().size(),
-            order.getCreatedAt()
+            order.getCreatedAt(),
+            order.getAdminReviewedAt()
         );
     }
 
@@ -262,6 +402,11 @@ public class AdminOrderService {
             order.getCreatedAt(),
             order.getEstimatedDeliveryStart(),
             order.getEstimatedDeliveryEnd(),
+            order.getTrackingNumber(),
+            order.getCourierName(),
+            order.getTrackingUrl(),
+            order.getDeliveredAt(),
+            order.getAdminReviewedAt(),
             order.getCancelledAt(),
             order.getCancellationReason(),
             order.getAddressLine1(),
@@ -279,7 +424,22 @@ public class AdminOrderService {
                     item.getQuantity(),
                     item.getPrice()
                 ))
-                .toList()
+                .toList(),
+            buildTrackingEvents(order)
         );
+    }
+
+    private List<OrderTrackingEventResponse> buildTrackingEvents(CustomerOrder order) {
+        return order.getTrackingEvents().stream()
+            .sorted(Comparator
+                .comparingInt((OrderTrackingEvent event) -> trackingStepIndex(event.getStatus()))
+                .thenComparing(OrderTrackingEvent::getEventTimestamp, Comparator.nullsLast(Comparator.naturalOrder()))
+            )
+            .map(event -> new OrderTrackingEventResponse(
+                event.getStatus().name(),
+                event.getDetail(),
+                event.getEventTimestamp()
+            ))
+            .toList();
     }
 }

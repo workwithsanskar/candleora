@@ -35,12 +35,12 @@ function UnderConstruction() {
 
   return (
     <section className="container-shell py-12 sm:py-16 lg:py-20">
-      <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-        <div className="relative overflow-hidden rounded-[24px] bg-black shadow-[0_18px_40px_rgba(0,0,0,0.14)]">
+      <div className="balanced-split-layout grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="balanced-split-media relative overflow-hidden rounded-[24px] bg-black shadow-[0_18px_40px_rgba(0,0,0,0.14)]">
           <img
             src={feature.image}
             alt={feature.title}
-            className="min-h-[320px] w-full object-cover sm:min-h-[420px]"
+            className="balanced-split-visual min-h-[320px] sm:min-h-[420px]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-[rgba(255,255,255,0.28)] px-6 py-4 backdrop-blur-[2px]">

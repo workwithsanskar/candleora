@@ -17,6 +17,8 @@ function Modal({
   maxWidthClass = "max-w-[920px]",
   bodyScrollable = true,
   bodyClassName = "",
+  headerClassName = "",
+  titleClassName = "",
   children,
 }) {
   useEffect(() => {
@@ -76,15 +78,19 @@ function Modal({
         onClick={onClose}
       />
 
-      <div className="relative flex min-h-full items-start justify-center overflow-y-auto px-4 py-4 sm:py-6">
+      <div className="mini-cart-scroll-view stealth-scrollbar relative flex min-h-full items-start justify-center overflow-y-auto overscroll-contain scroll-smooth px-4 py-4 sm:py-6">
         <div
           className={`relative z-[1] my-auto w-full overflow-hidden rounded-[34px] border border-[#f2d29a] bg-white shadow-[0_28px_100px_rgba(26,26,26,0.2)] ${maxWidthClass}`.trim()}
         >
-          <div className="sticky top-0 z-[4] border-b border-[#f2d29a] bg-[#fff5e3]/95 px-5 py-4 backdrop-blur sm:px-8 sm:py-5">
+          <div
+            className={`sticky top-0 z-[4] border-b border-[#f2d29a] bg-[#fff5e3]/95 px-5 py-4 backdrop-blur sm:px-8 sm:py-5 ${headerClassName}`.trim()}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 {kicker ? <p className="checkout-kicker">{kicker}</p> : null}
-                <h2 className="mt-2 text-[clamp(1.95rem,5vw,2.8rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-[#1A1A1A]">
+                <h2
+                  className={`mt-2 text-[clamp(1.95rem,5vw,2.8rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-[#1A1A1A] ${titleClassName}`.trim()}
+                >
                   {title}
                 </h2>
                 {description ? (
@@ -131,6 +137,8 @@ Modal.propTypes = {
   maxWidthClass: PropTypes.string,
   bodyScrollable: PropTypes.bool,
   bodyClassName: PropTypes.string,
+  headerClassName: PropTypes.string,
+  titleClassName: PropTypes.string,
   children: PropTypes.node.isRequired,
 };
 
@@ -140,6 +148,8 @@ Modal.defaultProps = {
   maxWidthClass: "max-w-[920px]",
   bodyScrollable: true,
   bodyClassName: "",
+  headerClassName: "",
+  titleClassName: "",
 };
 
 export default Modal;

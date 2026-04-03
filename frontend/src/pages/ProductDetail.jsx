@@ -105,8 +105,6 @@ function normalizeReviewSummary(payload, fallbackRating) {
   };
 }
 
-const packOptions = [4, 6, 8];
-
 function createInitialReviewForm(user = null) {
   return {
     reviewerName: user?.name ?? "",
@@ -140,7 +138,6 @@ function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [selectedPack, setSelectedPack] = useState(4);
   const [reviewSummary, setReviewSummary] = useState(() => normalizeReviewSummary(null, 4.8));
   const [reviewForm, setReviewForm] = useState(() => createInitialReviewForm(user));
   const [reviewError, setReviewError] = useState("");
@@ -177,7 +174,6 @@ function ProductDetail() {
         setProduct(normalized);
         setSelectedImage(normalized.imageUrls[0]);
         setQuantity(1);
-        setSelectedPack(4);
         setRelatedProducts(relatedResponse ?? []);
         setReviewSummary(normalizeReviewSummary(reviewResponse, normalized.rating));
       })
@@ -295,26 +291,15 @@ function ProductDetail() {
     `${product.category?.name ?? "Candle collection"} finish suitable for styling shelves and tables.`,
     `Scent notes: ${product.scentNotes}.`,
     `Estimated burn time: ${product.burnTime}.`,
+    "Available pack sizes: 4, 6, and 8 pieces.",
   ];
   const lowStockThreshold = Number(product.lowStockThreshold ?? 10);
   const showLowStock = Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= lowStockThreshold;
 
   return (
     <section className="container-shell py-7 pb-28 sm:py-8 sm:pb-32 lg:pb-10">
-      <div className="mb-5 flex flex-wrap items-center gap-2 text-[12px] text-black/42">
-        <Link to="/" className="transition hover:text-black">
-          Home
-        </Link>
-        <span>/</span>
-        <Link to="/shop" className="transition hover:text-black">
-          Shop
-        </Link>
-        <span>/</span>
-        <span className="text-black/62">{product.name}</span>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:items-start lg:gap-10">
-        <div className="order-2 grid grid-cols-3 gap-3 lg:order-1 lg:grid-cols-1 lg:gap-4">
+      <div className="balanced-split-layout grid gap-5 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:gap-10">
+        <div className="order-2 grid grid-cols-3 gap-3 self-start lg:order-1 lg:grid-cols-1 lg:gap-4 lg:self-start">
           {product.imageUrls.map((imageUrl) => (
             <button
               key={imageUrl}
@@ -342,8 +327,8 @@ function ProductDetail() {
           ))}
         </div>
 
-        <div className="order-1 lg:order-2">
-          <div className="overflow-hidden rounded-[4px] border border-black/10 bg-white">
+        <div className="balanced-split-media order-1 lg:order-2">
+          <div className="balanced-split-frame overflow-hidden rounded-[4px] border border-black/10 bg-white">
             <img
               src={heroImage.src}
               srcSet={heroImage.srcSet}
@@ -353,7 +338,7 @@ function ProductDetail() {
               decoding="async"
               fetchPriority="high"
               onError={(event) => applyImageFallback(event, fallbackProductImage)}
-              className="aspect-[0.8] w-full object-cover"
+              className="balanced-split-visual aspect-[0.8] lg:aspect-auto"
             />
           </div>
         </div>
@@ -421,26 +406,6 @@ function ProductDetail() {
 
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div className="space-y-1.5">
-                <p className="text-sm font-semibold text-black">Pack of</p>
-                <div className="flex flex-wrap gap-3">
-                  {packOptions.map((pack) => (
-                    <button
-                      key={pack}
-                      type="button"
-                      onClick={() => setSelectedPack(pack)}
-                      className={`inline-flex min-w-[68px] items-center justify-center rounded-full border px-5 py-2 text-sm font-medium transition ${
-                        selectedPack === pack
-                          ? "border-black bg-black text-white"
-                          : "border-black/12 bg-white text-black hover:border-black/30"
-                      }`}
-                    >
-                      {pack}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-1.5">
                 <p className="text-sm font-semibold text-black">Quantity</p>
                 <div className="inline-flex items-center rounded-full border border-black/10 bg-white">

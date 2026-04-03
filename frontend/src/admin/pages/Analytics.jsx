@@ -17,10 +17,11 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "../components/ChartCard";
+import AdminDatePicker from "../components/AdminDatePicker";
 import FiltersBar from "../components/FiltersBar";
 import KPICard from "../components/KPICard";
 import adminApi from "../services/adminApi";
-import { FILTER_FIELD_CLASS, FILTER_LABEL_CLASS, formatCurrencyAxisTick, resolveQuickRange } from "../helpers";
+import { FILTER_LABEL_CLASS, formatCurrencyAxisTick, resolveQuickRange } from "../helpers";
 import { formatApiError, formatCurrency, formatDateTime } from "../../utils/format";
 
 const quickRanges = [
@@ -129,11 +130,11 @@ function Analytics() {
       >
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Start date</label>
-          <input type="date" className={FILTER_FIELD_CLASS} value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+          <AdminDatePicker value={startDate} onChange={setStartDate} maxDate={endDate} />
         </div>
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>End date</label>
-          <input type="date" className={FILTER_FIELD_CLASS} value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+          <AdminDatePicker value={endDate} onChange={setEndDate} minDate={startDate} />
         </div>
       </FiltersBar>
 

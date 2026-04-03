@@ -7,6 +7,7 @@ import CheckoutPayment from "./CheckoutPayment";
 
 const {
   mockLoadRazorpayScript,
+  mockCouponApi,
   mockOrderApi,
   mockPaymentApi,
   mockRememberCompletedOrder,
@@ -16,12 +17,18 @@ const {
   mockSetPaymentMethod,
   mockSetWhatsappOptIn,
   mockStartCartCheckout,
+  mockApplyCoupon,
+  mockClearCoupon,
   mockUseAuth,
   mockUseAddresses,
   mockUseCart,
   mockUseCheckoutSession,
 } = vi.hoisted(() => ({
   mockLoadRazorpayScript: vi.fn(),
+  mockCouponApi: {
+    getOffers: vi.fn(),
+    validate: vi.fn(),
+  },
   mockOrderApi: {
     createOrder: vi.fn(),
   },
@@ -36,6 +43,8 @@ const {
   mockSetPaymentMethod: vi.fn(),
   mockSetWhatsappOptIn: vi.fn(),
   mockStartCartCheckout: vi.fn(),
+  mockApplyCoupon: vi.fn(),
+  mockClearCoupon: vi.fn(),
   mockUseAuth: vi.fn(),
   mockUseAddresses: vi.fn(),
   mockUseCart: vi.fn(),
@@ -43,6 +52,7 @@ const {
 }));
 
 vi.mock("../services/api", () => ({
+  couponApi: mockCouponApi,
   orderApi: mockOrderApi,
   paymentApi: mockPaymentApi,
 }));
@@ -111,6 +121,8 @@ describe("CheckoutPayment", () => {
 
   beforeEach(() => {
     mockLoadRazorpayScript.mockReset();
+    mockCouponApi.getOffers.mockReset();
+    mockCouponApi.validate.mockReset();
     mockOrderApi.createOrder.mockReset();
     mockPaymentApi.createRazorpayOrder.mockReset();
     mockPaymentApi.verifyRazorpayPayment.mockReset();
@@ -121,12 +133,15 @@ describe("CheckoutPayment", () => {
     mockSetPaymentMethod.mockReset();
     mockSetWhatsappOptIn.mockReset();
     mockStartCartCheckout.mockReset();
+    mockApplyCoupon.mockReset();
+    mockClearCoupon.mockReset();
     mockUseAuth.mockReset();
     mockUseAddresses.mockReset();
     mockUseCart.mockReset();
     mockUseCheckoutSession.mockReset();
 
     mockLoadRazorpayScript.mockResolvedValue(undefined);
+    mockCouponApi.getOffers.mockResolvedValue([]);
     mockBuildOrderPayload.mockReturnValue({ source: "payload" });
     mockRefreshCart.mockResolvedValue(undefined);
     mockUseCart.mockReturnValue({
@@ -164,6 +179,8 @@ describe("CheckoutPayment", () => {
         ...sessionOverrides,
       },
       startCartCheckout: mockStartCartCheckout,
+      applyCoupon: mockApplyCoupon,
+      clearCoupon: mockClearCoupon,
       setPaymentMethod: mockSetPaymentMethod,
       setWhatsappOptIn: mockSetWhatsappOptIn,
       refreshPromotions: vi.fn(),

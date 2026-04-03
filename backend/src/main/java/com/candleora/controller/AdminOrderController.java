@@ -1,6 +1,7 @@
 package com.candleora.controller;
 
 import com.candleora.dto.admin.AdminOrderDetailResponse;
+import com.candleora.dto.admin.AdminOrderTrackingUpdateRequest;
 import com.candleora.dto.admin.AdminOrderStatusUpdateRequest;
 import com.candleora.dto.admin.AdminOrderSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
@@ -34,15 +35,21 @@ public class AdminOrderController {
         @RequestParam(required = false) String status,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+        @RequestParam(required = false) Boolean reviewed,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        return adminOrderService.getOrders(search, status, startDate, endDate, page, size);
+        return adminOrderService.getOrders(search, status, startDate, endDate, reviewed, page, size);
     }
 
     @GetMapping("/{id}")
     public AdminOrderDetailResponse getOrder(@PathVariable Long id) {
         return adminOrderService.getOrder(id);
+    }
+
+    @PutMapping("/{id}/reviewed")
+    public AdminOrderDetailResponse markReviewed(@PathVariable Long id) {
+        return adminOrderService.markReviewed(id);
     }
 
     @PutMapping("/{id}/status")
@@ -51,5 +58,13 @@ public class AdminOrderController {
         @Valid @RequestBody AdminOrderStatusUpdateRequest request
     ) {
         return adminOrderService.updateStatus(id, request);
+    }
+
+    @PutMapping("/{id}/tracking")
+    public AdminOrderDetailResponse updateTracking(
+        @PathVariable Long id,
+        @Valid @RequestBody AdminOrderTrackingUpdateRequest request
+    ) {
+        return adminOrderService.updateTracking(id, request);
     }
 }

@@ -1,0 +1,8 @@
+ALTER TABLE IF EXISTS orders
+    ADD COLUMN IF NOT EXISTS admin_reviewed_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE IF EXISTS replacement_requests
+    ADD COLUMN IF NOT EXISTS admin_reviewed_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE IF EXISTS contact_messages
+    ADD COLUMN IF NOT EXISTS admin_reviewed_at TIMESTAMP;

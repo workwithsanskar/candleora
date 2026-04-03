@@ -41,16 +41,13 @@ function FooterLink({ to, children, onClick }) {
 
 function FooterExternalLink({ href, children }) {
   const isMailLink = href.startsWith("mailto:");
-  const itemClassName = isMailLink
-    ? "group flex items-center text-[15px] font-normal leading-[20px] text-[#BDBDBD] transition-colors duration-200 hover:text-white lg:whitespace-nowrap"
-    : footerInteractiveItemClassName;
 
   return (
     <a
       href={href}
       target={isMailLink ? undefined : "_blank"}
       rel={isMailLink ? undefined : "noreferrer"}
-      className={itemClassName}
+      className={footerInteractiveItemClassName}
     >
       <span className="transition-transform duration-200 group-hover:translate-x-[2px]">
         {children}
@@ -93,13 +90,17 @@ function Footer() {
       <div className="w-full bg-[linear-gradient(180deg,#070707_0%,#000000_18%,#000000_100%)]">
         <div className="mx-auto w-full max-w-[1440px] px-6 py-10 sm:px-10 sm:py-12 lg:pl-[74px] lg:pr-[49px] lg:pt-[42px] lg:pb-[68px]">
           <div className="grid gap-y-10 lg:grid-cols-[190px_942px] lg:gap-x-[170px]">
-            <div className="flex flex-col gap-7 lg:pt-[92px]">
-              <BrandLogo tone="light" className="max-w-[190px]" imageClassName="opacity-95" />
-              <p className="text-[15px] leading-[19px] text-[#676767] sm:text-[16px]">
-                Copyright {"\u00A9"} 2025
-                <br />
-                candleora.in
-              </p>
+            <div className="flex flex-col items-center lg:pt-[92px]">
+              <div className="flex w-fit flex-col items-center">
+                <BrandLogo
+                  tone="light"
+                  className="max-w-[190px]"
+                  imageClassName="opacity-95"
+                />
+                <p className="mt-4 text-center text-[15px] leading-[19px] text-[#676767] sm:text-[16px]">
+                  Copyright {"\u00A9"} 2026
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-y-8 sm:grid-cols-2 sm:gap-x-10 lg:flex lg:w-[942px] lg:gap-0 lg:items-start">

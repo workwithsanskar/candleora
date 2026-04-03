@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import AdminDatePicker from "../components/AdminDatePicker";
 import DataTable from "../components/DataTable";
+import AdminSelect from "../components/AdminSelect";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
@@ -17,10 +19,98 @@ import {
   statusClassName,
 } from "../helpers";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { formatApiError, formatCurrency, formatDate } from "../../utils/format";
+import { formatApiError, formatCurrency, formatDate, formatDateTime } from "../../utils/format";
+
+const TRACKING_STEPS = [
+  {
+    status: "PENDING_PAYMENT",
+    label: "Awaiting payment",
+    placeholder: "Add the first update customers should see after the order is created.",
+  },
+  {
+    status: "CONFIRMED",
+    label: "Confirmed",
+    placeholder: "Example: Order verified and moved to the CandleOra packing table.",
+  },
+  {
+    status: "SHIPPED",
+    label: "Shipped",
+    placeholder: "Example: Handed to the in-house rider and left the studio.",
+  },
+  {
+    status: "OUT_FOR_DELIVERY",
+    label: "Out for delivery",
+    placeholder: "Example: Rider is on the final route and should arrive soon.",
+  },
+  {
+    status: "DELIVERED",
+    label: "Delivered",
+    placeholder: "Example: Package delivered to the customer successfully.",
+  },
+];
+
+const ORDER_STATUS_SELECT_OPTIONS = [
+  { value: "ALL", label: "All statuses" },
+  ...ORDER_STATUS_OPTIONS.map((option) => ({
+    value: option,
+    label: formatAdminStatus(option),
+  })),
+];
+
+const TRACKING_TEXTAREA_CLASS =
+  "min-h-[104px] w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/20";
+
+function toLocalDateTimeInput(value) {
+  if (!value) {
+    return "";
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  const timezoneOffsetMs = parsedDate.getTimezoneOffset() * 60000;
+  return new Date(parsedDate.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
+}
+
+function toTrackingForm(detail) {
+  const trackingEvents = Array.isArray(detail?.trackingEvents) ? detail.trackingEvents : [];
+  const eventMap = new Map(
+    trackingEvents.map((event) => [String(event.status ?? "").toUpperCase(), event]),
+  );
+
+  return {
+    trackingNumber: detail?.trackingNumber ?? "",
+    courierName: detail?.courierName ?? "",
+    trackingUrl: detail?.trackingUrl ?? "",
+    events: TRACKING_STEPS.map((step) => {
+      const event = eventMap.get(step.status);
+      return {
+        status: step.status,
+        timestamp: toLocalDateTimeInput(event?.timestamp),
+        detail: event?.detail ?? "",
+      };
+    }),
+  };
+}
+
+function buildTrackingPayload(form) {
+  return {
+    trackingNumber: form.trackingNumber.trim(),
+    courierName: form.courierName.trim(),
+    trackingUrl: form.trackingUrl.trim(),
+    events: form.events.map((event) => ({
+      status: event.status,
+      timestamp: event.timestamp ? new Date(event.timestamp).toISOString() : null,
+      detail: event.detail.trim() || null,
+    })),
+  };
+}
 
 function Orders() {
   const { search } = useOutletContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   const debouncedSearch = useDebouncedValue(search, 300);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
@@ -29,10 +119,16 @@ function Orders() {
   const [endDate, setEndDate] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [detailStatus, setDetailStatus] = useState("");
+  const [trackingForm, setTrackingForm] = useState(() => toTrackingForm());
 
   useEffect(() => {
     setPage(0);
   }, [debouncedSearch, status, startDate, endDate]);
+
+  useEffect(() => {
+    setDetailStatus("");
+    setTrackingForm(toTrackingForm());
+  }, [selectedOrderId]);
 
   const ordersQuery = useQuery({
     queryKey: ["admin", "orders", debouncedSearch, status, startDate, endDate, page],
@@ -54,10 +150,11 @@ function Orders() {
   });
 
   useEffect(() => {
-    if (orderDetailQuery.data?.status) {
-      setDetailStatus(orderDetailQuery.data.status);
+    if (orderDetailQuery.data) {
+      setDetailStatus(orderDetailQuery.data.status ?? "");
+      setTrackingForm(toTrackingForm(orderDetailQuery.data));
     }
-  }, [orderDetailQuery.data?.status]);
+  }, [orderDetailQuery.data]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, nextStatus }) => adminApi.updateOrderStatus(id, nextStatus),
@@ -68,9 +165,66 @@ function Orders() {
         queryClient.invalidateQueries({ queryKey: ["admin", "overview"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "sales"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "revenue"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "sidebar-badge", "orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] }),
       ]);
       if (response?.id) {
         queryClient.setQueryData(["admin", "order", response.id], response);
+      }
+    },
+    onError: (error) => {
+      toast.error(formatApiError(error));
+    },
+  });
+
+  const markReviewedMutation = useMutation({
+    mutationFn: (id) => adminApi.markOrderReviewed(id),
+    onSuccess: async (response) => {
+      if (response?.id) {
+        queryClient.setQueryData(["admin", "order", response.id], response);
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "sidebar-badge", "orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] }),
+      ]);
+    },
+    onError: (error) => {
+      toast.error(formatApiError(error));
+    },
+  });
+
+  useEffect(() => {
+    const focusOrderId = searchParams.get("focusOrder");
+    if (!focusOrderId) {
+      return;
+    }
+
+    const numericId = Number(focusOrderId);
+    setSelectedOrderId(numericId);
+    markReviewedMutation.mutate(numericId);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("focusOrder");
+    setSearchParams(nextParams, { replace: true });
+  }, [markReviewedMutation, searchParams, setSearchParams]);
+
+  const updateTrackingMutation = useMutation({
+    mutationFn: ({ id, payload }) => adminApi.updateOrderTracking(id, payload),
+    onSuccess: async (response) => {
+      toast.success("Tracking timeline saved.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "overview"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "revenue"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "sidebar-badge", "orders"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] }),
+      ]);
+      if (response?.id) {
+        queryClient.setQueryData(["admin", "order", response.id], response);
+        setDetailStatus(response.status ?? "");
+        setTrackingForm(toTrackingForm(response));
       }
     },
     onError: (error) => {
@@ -85,7 +239,14 @@ function Orders() {
         header: "Order",
         cell: (order) => (
           <div>
-            <p className="font-medium text-brand-dark">#{order.id}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-brand-dark">#{order.id}</p>
+              {!order.adminReviewedAt ? (
+                <span className="inline-flex rounded-full bg-[#fff1d8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#986700]">
+                  New
+                </span>
+              ) : null}
+            </div>
             <p className="mt-1 text-xs text-brand-muted">{formatDate(order.createdAt)}</p>
           </div>
         ),
@@ -126,15 +287,52 @@ function Orders() {
           <button
             type="button"
             className="rounded-2xl border border-black/10 px-4 py-2 text-sm font-medium text-brand-dark transition hover:border-black/20 hover:bg-black/5"
-            onClick={() => setSelectedOrderId(order.id)}
+            onClick={() => {
+              setSelectedOrderId(order.id);
+              if (!order.adminReviewedAt) {
+                markReviewedMutation.mutate(order.id);
+              }
+            }}
           >
             View details
           </button>
         ),
       },
     ],
-    [],
+    [markReviewedMutation],
   );
+
+  function updateTrackingField(field, value) {
+    setTrackingForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function updateTrackingEvent(statusValue, field, value) {
+    setTrackingForm((current) => ({
+      ...current,
+      events: current.events.map((event) =>
+        event.status === statusValue
+          ? {
+              ...event,
+              [field]: value,
+            }
+          : event,
+      ),
+    }));
+  }
+
+  function handleSaveTracking(detail) {
+    if (!detail?.id || updateTrackingMutation.isPending) {
+      return;
+    }
+
+    updateTrackingMutation.mutate({
+      id: detail.id,
+      payload: buildTrackingPayload(trackingForm),
+    });
+  }
 
   if (ordersQuery.isError) {
     return (
@@ -164,24 +362,22 @@ function Orders() {
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Status</label>
-          <select className={FILTER_FIELD_CLASS} value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="ALL">All statuses</option>
-            {ORDER_STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {formatAdminStatus(option)}
-              </option>
-            ))}
-          </select>
+          <AdminSelect
+            value={status}
+            onChange={setStatus}
+            options={ORDER_STATUS_SELECT_OPTIONS}
+            placeholder="All statuses"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Start date</label>
-          <input type="date" className={FILTER_FIELD_CLASS} value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+          <AdminDatePicker value={startDate} onChange={setStartDate} maxDate={endDate} />
         </div>
 
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>End date</label>
-          <input type="date" className={FILTER_FIELD_CLASS} value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+          <AdminDatePicker value={endDate} onChange={setEndDate} minDate={startDate} />
         </div>
       </FiltersBar>
 
@@ -203,39 +399,41 @@ function Orders() {
         open={Boolean(selectedOrderId)}
         onClose={() => setSelectedOrderId(null)}
         title={detail ? `Order #${detail.id}` : "Order details"}
-        size="lg"
+        size="xl"
         footer={
           detail ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <select
-                  className={FILTER_FIELD_CLASS}
-                  value={detailStatus}
-                  onChange={(event) => setDetailStatus(event.target.value)}
-                >
-                  {ORDER_STATUS_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {formatAdminStatus(option)}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={updateStatusMutation.isPending || detailStatus === detail.status}
-                  onClick={() =>
-                    updateStatusMutation.mutate({
-                      id: detail.id,
-                      nextStatus: detailStatus,
-                    })
-                  }
-                >
-                  {updateStatusMutation.isPending ? "Updating..." : "Update status"}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center">
+                  <AdminSelect
+                    value={detailStatus}
+                    onChange={setDetailStatus}
+                    options={ORDER_STATUS_OPTIONS.map((option) => ({
+                      value: option,
+                      label: formatAdminStatus(option),
+                    }))}
+                    placeholder="Update status"
+                    placement="top"
+                    className="w-full sm:min-w-[220px]"
+                  />
+                  <button
+                    type="button"
+                    className={`${PRIMARY_BUTTON_CLASS} whitespace-nowrap sm:shrink-0`}
+                    disabled={updateStatusMutation.isPending || detailStatus === detail.status}
+                    onClick={() =>
+                      updateStatusMutation.mutate({
+                        id: detail.id,
+                        nextStatus: detailStatus,
+                      })
+                    }
+                  >
+                    {updateStatusMutation.isPending ? "Updating..." : "Update status"}
+                  </button>
+                </div>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setSelectedOrderId(null)}>
+                  Close
                 </button>
               </div>
-              <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setSelectedOrderId(null)}>
-                Close
-              </button>
             </div>
           ) : null
         }
@@ -249,21 +447,24 @@ function Orders() {
         ) : null}
 
         {detail ? (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Customer</p>
                 <p className="mt-2 text-base font-medium text-brand-dark">{detail.customerName}</p>
                 <p className="mt-1 text-sm text-brand-muted">{detail.customerEmail}</p>
                 <p className="mt-1 text-sm text-brand-muted">{detail.phone}</p>
               </div>
-              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Order</p>
                 <p className="mt-2 text-base font-medium text-brand-dark">{formatCurrency(detail.totalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Subtotal {formatCurrency(detail.subtotalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Discount {formatCurrency(detail.discountAmount)}</p>
+                {detail.deliveredAt ? (
+                  <p className="mt-2 text-xs font-medium text-success">Delivered {formatDateTime(detail.deliveredAt)}</p>
+                ) : null}
               </div>
-              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+              <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Address</p>
                 <p className="mt-2 text-sm leading-6 text-brand-dark">
                   {detail.addressLine1}
@@ -276,12 +477,12 @@ function Orders() {
             </div>
 
             <div className="rounded-[22px] border border-black/8 bg-white">
-              <div className="border-b border-black/8 px-4 py-3">
+              <div className="border-b border-black/8 px-4 py-2.5">
                 <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark">Items</h4>
               </div>
               <div className="divide-y divide-black/6">
                 {detail.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-4 px-4 py-4">
+                  <div key={item.id} className="flex items-center justify-between gap-4 px-4 py-3.5">
                     <div className="flex items-center gap-4">
                       <img src={item.imageUrl} alt={item.productName} className="h-16 w-16 rounded-2xl object-cover" />
                       <div>

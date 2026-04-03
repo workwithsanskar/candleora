@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 function KPICard({ title, value, helper, change, isLoading }) {
   return (
     <div className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
-      <p className="text-xs uppercase tracking-[0.24em] text-brand-muted">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">{title}</p>
       {isLoading ? (
         <div className="mt-4 space-y-3">
           <div className="h-8 w-24 animate-pulse rounded-full bg-black/8" />

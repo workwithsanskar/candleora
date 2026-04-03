@@ -95,8 +95,16 @@ export const orderApi = {
   createOrder: (payload) => api.post("/orders", payload).then(unwrap),
   getOrders: () => api.get("/orders").then(unwrap),
   getOrder: (orderId) => api.get(`/orders/${orderId}`).then(unwrap),
+  getTrackedOrder: (orderId, email) =>
+    api.get(`/orders/${orderId}/tracking`, {
+      params: { email },
+      skipAuth: true,
+    }).then(unwrap),
   cancelOrder: (orderId, payload = {}) =>
     api.post(`/orders/${orderId}/cancel`, payload).then(unwrap),
+  createReplacement: (orderId, payload) =>
+    api.post(`/orders/${orderId}/replace`, payload).then(unwrap),
+  getReplacement: (replacementId) => api.get(`/replacements/${replacementId}`).then(unwrap),
   downloadInvoice: (orderId) =>
     api.get(`/orders/${orderId}/invoice`, { responseType: "blob" }).then(unwrap),
   downloadTrackedInvoice: (orderId, email) =>

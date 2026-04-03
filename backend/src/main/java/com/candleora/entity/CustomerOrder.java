@@ -116,14 +116,32 @@ public class CustomerOrder {
     @Column
     private LocalDate estimatedDeliveryEnd;
 
+    @Column(length = 128)
+    private String trackingNumber;
+
+    @Column(length = 128)
+    private String courierName;
+
+    @Column(length = 1024)
+    private String trackingUrl;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderTrackingEvent> trackingEvents = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column
     private Instant cancelledAt;
+
+    @Column
+    private Instant deliveredAt;
+
+    @Column
+    private Instant adminReviewedAt;
 
     @Column(length = 512)
     private String cancellationReason;
@@ -361,12 +379,44 @@ public class CustomerOrder {
         this.estimatedDeliveryEnd = estimatedDeliveryEnd;
     }
 
+    public String getTrackingNumber() {
+        return trackingNumber;
+    }
+
+    public void setTrackingNumber(String trackingNumber) {
+        this.trackingNumber = trackingNumber;
+    }
+
+    public String getCourierName() {
+        return courierName;
+    }
+
+    public void setCourierName(String courierName) {
+        this.courierName = courierName;
+    }
+
+    public String getTrackingUrl() {
+        return trackingUrl;
+    }
+
+    public void setTrackingUrl(String trackingUrl) {
+        this.trackingUrl = trackingUrl;
+    }
+
     public List<OrderItem> getItems() {
         return items;
     }
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public List<OrderTrackingEvent> getTrackingEvents() {
+        return trackingEvents;
+    }
+
+    public void setTrackingEvents(List<OrderTrackingEvent> trackingEvents) {
+        this.trackingEvents = trackingEvents;
     }
 
     public Instant getCreatedAt() {
@@ -379,6 +429,22 @@ public class CustomerOrder {
 
     public void setCancelledAt(Instant cancelledAt) {
         this.cancelledAt = cancelledAt;
+    }
+
+    public Instant getDeliveredAt() {
+        return deliveredAt;
+    }
+
+    public void setDeliveredAt(Instant deliveredAt) {
+        this.deliveredAt = deliveredAt;
+    }
+
+    public Instant getAdminReviewedAt() {
+        return adminReviewedAt;
+    }
+
+    public void setAdminReviewedAt(Instant adminReviewedAt) {
+        this.adminReviewedAt = adminReviewedAt;
     }
 
     public String getCancellationReason() {

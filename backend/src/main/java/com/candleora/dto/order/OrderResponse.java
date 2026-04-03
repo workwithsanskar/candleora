@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public record OrderResponse(
     Long id,
@@ -38,6 +39,13 @@ public record OrderResponse(
     Instant cancelDeadline,
     Instant cancelledAt,
     String cancellationReason,
-    List<OrderItemResponse> items
+    List<OrderItemResponse> items,
+    String trackingNumber,
+    String courierName,
+    String trackingUrl,
+    Instant deliveredAt,
+    List<OrderTrackingEventResponse> trackingEvents,
+    Boolean canReplace,
+    Map<Long, OrderReplacementResponse> replacements
 ) {
 }
