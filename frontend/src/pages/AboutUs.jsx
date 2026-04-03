@@ -53,7 +53,7 @@ function AboutUs() {
 
           <h1 className="mt-4 mx-auto w-full text-center font-display text-[clamp(2.1rem,3.1vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#242424] md:whitespace-nowrap">
             Who We Are{" "}
-            <span className="font-sans font-medium text-brand-primary">
+            <span className="font-sans font-medium text-black">
               &amp;
             </span>{" "}
             What We Do

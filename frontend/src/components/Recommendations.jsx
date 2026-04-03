@@ -28,7 +28,7 @@ function Recommendations({ cards }) {
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.16)_0%,rgba(8,8,8,0.42)_100%)]" />
 
-          <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 py-6 text-center text-white sm:px-8">
+          <div className="relative z-10 flex h-full w-full translate-y-4 flex-col items-center justify-center px-6 py-6 text-center text-white sm:px-8 sm:translate-y-5 lg:translate-y-6">
             <p className="max-w-[16rem] text-[0.92rem] leading-[1.55] text-white/92 sm:max-w-[19rem] sm:text-[0.98rem]">
               {card.description}
             </p>
