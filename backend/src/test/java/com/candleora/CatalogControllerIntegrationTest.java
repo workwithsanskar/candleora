@@ -47,11 +47,10 @@ class CatalogControllerIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void getRelatedProductsReturnsSameCategoryRecommendations() throws Exception {
+    void getRelatedProductsReturnsEmptyArrayWhenNoManualRecommendationsConfigured() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/products/1/related"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").exists())
-            .andExpect(jsonPath("$[0].category.slug").exists())
-            .andExpect(jsonPath("$[0].imageUrl").exists());
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$").isEmpty());
     }
 }

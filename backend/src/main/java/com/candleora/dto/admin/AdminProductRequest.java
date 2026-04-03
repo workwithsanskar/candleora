@@ -28,6 +28,7 @@ public record AdminProductRequest(
     String scentNotes,
     String burnTime,
     Boolean visible,
-    List<String> imageUrls
+    List<String> imageUrls,
+    List<Long> similarProductIds
 ) {
 }

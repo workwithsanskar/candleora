@@ -35,6 +35,7 @@ const blankFormValues = {
   burnTime: "",
   scentNotes: "",
   imageUrls: "",
+  similarProductIds: [],
   visible: true,
 };
 
@@ -74,6 +75,7 @@ function Products() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [inventoryProduct, setInventoryProduct] = useState(null);
   const [confirmingProduct, setConfirmingProduct] = useState(null);
+  const [similarProductSearch, setSimilarProductSearch] = useState("");
 
   const {
     register,
@@ -102,6 +104,7 @@ function Products() {
   useEffect(() => {
     if (modalOpen) {
       reset(editingProduct ? toFormValues(editingProduct) : blankFormValues);
+      setSimilarProductSearch("");
     }
   }, [editingProduct, modalOpen, reset]);
 
@@ -112,10 +115,16 @@ function Products() {
   }, [inventoryProduct, resetAdjustment]);
 
   const selectedCategoryId = watch("categoryId");
+  const selectedSimilarProductIds = watch("similarProductIds") ?? [];
 
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: () => adminApi.getCategories(),
+  });
+
+  const productOptionsQuery = useQuery({
+    queryKey: ["admin", "product-options"],
+    queryFn: () => adminApi.getProductOptions(),
   });
 
   const productsQuery = useQuery({
@@ -221,10 +230,20 @@ function Products() {
       scentNotes: values.scentNotes || undefined,
       visible: Boolean(values.visible),
       imageUrls: parseImageUrls(values.imageUrls),
+      similarProductIds: selectedSimilarProductIds.map((value) => Number(value)).filter(Boolean),
     };
 
     await saveProductMutation.mutateAsync(payload);
   });
+
+  const toggleSimilarProduct = (productId) => {
+    const numericId = Number(productId);
+    const nextIds = selectedSimilarProductIdSet.has(numericId)
+      ? selectedSimilarProductIds.filter((value) => Number(value) !== numericId)
+      : [...selectedSimilarProductIds, numericId];
+
+    setValue("similarProductIds", nextIds, { shouldDirty: true });
+  };
 
   const onAdjustInventory = handleAdjustmentSubmit(async (values) => {
     if (!inventoryProduct) {
@@ -275,6 +294,45 @@ function Products() {
       }))),
     ],
     [categoriesQuery.data],
+  );
+
+  const selectedSimilarProductIdSet = useMemo(
+    () => new Set(selectedSimilarProductIds.map((value) => Number(value))),
+    [selectedSimilarProductIds],
+  );
+
+  const filteredSimilarProductOptions = useMemo(() => {
+    const normalizedSearch = similarProductSearch.trim().toLowerCase();
+
+    return (productOptionsQuery.data ?? [])
+      .filter((option) => Number(option.id) !== Number(editingProduct?.id ?? 0))
+      .filter((option) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return [option.name, option.sku, option.slug, option.categoryName]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+      })
+      .sort((left, right) => {
+        const leftSelected = selectedSimilarProductIdSet.has(Number(left.id)) ? 0 : 1;
+        const rightSelected = selectedSimilarProductIdSet.has(Number(right.id)) ? 0 : 1;
+
+        if (leftSelected !== rightSelected) {
+          return leftSelected - rightSelected;
+        }
+
+        return String(left.name ?? "").localeCompare(String(right.name ?? ""));
+      });
+  }, [editingProduct?.id, productOptionsQuery.data, selectedSimilarProductIdSet, similarProductSearch]);
+
+  const selectedSimilarProducts = useMemo(
+    () =>
+      (productOptionsQuery.data ?? []).filter((option) =>
+        selectedSimilarProductIdSet.has(Number(option.id)),
+      ),
+    [productOptionsQuery.data, selectedSimilarProductIdSet],
   );
 
   const columns = useMemo(
@@ -670,6 +728,133 @@ function Products() {
               </div>
             </div>
           </section>
+
+          <section className={ADMIN_FORM_SECTION_CLASS}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Similar products</p>
+                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
+                  Choose the exact products that should appear in the Similar Products section for this listing. Leave this empty to hide that section on the storefront.
+                </p>
+              </div>
+              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                {selectedSimilarProductIds.length} linked
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-3 xl:grid-cols-[0.72fr_1.28fr]">
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2">
+                  <label className={FILTER_LABEL_CLASS}>Find products</label>
+                  <input
+                    className={FILTER_FIELD_CLASS}
+                    value={similarProductSearch}
+                    onChange={(event) => setSimilarProductSearch(event.target.value)}
+                    placeholder="Search by product name, SKU, slug, or category"
+                  />
+                </div>
+
+                {selectedSimilarProducts.length ? (
+                  <div className="rounded-[24px] border border-black/8 bg-white p-3.5">
+                    <p className={FILTER_LABEL_CLASS}>Selected links</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedSimilarProducts.map((option) => (
+                        <button
+                          key={`selected-similar-${option.id}`}
+                          type="button"
+                          className="inline-flex items-center gap-2 rounded-full border border-[#f3b33d]/35 bg-[#fffaf3] px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:border-[#f3b33d]/60"
+                          onClick={() => toggleSimilarProduct(option.id)}
+                        >
+                          <span className="max-w-[180px] truncate">{option.name}</span>
+                          <span className="text-brand-muted">x</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-[24px] border border-dashed border-black/12 bg-white p-4 text-sm leading-6 text-brand-muted">
+                    No similar products selected yet. When this stays empty, the storefront hides the Similar Products block completely.
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[24px] border border-black/8 bg-white">
+                <div className="border-b border-black/8 px-4 py-2.5">
+                  <p className="font-display text-[1.55rem] font-semibold leading-none text-brand-dark">
+                    Product links
+                  </p>
+                  <p className="mt-1 text-sm text-brand-muted">
+                    Click products to add or remove them from this listing&apos;s recommendation set.
+                  </p>
+                </div>
+
+                <div
+                  className="mini-cart-scroll-view stealth-scrollbar max-h-[272px] touch-pan-y overflow-y-auto overscroll-contain px-4 py-3 scroll-smooth"
+                  data-lenis-prevent="true"
+                  data-lenis-prevent-wheel="true"
+                  data-lenis-prevent-touch="true"
+                >
+                  {productOptionsQuery.isLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <div key={`similar-loading-${index}`} className="h-20 animate-pulse rounded-[22px] bg-black/8" />
+                      ))}
+                    </div>
+                  ) : filteredSimilarProductOptions.length ? (
+                    <div className="space-y-3">
+                      {filteredSimilarProductOptions.map((option) => {
+                        const checked = selectedSimilarProductIdSet.has(Number(option.id));
+
+                        return (
+                          <label
+                            key={option.id}
+                            className={`flex cursor-pointer items-start gap-3 rounded-[22px] border px-3.5 py-3 transition ${
+                              checked
+                                ? "border-[#f3b33d]/45 bg-[#fff8ea]"
+                                : "border-black/8 bg-[#fcfaf6] hover:border-black/14"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 rounded border-black/20"
+                              checked={checked}
+                              onChange={() => toggleSimilarProduct(option.id)}
+                            />
+
+                            <img
+                              src={option.imageUrl || "https://placehold.co/88x88?text=CandleOra"}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-14 w-14 rounded-[16px] object-cover"
+                            />
+
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium text-brand-dark">{option.name}</p>
+                              <p className="mt-1 text-xs text-brand-muted">
+                                {[option.categoryName, option.sku || "SKU pending", option.visible ? "Visible" : "Hidden"]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                              <p className="mt-1 truncate text-[11px] uppercase tracking-[0.14em] text-brand-muted">
+                                {option.slug}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-[22px] border border-dashed border-black/12 bg-[#fcfaf6] p-5 text-center">
+                      <p className="font-medium text-brand-dark">No products match this search.</p>
+                      <p className="mt-2 text-sm leading-6 text-brand-muted">
+                        Try a different product name, SKU, slug, or category to find items to link here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
         </form>
       </Modal>
 
@@ -861,6 +1046,7 @@ function toFormValues(product) {
     burnTime: product.burnTime ?? "",
     scentNotes: product.scentNotes ?? "",
     imageUrls: Array.isArray(product.imageUrls) ? product.imageUrls.join("\n") : "",
+    similarProductIds: Array.isArray(product.similarProductIds) ? product.similarProductIds : [],
     visible: Boolean(product.visible),
   };
 }

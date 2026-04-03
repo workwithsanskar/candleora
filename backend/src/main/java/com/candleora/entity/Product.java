@@ -9,7 +9,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -98,6 +101,16 @@ public class Product {
     @BatchSize(size = 24)
     @Fetch(FetchMode.SUBSELECT)
     private List<String> imageUrls = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "product_similar_products",
+        joinColumns = @JoinColumn(name = "product_id"),
+        inverseJoinColumns = @JoinColumn(name = "similar_product_id")
+    )
+    @OrderColumn(name = "sort_order")
+    @BatchSize(size = 24)
+    private List<Product> similarProducts = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -253,6 +266,14 @@ public class Product {
 
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
+    }
+
+    public List<Product> getSimilarProducts() {
+        return similarProducts;
+    }
+
+    public void setSimilarProducts(List<Product> similarProducts) {
+        this.similarProducts = similarProducts;
     }
 
     public Instant getCreatedAt() {

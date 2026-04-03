@@ -285,7 +285,7 @@ function ProductDetail() {
   const heroImage = getResponsiveImageProps(selectedImage, {
     widths: [480, 720, 960, 1200],
     quality: 74,
-    sizes: "(min-width: 1024px) 500px, 100vw",
+    sizes: "(min-width: 1280px) 500px, (min-width: 1024px) 42vw, 100vw",
   });
   const detailBullets = [
     `${product.category?.name ?? "Candle collection"} finish suitable for styling shelves and tables.`,
@@ -295,17 +295,18 @@ function ProductDetail() {
   ];
   const lowStockThreshold = Number(product.lowStockThreshold ?? 10);
   const showLowStock = Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= lowStockThreshold;
+  const hasScrollableReviews = reviewSummary.reviews.length > 3;
 
   return (
-    <section className="container-shell py-7 pb-28 sm:py-8 sm:pb-32 lg:pb-10">
-      <div className="balanced-split-layout grid gap-5 lg:grid-cols-[104px_minmax(0,500px)_minmax(0,380px)] lg:gap-10">
-        <div className="order-2 grid grid-cols-3 gap-3 self-start lg:order-1 lg:grid-cols-1 lg:gap-4 lg:self-start">
+    <section className="container-shell py-6 pb-28 sm:py-7 sm:pb-32 lg:py-5 lg:pb-8">
+      <div className="balanced-split-layout grid gap-4 lg:grid-cols-[92px_minmax(0,472px)_minmax(0,420px)] lg:gap-7 xl:grid-cols-[96px_minmax(0,500px)_minmax(0,432px)] xl:gap-9">
+        <div className="order-2 grid grid-cols-3 gap-3 self-start lg:order-1 lg:grid-cols-1 lg:gap-3.5 lg:self-start">
           {product.imageUrls.map((imageUrl) => (
             <button
               key={imageUrl}
               type="button"
               onClick={() => setSelectedImage(imageUrl)}
-              className={`overflow-hidden rounded-[4px] border transition ${
+              className={`aspect-[0.82] overflow-hidden rounded-[4px] border transition ${
                 selectedImage === imageUrl
                   ? "border-black shadow-candle"
                   : "border-black/10 bg-white"
@@ -321,14 +322,14 @@ function ProductDetail() {
                 loading="lazy"
                 decoding="async"
                 onError={(event) => applyImageFallback(event, fallbackProductImage)}
-                className="aspect-[0.76] w-full object-cover"
+                className="h-full w-full object-cover object-center"
               />
             </button>
           ))}
         </div>
 
         <div className="balanced-split-media order-1 lg:order-2">
-          <div className="balanced-split-frame overflow-hidden rounded-[4px] border border-black/10 bg-white">
+          <div className="balanced-split-frame aspect-[0.9] overflow-hidden rounded-[4px] border border-black/10 bg-white sm:aspect-[0.92] lg:aspect-[0.86] xl:aspect-[0.88]">
             <img
               src={heroImage.src}
               srcSet={heroImage.srcSet}
@@ -338,13 +339,13 @@ function ProductDetail() {
               decoding="async"
               fetchPriority="high"
               onError={(event) => applyImageFallback(event, fallbackProductImage)}
-              className="balanced-split-visual aspect-[0.8] lg:aspect-auto"
+              className="balanced-split-visual h-full w-full object-cover object-center"
             />
           </div>
         </div>
 
-        <div className="order-3 max-w-[380px] space-y-4 text-left lg:pl-1">
-          <div className="space-y-2.5">
+        <div className="order-3 max-w-[432px] space-y-3.5 text-left lg:pl-1">
+          <div className="space-y-2">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <h1 className="font-display text-heading-md font-semibold leading-[0.98] text-black">
@@ -374,7 +375,7 @@ function ProductDetail() {
               </m.button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
               <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
               {product.originalPrice > product.price ? (
@@ -386,7 +387,7 @@ function ProductDetail() {
           </div>
 
           <div className="rounded-[18px] border border-black/10 bg-white px-4 py-3">
-            <p className="text-sm leading-6 text-black/72">{product.description}</p>
+            <p className="text-sm leading-[1.7] text-black/72">{product.description}</p>
           </div>
 
           {showLowStock ? (
@@ -395,18 +396,18 @@ function ProductDetail() {
             </div>
           ) : null}
 
-          <ul className="space-y-1.5 text-sm leading-[1.55] text-black/70">
+          <ul className="space-y-1.25 text-sm leading-[1.5] text-black/70">
             {detailBullets.map((detail) => (
               <li key={detail} className="flex items-start gap-2">
-                <span className="mt-[7px] inline-flex h-1.5 w-1.5 rounded-full bg-black/45" />
+                <span className="mt-[8px] inline-flex h-1.5 w-1.5 rounded-full bg-black/45" />
                 <span>{detail}</span>
               </li>
             ))}
           </ul>
 
-          <div className="grid gap-3">
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <div className="space-y-1.5">
+          <div className="grid gap-2.5">
+            <div className="grid gap-2.5 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="space-y-1.25">
                 <p className="text-sm font-semibold text-black">Quantity</p>
                 <div className="inline-flex items-center rounded-full border border-black/10 bg-white">
                   <button
@@ -440,7 +441,7 @@ function ProductDetail() {
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
               whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
-              className="inline-flex h-[46px] w-full items-center justify-center rounded-[12px] bg-brand-primary px-6 text-sm font-semibold text-black transition hover:bg-[#dfa129] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[44px] w-full items-center justify-center rounded-[12px] bg-brand-primary px-6 text-sm font-semibold text-black transition hover:bg-[#dfa129] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {product.stock > 0 ? "Add to Cart" : "Out of Stock"}
             </m.button>
@@ -449,13 +450,13 @@ function ProductDetail() {
               onClick={handleBuyNow}
               disabled={product.stock <= 0}
               whileTap={prefersReducedMotion || product.stock <= 0 ? undefined : { scale: 0.98 }}
-              className="inline-flex h-[46px] w-full items-center justify-center rounded-[12px] bg-black px-6 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[44px] w-full items-center justify-center rounded-[12px] bg-black px-6 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Buy Now
             </m.button>
           </div>
 
-          <div className="space-y-2.5 border-t border-black/10 pt-2.5 text-sm text-black/56">
+          <div className="space-y-2 border-t border-black/10 pt-2 text-sm text-black/56">
             <div className="flex items-start gap-3">
               <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M3 7H15V17H3Z" />
@@ -518,10 +519,14 @@ function ProductDetail() {
               {reviewSummary.reviews.length ? (
                 <div
                   className={`space-y-4 ${
-                    reviewSummary.reviews.length > 3
-                      ? "mini-cart-scroll-view stealth-scrollbar max-h-[572px] overflow-y-auto pr-2 scroll-smooth"
+                    hasScrollableReviews
+                      ? "mini-cart-scroll-view stealth-scrollbar max-h-[572px] touch-pan-y overflow-y-auto overscroll-contain pr-2 scroll-smooth"
                       : ""
                   }`}
+                  data-lenis-prevent={hasScrollableReviews ? "true" : undefined}
+                  data-lenis-prevent-wheel={hasScrollableReviews ? "true" : undefined}
+                  data-lenis-prevent-touch={hasScrollableReviews ? "true" : undefined}
+                  tabIndex={hasScrollableReviews ? 0 : undefined}
                 >
                   {reviewSummary.reviews.map((review) => (
                     <article
@@ -652,15 +657,17 @@ function ProductDetail() {
         )}
       </Reveal>
 
-      <Reveal className="mt-16 space-y-6" delay={0.1}>
-        <h2 className="section-title">Similar Products</h2>
-        <ProductSlider
-          products={relatedProducts}
-          arrowTopClass="top-[168px]"
-          arrowLeftClass="-left-10 lg:-left-12"
-          arrowRightClass="-right-10 lg:-right-12"
-        />
-      </Reveal>
+      {relatedProducts.length ? (
+        <Reveal className="mt-16 space-y-6" delay={0.1}>
+          <h2 className="section-title">Similar Products</h2>
+          <ProductSlider
+            products={relatedProducts}
+            arrowTopClass="top-[168px]"
+            arrowLeftClass="-left-10 lg:-left-12"
+            arrowRightClass="-right-10 lg:-right-12"
+          />
+        </Reveal>
+      ) : null}
 
       <m.div
         initial={prefersReducedMotion ? false : { y: 80, opacity: 0 }}

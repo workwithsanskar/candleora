@@ -1,6 +1,7 @@
 package com.candleora.service;
 
 import com.candleora.dto.admin.AdminProductRequest;
+import com.candleora.dto.admin.AdminProductOptionResponse;
 import com.candleora.dto.admin.AdminProductResponse;
 import com.candleora.dto.catalog.CategoryResponse;
 import com.candleora.dto.common.PagedResponse;
@@ -11,8 +12,13 @@ import com.candleora.repository.ProductRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -112,6 +118,14 @@ public class AdminProductService {
         ).map(this::toProductResponse);
 
         return PagedResponse.from(productPage);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminProductOptionResponse> getProductOptions() {
+        return productRepository.findAll(Sort.by(Sort.Order.asc("name"), Sort.Order.asc("id")))
+            .stream()
+            .map(this::toProductOptionResponse)
+            .toList();
     }
 
     @Caching(evict = {
@@ -263,16 +277,22 @@ public class AdminProductService {
 
         if (request.imageUrls() != null) {
             product.setImageUrls(
-                request.imageUrls().stream()
+                new ArrayList<>(request.imageUrls().stream()
                     .filter(StringUtils::hasText)
                     .map(String::trim)
                     .distinct()
-                    .toList()
+                    .toList())
             );
         }
 
         if (request.categoryId() != null || StringUtils.hasText(request.categorySlug())) {
             product.setCategory(resolveCategory(request.categoryId(), request.categorySlug()));
+        }
+
+        if (request.similarProductIds() != null) {
+            product.setSimilarProducts(resolveSimilarProducts(request.similarProductIds(), product.getId()));
+        } else if (creating) {
+            product.setSimilarProducts(new ArrayList<>());
         }
 
         if (product.getOriginalPrice() == null && product.getPrice() != null) {
@@ -318,6 +338,32 @@ public class AdminProductService {
     private Product findProduct(Long id) {
         return productRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+    }
+
+    private List<Product> resolveSimilarProducts(List<Long> similarProductIds, Long currentProductId) {
+        List<Long> normalizedIds = similarProductIds == null
+            ? List.of()
+            : similarProductIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .filter(id -> !Objects.equals(id, currentProductId))
+                .toList();
+
+        if (normalizedIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Map<Long, Product> productsById = productRepository.findAllById(normalizedIds)
+            .stream()
+            .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        if (productsById.size() != normalizedIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more similar products could not be found");
+        }
+
+        return normalizedIds.stream()
+            .map(productsById::get)
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private BigDecimal defaultCostPrice(BigDecimal price) {
@@ -444,7 +490,22 @@ public class AdminProductService {
                 product.getCategory().getSlug()
             ),
             product.getImageUrls(),
+            product.getSimilarProducts().stream()
+                .map(Product::getId)
+                .toList(),
             product.getCreatedAt()
+        );
+    }
+
+    private AdminProductOptionResponse toProductOptionResponse(Product product) {
+        return new AdminProductOptionResponse(
+            product.getId(),
+            product.getName(),
+            product.getSku(),
+            product.getSlug(),
+            product.getCategory() == null ? null : product.getCategory().getName(),
+            product.getImageUrls().stream().findFirst().orElse(null),
+            product.isVisible()
         );
     }
 }

@@ -49,6 +49,7 @@ const adminApi = {
     api.post("/admin/replacements/bulk-approve", payload).then(unwrap),
   getProducts: (params = {}) =>
     api.get("/admin/products", { params: withDefinedParams(params) }).then(unwrap),
+  getProductOptions: () => api.get("/admin/products/options").then(unwrap),
   createProduct: (payload) => api.post("/admin/products", payload).then(unwrap),
   updateProduct: (id, payload) => api.put(`/admin/products/${id}`, payload).then(unwrap),
   deleteProduct: (id) => api.delete(`/admin/products/${id}`).then(unwrap),

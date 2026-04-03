@@ -27,6 +27,7 @@ public record AdminProductResponse(
     String burnTime,
     CategoryResponse category,
     List<String> imageUrls,
+    List<Long> similarProductIds,
     Instant createdAt
 ) {
 }

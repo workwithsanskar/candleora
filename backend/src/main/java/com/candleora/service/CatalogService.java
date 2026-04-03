@@ -104,11 +104,10 @@ public class CatalogService {
     public List<ProductSummaryResponse> getRelatedProducts(String identifier) {
         Product product = findProduct(identifier);
 
-        return productRepository.findTop4ByCategoryAndVisibleTrueAndIdNotOrderByCreatedAtDesc(
-                product.getCategory(),
-                product.getId()
-            )
-            .stream()
+        return product.getSimilarProducts().stream()
+            .filter(Objects::nonNull)
+            .filter(Product::isVisible)
+            .filter(similarProduct -> !Objects.equals(similarProduct.getId(), product.getId()))
             .map(this::toProductSummaryResponse)
             .toList();
     }

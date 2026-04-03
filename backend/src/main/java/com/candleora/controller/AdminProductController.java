@@ -2,6 +2,7 @@ package com.candleora.controller;
 
 import com.candleora.dto.admin.AdminInventoryAdjustmentRequest;
 import com.candleora.dto.admin.AdminInventoryMovementResponse;
+import com.candleora.dto.admin.AdminProductOptionResponse;
 import com.candleora.dto.admin.AdminProductRequest;
 import com.candleora.dto.admin.AdminProductResponse;
 import com.candleora.dto.common.PagedResponse;
@@ -46,6 +47,11 @@ public class AdminProductController {
         @RequestParam(defaultValue = "10") int size
     ) {
         return adminProductService.getProducts(search, category, stock, page, size);
+    }
+
+    @GetMapping("/options")
+    public List<AdminProductOptionResponse> getProductOptions() {
+        return adminProductService.getProductOptions();
     }
 
     @PostMapping

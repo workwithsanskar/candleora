@@ -1,7 +1,7 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProductDetail from "./ProductDetail";
 
 const { mockAddToCart, mockCatalogApi, mockUseAuth, mockStartBuyNowCheckout } = vi.hoisted(() => ({
@@ -49,6 +49,10 @@ vi.mock("../components/ProductCard", () => ({
 }));
 
 describe("ProductDetail", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     mockAddToCart.mockReset();
     mockAddToCart.mockResolvedValue(undefined);
@@ -129,6 +133,24 @@ describe("ProductDetail", () => {
     );
 
     expect(await screen.findByText("That product is unavailable")).toBeInTheDocument();
+  });
+
+  it("hides the similar products section when no related products are returned", async () => {
+    mockCatalogApi.getRelatedProducts.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/product/1"]}>
+        <Routes>
+          <Route path="/product/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Lavender Ember Jar" })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "Similar Products" })).not.toBeInTheDocument();
+    });
   });
 
   it("starts a buy-now checkout session without mutating the cart", async () => {
@@ -239,5 +261,9 @@ describe("ProductDetail", () => {
     expect(reviewListScroller.className).toContain("stealth-scrollbar");
     expect(reviewListScroller.className).toContain("overflow-y-auto");
     expect(reviewListScroller.className).toContain("scroll-smooth");
+    expect(reviewListScroller.className).toContain("overscroll-contain");
+    expect(reviewListScroller).toHaveAttribute("data-lenis-prevent", "true");
+    expect(reviewListScroller).toHaveAttribute("data-lenis-prevent-wheel", "true");
+    expect(reviewListScroller).toHaveAttribute("data-lenis-prevent-touch", "true");
   });
 });
