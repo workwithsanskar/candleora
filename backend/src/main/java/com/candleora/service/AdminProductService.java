@@ -128,6 +128,11 @@ public class AdminProductService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public AdminProductResponse getProduct(Long id) {
+        return toProductResponse(findProduct(id));
+    }
+
     @Caching(evict = {
         @CacheEvict(cacheNames = "adminAnalytics", allEntries = true),
         @CacheEvict(cacheNames = "catalogProductPages", allEntries = true),

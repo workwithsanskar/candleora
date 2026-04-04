@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
@@ -26,48 +25,8 @@ import {
 } from "../../utils/format";
 
 const COUPON_TYPE_OPTIONS = ["PERCENTAGE", "FLAT"];
-const COUPON_SCOPE_OPTIONS = [
-  { value: "ALL_PRODUCTS", label: "Entire catalog" },
-  { value: "CATEGORIES", label: "Selected categories" },
-  { value: "PRODUCTS", label: "Selected products" },
-];
 const COUPON_STATUS_OPTIONS = ["ALL", "LIVE", "SCHEDULED", "PAUSED", "EXPIRED", "EXHAUSTED"];
-const DURATION_MODE_OPTIONS = [
-  { value: "NONE", label: "No expiry" },
-  { value: "7_DAYS", label: "7 days" },
-  { value: "30_DAYS", label: "30 days" },
-  { value: "90_DAYS", label: "90 days" },
-  { value: "CUSTOM", label: "Custom schedule" },
-];
 const PAGE_SIZE = 8;
-const COUPON_FORM_ID = "admin-coupon-form";
-const COUPON_MODAL_SECTION_CLASS =
-  "rounded-[26px] border border-black/8 bg-[#fffaf3] p-3.5 shadow-[0_12px_28px_rgba(23,18,15,0.04)] sm:p-4";
-const COUPON_MODAL_SECTION_TITLE_CLASS =
-  "text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted";
-const COUPON_MODAL_SECTION_COPY_CLASS = "mt-1 text-[13px] leading-5 text-brand-muted";
-const COUPON_MULTISELECT_CLASS =
-  `${FILTER_FIELD_CLASS} stealth-scrollbar h-auto min-h-[96px] resize-none py-2.5`;
-const COUPON_TOGGLE_CARD_CLASS =
-  "inline-flex items-center gap-3 rounded-[20px] border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark";
-
-const blankFormValues = {
-  code: "",
-  type: "PERCENTAGE",
-  scope: "ALL_PRODUCTS",
-  value: "",
-  maxDiscount: "",
-  minOrderAmount: "",
-  usageLimit: "",
-  active: true,
-  firstOrderOnly: false,
-  oneUsePerCustomer: false,
-  durationMode: "NONE",
-  startsAt: "",
-  endsAt: "",
-  categorySlugs: [],
-  productIds: [],
-};
 
 const COUPON_TYPE_FILTER_OPTIONS = [
   { value: "ALL", label: "All coupon types" },
@@ -83,40 +42,18 @@ const COUPON_STATUS_FILTER_OPTIONS = COUPON_STATUS_OPTIONS.map((option) => ({
 }));
 
 function Coupons() {
+  const navigate = useNavigate();
   const { search } = useOutletContext();
   const debouncedSearch = useDebouncedValue(search, 300);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState(null);
   const [confirmingCoupon, setConfirmingCoupon] = useState(null);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { isSubmitting },
-  } = useForm({
-    defaultValues: blankFormValues,
-  });
-
-  const durationMode = watch("durationMode");
-  const couponType = watch("type");
-  const couponScope = watch("scope");
 
   useEffect(() => {
     setPage(0);
   }, [debouncedSearch, typeFilter, statusFilter]);
-
-  useEffect(() => {
-    if (modalOpen) {
-      reset(editingCoupon ? toFormValues(editingCoupon) : blankFormValues);
-    }
-  }, [editingCoupon, modalOpen, reset]);
 
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
@@ -202,21 +139,6 @@ function Coupons() {
     ];
   }, [couponsQuery.data]);
 
-  const saveCouponMutation = useMutation({
-    mutationFn: (payload) =>
-      editingCoupon ? adminApi.updateCoupon(editingCoupon.id, payload) : adminApi.createCoupon(payload),
-    onSuccess: async () => {
-      toast.success(editingCoupon ? "Coupon updated." : "Coupon created.");
-      setModalOpen(false);
-      setEditingCoupon(null);
-      reset(blankFormValues);
-      await queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
-    },
-    onError: (error) => {
-      toast.error(formatApiError(error));
-    },
-  });
-
   const toggleCouponMutation = useMutation({
     mutationFn: ({ coupon, active }) =>
       adminApi.updateCoupon(coupon.id, toCouponPayload(coupon, { active })),
@@ -239,29 +161,6 @@ function Coupons() {
     onError: (error) => {
       toast.error(formatApiError(error));
     },
-  });
-
-  const onSubmit = handleSubmit(async (values) => {
-    const { startsAt, endsAt } = resolveDuration(values);
-
-    const payload = toCouponPayload({
-      code: values.code,
-      type: values.type,
-      scope: values.scope,
-      value: values.value,
-      maxDiscount: values.type === "PERCENTAGE" ? values.maxDiscount : null,
-      minOrderAmount: values.minOrderAmount,
-      usageLimit: values.usageLimit,
-      active: values.active,
-      firstOrderOnly: values.firstOrderOnly,
-      oneUsePerCustomer: values.oneUsePerCustomer,
-      startsAt,
-      endsAt,
-      categorySlugs: values.categorySlugs,
-      productIds: values.productIds,
-    });
-
-    await saveCouponMutation.mutateAsync(payload);
   });
 
   const columns = useMemo(
@@ -341,10 +240,7 @@ function Coupons() {
             <button
               type="button"
               className="rounded-2xl border border-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-dark transition hover:border-black/20 hover:bg-black/5"
-              onClick={() => {
-                setEditingCoupon(coupon);
-                setModalOpen(true);
-              }}
+              onClick={() => navigate(`/admin/coupons/${coupon.id}/edit`)}
             >
               Edit
             </button>
@@ -371,7 +267,7 @@ function Coupons() {
         ),
       },
     ],
-    [categoryMap, productMap, toggleCouponMutation],
+    [categoryMap, navigate, productMap, toggleCouponMutation],
   );
 
   if (couponsQuery.isError) {
@@ -394,10 +290,7 @@ function Coupons() {
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setEditingCoupon(null);
-              setModalOpen(true);
-            }}
+            onClick={() => navigate("/admin/coupons/new")}
           >
             Create coupon
           </button>
@@ -453,242 +346,6 @@ function Coupons() {
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-
-      <Modal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditingCoupon(null);
-        }}
-        title={editingCoupon ? `Edit ${editingCoupon.code}` : "Create coupon"}
-        size="xl"
-        align="top"
-        footer={
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              className={`${SECONDARY_BUTTON_CLASS} min-w-[116px]`}
-              onClick={() => {
-                setModalOpen(false);
-                setEditingCoupon(null);
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form={COUPON_FORM_ID}
-              className={`${PRIMARY_BUTTON_CLASS} min-w-[150px]`}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : editingCoupon ? "Save coupon" : "Create coupon"}
-            </button>
-          </div>
-        }
-      >
-        <form id={COUPON_FORM_ID} className="space-y-3" onSubmit={onSubmit}>
-          <section className={COUPON_MODAL_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Offer structure</p>
-                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
-                  Define the headline offer first, then decide where this campaign should be allowed to run.
-                </p>
-              </div>
-              <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
-                {editingCoupon ? "Editing live campaign" : "New campaign"}
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 lg:grid-cols-12">
-              <div className="flex flex-col gap-2 lg:col-span-4">
-                <label className={FILTER_LABEL_CLASS}>Coupon code</label>
-                <input className={FILTER_FIELD_CLASS} {...register("code")} placeholder="SUMMER15" />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-3">
-                <label className={FILTER_LABEL_CLASS}>Discount type</label>
-                <AdminSelect
-                  value={couponType}
-                  onChange={(value) => setValue("type", value, { shouldDirty: true })}
-                  options={COUPON_TYPE_OPTIONS.map((option) => ({
-                    value: option,
-                    label: formatCouponType(option),
-                  }))}
-                  placeholder="Select type"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-3">
-                <label className={FILTER_LABEL_CLASS}>Applies to</label>
-                <AdminSelect
-                  value={couponScope}
-                  onChange={(value) => setValue("scope", value, { shouldDirty: true })}
-                  options={COUPON_SCOPE_OPTIONS}
-                  placeholder="Select scope"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-2">
-                <label className={FILTER_LABEL_CLASS}>
-                  {couponType === "PERCENTAGE" ? "Discount %" : "Discount value"}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={FILTER_FIELD_CLASS}
-                  {...register("value")}
-                  placeholder={couponType === "PERCENTAGE" ? "15" : "250"}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className={COUPON_MODAL_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Guardrails and timing</p>
-                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
-                  Set the cart threshold, cap the reward, and choose how long the offer should stay active.
-                </p>
-              </div>
-              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                Rules + schedule
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 lg:grid-cols-12">
-              <div className="flex flex-col gap-2 lg:col-span-3">
-                <label className={FILTER_LABEL_CLASS}>Minimum order amount</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={FILTER_FIELD_CLASS}
-                  {...register("minOrderAmount")}
-                  placeholder="1500"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-3">
-                <label className={FILTER_LABEL_CLASS}>Maximum discount</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className={FILTER_FIELD_CLASS}
-                  {...register("maxDiscount")}
-                  disabled={couponType !== "PERCENTAGE"}
-                  placeholder={couponType === "PERCENTAGE" ? "500" : "Available for percentage coupons"}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-2">
-                <label className={FILTER_LABEL_CLASS}>Usage limit</label>
-                <input type="number" className={FILTER_FIELD_CLASS} {...register("usageLimit")} placeholder="200" />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-4">
-                <label className={FILTER_LABEL_CLASS}>Coupon duration</label>
-                <AdminSelect
-                  value={durationMode}
-                  onChange={(value) => setValue("durationMode", value, { shouldDirty: true })}
-                  options={DURATION_MODE_OPTIONS}
-                  placeholder="Select duration"
-                />
-              </div>
-
-              {durationMode === "CUSTOM" ? (
-                <>
-                  <div className="flex flex-col gap-2 lg:col-span-6">
-                    <label className={FILTER_LABEL_CLASS}>Starts at</label>
-                    <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("startsAt")} />
-                  </div>
-
-                  <div className="flex flex-col gap-2 lg:col-span-6">
-                    <label className={FILTER_LABEL_CLASS}>Ends at</label>
-                    <input type="datetime-local" className={FILTER_FIELD_CLASS} {...register("endsAt")} />
-                  </div>
-                </>
-              ) : (
-                <div className="rounded-[24px] border border-black/8 bg-white p-4 lg:col-span-12">
-                  <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Schedule preview</p>
-                  <p className="mt-1.5 text-sm leading-6 text-brand-dark">{describeDurationMode(durationMode)}</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {couponScope === "CATEGORIES" ? (
-            <section className={COUPON_MODAL_SECTION_CLASS}>
-              <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Targeted categories</p>
-              <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
-                Select the collections this coupon can unlock. Hold Ctrl or Cmd to choose multiple categories.
-              </p>
-
-              <div className="mt-3 flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Eligible categories</label>
-                <select multiple className={COUPON_MULTISELECT_CLASS} {...register("categorySlugs")}>
-                  {(categoriesQuery.data ?? []).map((category) => (
-                    <option key={category.slug} value={category.slug}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </section>
-          ) : null}
-
-          {couponScope === "PRODUCTS" ? (
-            <section className={COUPON_MODAL_SECTION_CLASS}>
-              <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Targeted products</p>
-              <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
-                Choose the specific candles or accessories that should trigger this offer for customers.
-              </p>
-
-              <div className="mt-3 flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Eligible products</label>
-                <select multiple className={COUPON_MULTISELECT_CLASS} {...register("productIds")}>
-                  {(productOptionsQuery.data?.content ?? []).map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </section>
-          ) : null}
-
-          <section className={COUPON_MODAL_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={COUPON_MODAL_SECTION_TITLE_CLASS}>Campaign rules</p>
-                <p className={COUPON_MODAL_SECTION_COPY_CLASS}>
-                  Turn on only the restrictions you want the checkout to enforce for this discount.
-                </p>
-              </div>
-              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                Checkout behavior
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 xl:grid-cols-3">
-              <label className={COUPON_TOGGLE_CARD_CLASS}>
-                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("active")} />
-                Coupon is active
-              </label>
-
-              <label className={COUPON_TOGGLE_CARD_CLASS}>
-                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("firstOrderOnly")} />
-                First order only
-              </label>
-
-              <label className={COUPON_TOGGLE_CARD_CLASS}>
-                <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("oneUsePerCustomer")} />
-                Limit this coupon to one successful redemption per customer
-              </label>
-            </div>
-          </section>
-        </form>
-      </Modal>
 
       <Modal
         open={Boolean(confirmingCoupon)}
@@ -872,42 +529,6 @@ function formatCouponCapHint(coupon) {
   return `${remaining} redemptions left`;
 }
 
-function describeDurationMode(durationMode) {
-  switch (durationMode) {
-    case "7_DAYS":
-      return "The coupon becomes active now and expires after 7 days.";
-    case "30_DAYS":
-      return "The coupon becomes active now and expires after 30 days.";
-    case "90_DAYS":
-      return "The coupon becomes active now and expires after 90 days.";
-    case "CUSTOM":
-      return "Set a precise campaign start and end time for this coupon.";
-    default:
-      return "The coupon stays available until you pause it or delete it.";
-  }
-}
-
-function resolveDuration(values) {
-  const now = new Date();
-  const addDays = (days) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-
-  switch (values.durationMode) {
-    case "7_DAYS":
-      return { startsAt: now.toISOString(), endsAt: addDays(7) };
-    case "30_DAYS":
-      return { startsAt: now.toISOString(), endsAt: addDays(30) };
-    case "90_DAYS":
-      return { startsAt: now.toISOString(), endsAt: addDays(90) };
-    case "CUSTOM":
-      return {
-        startsAt: values.startsAt ? new Date(values.startsAt).toISOString() : null,
-        endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : null,
-      };
-    default:
-      return { startsAt: null, endsAt: null };
-  }
-}
-
 function toCouponPayload(source, overrides = {}) {
   const payload = { ...source, ...overrides };
 
@@ -932,26 +553,6 @@ function toCouponPayload(source, overrides = {}) {
     usageLimit: payload.usageLimit === "" || payload.usageLimit == null ? null : Number(payload.usageLimit),
     categorySlugs: payload.scope === "CATEGORIES" ? normalizeStringArray(payload.categorySlugs) : [],
     productIds: payload.scope === "PRODUCTS" ? normalizeNumberArray(payload.productIds) : [],
-  };
-}
-
-function toFormValues(coupon) {
-  return {
-    code: coupon.code ?? "",
-    type: coupon.type ?? "PERCENTAGE",
-    scope: coupon.scope ?? "ALL_PRODUCTS",
-    value: coupon.value ?? "",
-    maxDiscount: coupon.maxDiscount ?? "",
-    minOrderAmount: coupon.minOrderAmount ?? "",
-    usageLimit: coupon.usageLimit ?? "",
-    active: Boolean(coupon.active),
-    firstOrderOnly: Boolean(coupon.firstOrderOnly),
-    oneUsePerCustomer: Boolean(coupon.oneUsePerCustomer),
-    durationMode: coupon.startsAt || coupon.endsAt ? "CUSTOM" : "NONE",
-    startsAt: toDateTimeLocalValue(coupon.startsAt),
-    endsAt: toDateTimeLocalValue(coupon.endsAt),
-    categorySlugs: normalizeStringArray(coupon.categorySlugs),
-    productIds: normalizeNumberArray(coupon.productIds).map(String),
   };
 }
 
@@ -982,17 +583,6 @@ function normalizeNumberArray(value) {
   return Number.isFinite(parsed) && parsed > 0 ? [parsed] : [];
 }
 
-function toDateTimeLocalValue(value) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  const offset = date.getTimezoneOffset();
-  const localized = new Date(date.getTime() - offset * 60 * 1000);
-  return localized.toISOString().slice(0, 16);
-}
-
 function trimNumericValue(value) {
   const amount = Number(value ?? 0);
   if (!Number.isFinite(amount)) {
@@ -1003,4 +593,3 @@ function trimNumericValue(value) {
 }
 
 export default Coupons;
-

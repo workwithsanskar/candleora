@@ -45,103 +45,23 @@ function CartIcon() {
   );
 }
 
-function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M5 12H19" strokeLinecap="round" />
-      <path d="M13 6L19 12L13 18" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function SummaryStat({ label, value, tone = "default" }) {
-  const toneClass =
-    tone === "accent"
-      ? "bg-brand-primary/14 text-black"
-      : tone === "success"
-        ? "bg-[#eef7ee] text-[#2d7d32]"
-        : "bg-black/[0.04] text-black/72";
-
-  return (
-    <div className={`rounded-[18px] px-4 py-3 ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">{label}</p>
-      <p className="mt-2 text-[1.35rem] font-semibold leading-none text-black">{value}</p>
-    </div>
-  );
-}
-
-SummaryStat.propTypes = {
-  label: PropTypes.string.isRequired,
-  tone: PropTypes.oneOf(["default", "accent", "success"]),
-  value: PropTypes.string.isRequired,
-};
-
-SummaryStat.defaultProps = {
-  tone: "default",
-};
-
 function Wishlist() {
   const prefersReducedMotion = useReducedMotion();
   const { addToCart } = useCart();
-  const { items, removeFromWishlist, clearWishlist } = useWishlist();
-
-  const inStockCount = items.filter((item) => item.stock > 0).length;
-  const totalSavings = items.reduce(
-    (sum, item) => sum + Math.max(Number(item.originalPrice ?? 0) - Number(item.price ?? 0), 0),
-    0,
-  );
-
-  const handleClearWishlist = () => {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm("Clear all saved items from your wishlist?")
-    ) {
-      return;
-    }
-
-    clearWishlist();
-  };
+  const { items, removeFromWishlist } = useWishlist();
 
   if (!items.length) {
     return (
       <section className="container-shell py-12 sm:py-14">
-        <div className="overflow-hidden rounded-[30px] border border-black/10 bg-white shadow-[0_20px_40px_rgba(0,0,0,0.05)]">
-          <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-5 px-6 py-10 sm:px-8 sm:py-12">
-              <p className="eyebrow">Wishlist</p>
-              <h1 className="page-title max-w-[480px]">Nothing saved yet</h1>
-              <p className="max-w-[520px] text-body leading-7 text-black/62">
-                Keep your favorite CandleOra products here so you can come back, compare, and move them into your cart whenever you are ready.
-              </p>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Link to="/shop" className="btn btn-primary rounded-[14px]">
-                  Explore the shop
-                </Link>
-                <Link to="/orders" className="btn btn-outline rounded-[14px]">
-                  View your orders
-                </Link>
-              </div>
-            </div>
-
-            <div className="border-t border-black/8 bg-[#fff9ee] px-6 py-10 sm:px-8 lg:border-l lg:border-t-0">
-              <div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_10px_24px_rgba(0,0,0,0.04)]">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/12 text-[#d63d3d]">
-                  <HeartIcon filled />
-                </div>
-                <h2 className="mt-5 text-[1.45rem] font-semibold leading-tight text-black">
-                  Save pieces that match your mood
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-black/62">
-                  Use the heart on any product card to collect candles, holders, and gifting picks in one calm place.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <SummaryStat label="Saved items" value="0" tone="accent" />
-                  <SummaryStat label="Ready to order" value="0" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatusView
+          title="Wishlist"
+          message="Save your favorites and add them to cart anytime."
+          action={(
+            <Link to="/shop" className="btn btn-primary mt-6">
+              Explore the shop
+            </Link>
+          )}
+        />
       </section>
     );
   }
@@ -149,26 +69,18 @@ function Wishlist() {
   return (
     <section className="container-shell py-12 sm:py-14">
       <div className="space-y-8">
-        <div className="flex flex-wrap items-end justify-between gap-5">
+        <div className="space-y-3">
           <div className="space-y-3">
-            <p className="eyebrow">Wishlist</p>
-            <h1 className="page-title">Saved for later</h1>
+            <h1 className="page-title">Wishlist</h1>
             <p className="max-w-[760px] text-body leading-7 text-black/62">
-              Keep your favorite pieces in one place, compare prices, and move them to cart whenever you are ready to order.
+              Save your favorites and add them to cart anytime.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={handleClearWishlist}
-            className="inline-flex h-[46px] items-center rounded-full border border-black/10 px-5 text-sm font-semibold text-brand-primary transition hover:border-brand-primary/35 hover:bg-brand-primary/6"
-          >
-            Clear wishlist
-          </button>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="space-y-5">
+        <div
+          className={`space-y-5 ${items.length > 3 ? "stealth-scrollbar max-h-[1100px] overflow-y-auto pr-2" : ""}`.trim()}
+        >
             {items.map((item, index) => {
               const savings = Math.max(Number(item.originalPrice ?? 0) - Number(item.price ?? 0), 0);
 
@@ -263,58 +175,12 @@ function Wishlist() {
                           <CartIcon />
                           Add to cart
                         </button>
-                        <Link
-                          to={getProductPath(item)}
-                          className="inline-flex h-[50px] min-w-[180px] items-center justify-center gap-2 rounded-[14px] border border-black/14 bg-white px-6 text-base font-semibold text-black transition hover:border-black/28 hover:bg-black/[0.02]"
-                        >
-                          View product
-                          <ArrowIcon />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => removeFromWishlist(item.id)}
-                          className="text-sm font-semibold text-brand-primary transition hover:text-[#c98911]"
-                        >
-                          Remove
-                        </button>
                       </div>
                     </div>
                   </div>
                 </m.article>
               );
             })}
-          </div>
-
-          <aside className="h-fit rounded-[28px] border border-black/10 bg-[#fff9ee] p-5 shadow-[0_18px_34px_rgba(0,0,0,0.05)] xl:sticky xl:top-6">
-            <p className="eyebrow">Wishlist summary</p>
-            <h2 className="panel-title mt-3">
-              {items.length} saved item{items.length > 1 ? "s" : ""}
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-black/62">
-              Your wishlist helps you shortlist favorites before checkout and compare what is ready to order right now.
-            </p>
-
-            <div className="mt-6 grid gap-3">
-              <SummaryStat label="Saved items" value={String(items.length)} tone="accent" />
-              <SummaryStat label="Ready to order" value={String(inStockCount)} tone="success" />
-              <SummaryStat label="Potential savings" value={formatCurrency(totalSavings)} />
-            </div>
-
-            <div className="mt-6 rounded-[22px] border border-black/8 bg-white p-4">
-              <p className="text-sm font-semibold text-black">Quick note</p>
-              <p className="mt-2 text-sm leading-6 text-black/62">
-                Move in-stock items to cart when you are ready. Anything saved here stays easy to revisit later.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleClearWishlist}
-              className="mt-6 inline-flex h-[48px] w-full items-center justify-center rounded-[14px] border border-black/10 bg-white text-sm font-semibold text-brand-primary transition hover:border-brand-primary/35 hover:bg-brand-primary/6"
-            >
-              Clear wishlist
-            </button>
-          </aside>
         </div>
       </div>
     </section>

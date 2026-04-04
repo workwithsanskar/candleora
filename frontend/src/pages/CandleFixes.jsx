@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import StatusView from "../components/StatusView";
 import { contentApi } from "../services/api";
 import { formatApiError } from "../utils/format";
@@ -150,8 +151,16 @@ function CandleFixes() {
   return (
     <section className="container-shell py-10 sm:py-12">
       <div className="w-full">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-black transition hover:underline hover:underline-offset-4"
+        >
+          <span aria-hidden="true">&lt;</span>
+          <span>Back</span>
+        </Link>
+
         <header className="max-w-[760px]">
-          <h1 className="font-display text-heading-lg font-semibold text-black">CANDLE FIXES</h1>
+          <h1 className="mt-5 font-display text-heading-lg font-semibold text-black">CANDLE FIXES</h1>
           <p className="mt-4 text-sm leading-7 text-black/62">
             For every candle question, there&apos;s a CandleOra solution - your trusted guide to keep the glow alive.
           </p>

@@ -146,7 +146,7 @@ function Login() {
                   type="button"
                   className="text-[14px] font-semibold text-brand-dark underline underline-offset-4"
                 >
-                  Forgot Your Password
+                  Forgot Your Password?
                 </button>
               </div>
             </form>
@@ -154,11 +154,10 @@ function Login() {
             <div className="mt-6 space-y-4 rounded-[20px] border border-black/10 bg-white p-4 sm:p-5">
               <div className="space-y-1 text-center">
                 <p className="text-sm font-semibold text-black">Continue another way</p>
-                <p className="text-sm leading-6 text-black/60">
-                  {PHONE_AUTH_ENABLED
-                    ? "Use Google for one-click access or verify your phone with OTP."
-                    : "Use Google for one-click access while phone OTP stays hidden until launch."}
-                </p>
+                <p className="text-sm leading-6 text-black/60">Continue with Google for quick access.</p>
+                {PHONE_AUTH_ENABLED ? (
+                  <p className="text-sm leading-6 text-black/55">Or verify your phone with OTP.</p>
+                ) : null}
               </div>
 
               <GoogleAuthButton

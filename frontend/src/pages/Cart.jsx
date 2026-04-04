@@ -11,16 +11,36 @@ import StatusView from "../components/StatusView";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCheckoutSession } from "../context/CheckoutSessionContext";
+import { useWishlist } from "../context/WishlistContext";
 import { useCouponFlow } from "../hooks/useCouponFlow";
 import { catalogApi } from "../services/api";
 import { formatCurrency } from "../utils/format";
 import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import { getProductPath } from "../utils/normalize";
 
+function HeartIcon({ filled = false }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-[16px] w-[16px]"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.9"
+    >
+      <path
+        d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function Cart() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { items, grandTotal, updateQuantity, removeFromCart, isLoading, error } = useCart();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const {
     session,
     startCartCheckout,
@@ -107,7 +127,7 @@ function Cart() {
   if (isLoading) {
     return (
       <section className="container-shell py-16">
-        <StatusView title="Refreshing bag" message="Pulling the latest CandleOra cart details." />
+        <StatusView title="Preparing your cart..." message="Pulling the latest CandleOra cart details." />
       </section>
     );
   }
@@ -124,8 +144,8 @@ function Cart() {
     return (
       <section className="container-shell py-16">
         <StatusView
-          title="Your bag is empty"
-          message="Browse the CandleOra collection and add a few favorites."
+          title="Nothing in your cart yet"
+          message="Find something you love and add it here."
           action={(
             <Link to="/shop" className="btn btn-primary mt-6">
               Start shopping
@@ -141,26 +161,15 @@ function Cart() {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <div className="space-y-6">
           <div className="space-y-3">
-            <p className="checkout-kicker">Checkout review</p>
             <h1 className="page-title">
-              My Bag ({items.length} {items.length === 1 ? "item" : "items"})
+              My Cart ({items.length} {items.length === 1 ? "item" : "items"})
             </h1>
             <p className="page-subtitle max-w-[760px]">
-              Review your selected pieces, adjust quantity, apply offers, and then continue into the redesigned checkout.
+              Review your items and proceed to checkout.
             </p>
           </div>
 
-          {effectiveSummary.savings > 0 ? (
-            <div className="checkout-banner-success px-5 py-4 text-base font-medium">
-              You are saving {formatCurrency(effectiveSummary.savings)} on this order.
-            </div>
-          ) : (
-            <div className="checkout-banner-success px-5 py-4 text-base font-medium">
-              Free delivery is already included with this order.
-            </div>
-          )}
-
-          <div className="space-y-4">
+          <div className={`space-y-4 ${items.length > 3 ? "mini-cart-scroll-view max-h-[940px] overflow-y-auto pr-2" : ""}`}>
             {items.map((item) => (
               <article
                 key={item.id}
@@ -178,7 +187,7 @@ function Cart() {
 
                   <Link
                     to={getProductPath({ id: item.productId, name: item.productName })}
-                    className="self-start overflow-hidden rounded-[22px] bg-[#F2ECE2]"
+                    className="relative self-start overflow-hidden rounded-[22px] bg-[#F2ECE2]"
                   >
                     <img
                       {...getResponsiveImageProps(item.imageUrl, {
@@ -192,12 +201,35 @@ function Cart() {
                       onError={(event) => applyImageFallback(event, fallbackImage)}
                       className="aspect-[0.92] h-full w-full object-cover"
                     />
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        toggleWishlist({
+                          id: item.productId,
+                          name: item.productName,
+                          price: item.unitPrice,
+                          originalPrice: item.originalUnitPrice,
+                          stock: item.stock,
+                          imageUrl: item.imageUrl,
+                          category: { name: item.occasionTag || "CandleOra" },
+                        });
+                      }}
+                      className={`absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/92 transition ${
+                        isWishlisted(item.productId)
+                          ? "text-danger"
+                          : "text-black/45 hover:text-danger"
+                      }`}
+                    >
+                      <HeartIcon filled={isWishlisted(item.productId)} />
+                    </button>
                   </Link>
 
                   <div className="flex min-w-0 flex-col justify-between gap-5">
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-brand-primary/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-black">
+                        <span className="rounded-full bg-black/[0.05] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/72">
                           {item.occasionTag || "CandleOra"}
                         </span>
                         <span
@@ -223,7 +255,7 @@ function Cart() {
                         <p className="max-w-[520px] text-sm leading-6 text-black/62">
                           {item.stock > 0
                             ? "Get it within 3-6 delivery days."
-                            : "This item is currently unavailable, but it will stay in your bag until stock returns."}
+                            : "This item is currently unavailable. Saved in for later."}
                         </p>
                       </div>
                     </div>
@@ -236,8 +268,17 @@ function Cart() {
                         onIncrease={() => updateQuantity(item.id, Number(item.quantity) + 1)}
                       />
                       <p className="inline-flex h-[42px] items-center rounded-full border border-[#f2d29a] bg-white px-4 text-sm text-black/62">
-                        Unit price {formatCurrency(item.unitPrice)}
+                        {formatCurrency(item.unitPrice)} each
                       </p>
+                      <span className="inline-flex items-center gap-2 text-sm font-medium text-black/62">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
+                          <path d="M3 7H15V17H3Z" />
+                          <path d="M15 10H18.5L21 13V17H15Z" />
+                          <circle cx="7" cy="18" r="1.8" />
+                          <circle cx="18" cy="18" r="1.8" />
+                        </svg>
+                        Free delivery applied to your order.
+                      </span>
                     </div>
                   </div>
 
@@ -286,21 +327,17 @@ function Cart() {
                 Sign in to continue
               </Link>
             )}
-            note="Apply a coupon here before moving into address and payment."
+            note=""
             extraContent={(
-              <div className="checkout-soft-panel p-4">
+              <div className="space-y-2 border-t border-black/8 pt-4">
                 <div className="grid gap-2 text-sm text-black/62">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-2 w-2 rounded-full bg-[#F1B85A]" />
-                    <span>Quality assurance</span>
+                    <span>Quality Assurance</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-2 w-2 rounded-full bg-[#F1B85A]" />
-                    <span>100% secure payment</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-[#F1B85A]" />
-                    <span>Easy returns & instant refunds</span>
+                    <span>100% Secure Payments</span>
                   </div>
                 </div>
               </div>

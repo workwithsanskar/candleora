@@ -5,7 +5,7 @@ function ChartCard({ title, subtitle, action, isLoading, children }) {
     <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="font-display text-2xl font-semibold text-brand-dark">{title}</h3>
+          <h3 className="text-2xl font-semibold text-brand-dark">{title}</h3>
           {subtitle ? <p className="mt-1 text-sm leading-6 text-brand-muted">{subtitle}</p> : null}
         </div>
         {action}

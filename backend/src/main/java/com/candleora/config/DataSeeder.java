@@ -1,6 +1,7 @@
 package com.candleora.config;
 
 import com.candleora.entity.AppUser;
+import com.candleora.entity.AnnouncementMessage;
 import com.candleora.entity.AuthProvider;
 import com.candleora.entity.CandleFix;
 import com.candleora.entity.Category;
@@ -9,6 +10,7 @@ import com.candleora.entity.Product;
 import com.candleora.entity.Role;
 import com.candleora.entity.StylingGuide;
 import com.candleora.repository.AppUserRepository;
+import com.candleora.repository.AnnouncementMessageRepository;
 import com.candleora.repository.CandleFixRepository;
 import com.candleora.repository.CategoryRepository;
 import com.candleora.repository.FaqRepository;
@@ -29,6 +31,7 @@ public class DataSeeder implements ApplicationRunner {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final AnnouncementMessageRepository announcementMessageRepository;
     private final CandleFixRepository candleFixRepository;
     private final StylingGuideRepository stylingGuideRepository;
     private final FaqRepository faqRepository;
@@ -38,6 +41,7 @@ public class DataSeeder implements ApplicationRunner {
     public DataSeeder(
         CategoryRepository categoryRepository,
         ProductRepository productRepository,
+        AnnouncementMessageRepository announcementMessageRepository,
         CandleFixRepository candleFixRepository,
         StylingGuideRepository stylingGuideRepository,
         FaqRepository faqRepository,
@@ -46,6 +50,7 @@ public class DataSeeder implements ApplicationRunner {
     ) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.announcementMessageRepository = announcementMessageRepository;
         this.candleFixRepository = candleFixRepository;
         this.stylingGuideRepository = stylingGuideRepository;
         this.faqRepository = faqRepository;
@@ -233,6 +238,8 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedContent() {
+        seedAnnouncementMessages();
+
         if (candleFixRepository.count() == 0) {
             candleFixRepository.saveAll(List.of(
                 candleFix(
@@ -312,50 +319,19 @@ public class DataSeeder implements ApplicationRunner {
             ));
         }
 
-        if (faqRepository.count() == 0) {
-            faqRepository.saveAll(List.of(
-                faq(
-                    "What makes CandleOra candles special?",
-                    "Our candles are handmade with love, tested for quality and burn performance, and designed to enhance your mood, freshen your space, and create a calming ambiance.",
-                    1
-                ),
-                faq(
-                    "Do CandleOra candles have scents?",
-                    "Yes. Each candle is infused with carefully selected fragrances that match its mood, occasion, or styling intention.",
-                    2
-                ),
-                faq(
-                    "How long do your candles burn?",
-                    "Depending on the size and design, our candles can burn anywhere from 20 to 60 hours without losing fragrance or quality.",
-                    3
-                ),
-                faq(
-                    "Are your candles safe for indoor use?",
-                    "Yes. Our candles are made with safe, high-quality wax and wicks. Always place them on a heat-resistant surface and never leave them unattended while lit.",
-                    4
-                ),
-                faq(
-                    "Can I gift CandleOra candles for special occasions?",
-                    "Absolutely. Our occasion edits are designed for birthdays, weddings, anniversaries, festivals, housewarmings, and thoughtful self-care gifting.",
-                    5
-                ),
-                faq(
-                    "How should I care for the wick?",
-                    "Trim the wick to about 1/4 inch before each burn for a cleaner flame and more even wax melt.",
-                    6
-                ),
-                faq(
-                    "How should I store my candles?",
-                    "Keep them in a cool, dry place away from direct sunlight and heat so the wax shape, color, and fragrance stay intact.",
-                    7
-                ),
-                faq(
-                    "Do you share order updates after checkout?",
-                    "Yes. You can review order details in your account, and the checkout email is used for order confirmation and invoice communication.",
-                    8
-                )
-            ));
+        syncFaqs();
+    }
+
+    private void seedAnnouncementMessages() {
+        if (announcementMessageRepository.count() > 0) {
+            return;
         }
+
+        AnnouncementMessage announcementMessage = new AnnouncementMessage();
+        announcementMessage.setMessage("Free delivery & free gift when you spend over Rs. 1999/-");
+        announcementMessage.setActive(true);
+        announcementMessage.setOrderIndex(0);
+        announcementMessageRepository.save(announcementMessage);
     }
 
     private void seedUsers() {
@@ -451,6 +427,104 @@ public class DataSeeder implements ApplicationRunner {
         return faq;
     }
 
+    private void syncFaqs() {
+        Map<String, Faq> existingByQuestion = faqRepository.findAll().stream()
+            .collect(Collectors.toMap(
+                faq -> normalizeFaqQuestion(faq.getQuestion()),
+                Function.identity(),
+                (left, right) -> left
+            ));
+
+        List<Faq> syncedFaqs = seededFaqs().stream()
+            .map(seed -> {
+                Faq faq = existingByQuestion.remove(normalizeFaqQuestion(seed.question()));
+                if (faq == null) {
+                    faq = new Faq();
+                }
+
+                faq.setQuestion(seed.question());
+                faq.setAnswer(seed.answer());
+                faq.setOrderIndex(seed.orderIndex());
+                return faq;
+            })
+            .toList();
+
+        faqRepository.saveAll(syncedFaqs);
+
+        if (!existingByQuestion.isEmpty()) {
+            faqRepository.deleteAll(existingByQuestion.values());
+        }
+    }
+
+    private List<SeededFaq> seededFaqs() {
+        return List.of(
+            new SeededFaq(
+                "What makes CandleOra candles special?",
+                "Our candles are handmade with love, tested for quality and burn performance, and designed to enhance your mood, freshen your space, and create a calming ambiance.",
+                1
+            ),
+            new SeededFaq(
+                "What types of waxes do you use?",
+                "We use soy wax, beeswax, and occasionally paraffin (rarely) wax options.",
+                2
+            ),
+            new SeededFaq(
+                "Do CandleOra candles have scents?",
+                "Yes, each candle is infused with carefully selected fragrances that match its mood, occasion, or styling intention.",
+                3
+            ),
+            new SeededFaq(
+                "How long do your candles burn?",
+                "Depending on the size and design, our candles can burn anywhere from 20 to 60 hours without losing fragrance or quality.",
+                4
+            ),
+            new SeededFaq(
+                "Are your candles safe for indoor use?",
+                "Yes, our candles are made with high-quality, safe materials. Always place them on a heat-resistant surface and never leave them unattended. Use around children and pets with proper supervision.",
+                5
+            ),
+            new SeededFaq(
+                "Can I leave a candle burning overnight?",
+                "No, we strongly advise against leaving a candle burning unattended or overnight. Always extinguish candles before sleeping to ensure safety.",
+                6
+            ),
+            new SeededFaq(
+                "Can I gift CandleOra candles for special occasions?",
+                "Absolutely. Our \"Occasion Picks\" page is designed for birthdays, weddings, anniversaries, festivals, housewarmings, and even self-care gifting.",
+                7
+            ),
+            new SeededFaq(
+                "How long does shipping take?",
+                "Shipping typically takes 3–7 business days, depending on your location. You will receive tracking details once your order is dispatched.",
+                8
+            ),
+            new SeededFaq(
+                "Do you offer international shipping?",
+                "Yes, we offer international shipping to selected countries. Shipping times and charges may vary based on the destination.",
+                9
+            ),
+            new SeededFaq(
+                "Do you share order updates after checkout?",
+                "Yes, you can review your order details on the \"Orders\" page. We also send order confirmations and invoices to your registered email.",
+                10
+            ),
+            new SeededFaq(
+                "What should I do if my candle has any issue?",
+                "For any issues, please refer to our \"CANDLE FIXES\" page.",
+                11
+            ),
+            new SeededFaq(
+                "What happens if my candle arrives damaged?",
+                "If your order arrives damaged, please reach out to us within 48 hours of delivery with photos of the product and packaging. We will arrange a replacement or issue a refund as quickly as possible. Go to Orders > Tracking ID > Replacement Policy.",
+                12
+            )
+        );
+    }
+
+    private String normalizeFaqQuestion(String value) {
+        return value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
     private AppUser user(String name, String email, Role role) {
         AppUser user = new AppUser();
         user.setName(name);
@@ -461,6 +535,9 @@ public class DataSeeder implements ApplicationRunner {
         user.setEmailVerified(true);
         user.setPhoneVerified(false);
         return user;
+    }
+
+    private record SeededFaq(String question, String answer, int orderIndex) {
     }
 
 }

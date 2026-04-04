@@ -21,6 +21,8 @@ public interface ReplacementRepository
 
     Optional<ReplacementRequest> findTopByOrderIdAndOrderItemIdOrderByRequestedAtDesc(Long orderId, Long orderItemId);
 
+    Optional<ReplacementRequest> findTopByOrderIdOrderByRequestedAtDesc(Long orderId);
+
     boolean existsByOrderIdAndOrderItemId(Long orderId, Long orderItemId);
 
     boolean existsByOrderIdAndOrderItemIdAndStatusIn(
@@ -30,6 +32,8 @@ public interface ReplacementRepository
     );
 
     List<ReplacementRequest> findByOrderIdOrderByRequestedAtDesc(Long orderId);
+
+    List<ReplacementRequest> findByOrderIdInOrderByRequestedAtDesc(Collection<Long> orderIds);
 
     List<ReplacementRequest> findByOrderUserAndRequestedAtAfter(AppUser user, Instant requestedAfter);
 

@@ -10,6 +10,7 @@ const titles = {
   "/admin/replacements": "Replacements",
   "/admin/products": "Products",
   "/admin/coupons": "Coupons",
+  "/admin/banners": "Festive banners",
   "/admin/customers": "Customers",
   "/admin/analytics": "Analytics",
   "/admin/settings": "Settings",
@@ -20,6 +21,7 @@ const placeholders = {
   "/admin/contact-messages": "Search messages by name, email, phone, or subject",
   "/admin/products": "Search products by name, SKU, slug, or description",
   "/admin/coupons": "Search coupons by code or campaign status",
+  "/admin/banners": "Search banners by title or linked coupon",
   "/admin/customers": "Search customers by name, email, or phone",
 };
 
@@ -39,6 +41,30 @@ function AdminLayout() {
 
     if (location.pathname.startsWith("/admin/replacements/")) {
       return "Review replacement";
+    }
+
+    if (location.pathname === "/admin/products/new") {
+      return "Add product";
+    }
+
+    if (location.pathname.startsWith("/admin/products/") && location.pathname.endsWith("/edit")) {
+      return "Edit product";
+    }
+
+    if (location.pathname === "/admin/coupons/new") {
+      return "Create coupon";
+    }
+
+    if (location.pathname.startsWith("/admin/coupons/") && location.pathname.endsWith("/edit")) {
+      return "Edit coupon";
+    }
+
+    if (location.pathname === "/admin/banners/new") {
+      return "Create festive banner";
+    }
+
+    if (location.pathname.startsWith("/admin/banners/") && location.pathname.endsWith("/edit")) {
+      return "Edit festive banner";
     }
 
     return titles[location.pathname] ?? "Admin";

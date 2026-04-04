@@ -132,10 +132,9 @@ function Orders() {
     <section className="container-shell py-10 sm:py-12">
       <div className="space-y-6">
         <header className="space-y-3">
-          <h1 className="page-title">Order History</h1>
+          <h1 className="page-title">Orders</h1>
           <p className="max-w-[920px] text-sm leading-7 text-black/58 sm:text-body">
-            Review your past CandleOra purchases, track order progress, and jump back into the
-            shop whenever you want to reorder your favorites.
+            See your past purchases, track each order, and reorder your favourites in a click.
           </p>
           {location.state?.placedOrderId && (
             <p className="text-sm font-semibold text-brand-primary">
@@ -147,12 +146,17 @@ function Orders() {
         {!orders.length ? (
           <StatusView
             title="No orders yet"
-            message="Place your first order and it will appear here."
+            message="No orders yet. Start shopping to see your orders here."
+            action={(
+              <Link to="/shop" className="btn btn-primary mt-6">
+                Shop
+              </Link>
+            )}
           />
         ) : (
           <div className="overflow-hidden rounded-[6px] border border-black/12 bg-white">
-            <div className="hidden grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_120px] items-center gap-6 bg-black/35 px-5 py-4 text-sm font-medium text-white lg:grid">
-              <p>Order no</p>
+            <div className="hidden grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_156px] items-center gap-6 bg-black/35 px-5 py-4 text-sm font-medium text-white lg:grid">
+              <p>Order No.</p>
               <p>Items</p>
               <p>Status</p>
               <p>Tracking ID</p>
@@ -181,10 +185,10 @@ function Orders() {
                       index !== orders.length - 1 ? "border-b" : ""
                     }`}
                   >
-                    <div className="grid gap-5 lg:grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_120px] lg:items-center lg:gap-6">
+                    <div className="grid gap-5 lg:grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_156px] lg:items-center lg:gap-6">
                       <div className="space-y-1">
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
-                          Order no
+                          Order No.
                         </p>
                         <Link
                           to={`/orders/${order.id}`}
@@ -246,7 +250,7 @@ function Orders() {
                         </p>
                         <Link
                           to={`/orders/${order.id}`}
-                          className="inline-flex items-center gap-1 text-sm text-black/52 hover:text-black"
+                          className="inline-flex items-center gap-1 text-sm text-[#1b75bc] hover:text-[#15588e]"
                         >
                           <span className="underline underline-offset-2">{trackingReference}</span>
                           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -279,27 +283,34 @@ function Orders() {
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                           Action
                         </p>
-                        {liveCancelableOrderIds.has(order.id) ? (
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 text-sm font-semibold text-danger hover:opacity-80"
-                            onClick={() => handleCancelOrder(order.id)}
-                            disabled={cancellingOrderId === order.id}
-                          >
-                            {cancellingOrderId === order.id ? "Cancelling..." : "Cancel order"}
-                          </button>
-                        ) : (
+                        <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap text-sm font-semibold lg:justify-end">
                           <Link
                             to="/shop"
-                            className="inline-flex items-center gap-2 text-sm font-semibold text-success hover:opacity-80"
+                            className="text-black transition hover:underline hover:underline-offset-4"
                           >
-                            Re-Order
-                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
-                              <path d="M5 12H19" strokeLinecap="round" />
-                              <path d="M13 6L19 12L13 18" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            Reorder
                           </Link>
-                        )}
+                          <span className="text-black/35">|</span>
+                          {String(order.status).toUpperCase() === "DELIVERED" ? (
+                            <Link
+                              to={`/orders/${order.id}?rate=true`}
+                              className="text-success transition hover:underline hover:underline-offset-4"
+                            >
+                              Rate
+                            </Link>
+                          ) : liveCancelableOrderIds.has(order.id) ? (
+                            <button
+                              type="button"
+                              className="text-danger transition hover:underline hover:underline-offset-4 disabled:opacity-60"
+                              onClick={() => handleCancelOrder(order.id)}
+                              disabled={cancellingOrderId === order.id}
+                            >
+                              {cancellingOrderId === order.id ? "Cancelling..." : "Cancel"}
+                            </button>
+                          ) : (
+                            <span className="text-black/35">Cancel</span>
+                          )}
+                        </div>
                         {cancelError && order.id === cancelErrorOrderId && (
                           <p className="text-xs text-danger">{cancelError}</p>
                         )}

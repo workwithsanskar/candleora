@@ -54,6 +54,11 @@ public class AdminProductController {
         return adminProductService.getProductOptions();
     }
 
+    @GetMapping("/{id}")
+    public AdminProductResponse getProduct(@PathVariable Long id) {
+        return adminProductService.getProduct(id);
+    }
+
     @PostMapping
     public AdminProductResponse createProduct(@Valid @RequestBody AdminProductRequest request) {
         return adminProductService.createProduct(request);

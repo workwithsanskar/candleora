@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import CandleCheckbox from "../components/CandleCheckbox";
 import CouponCodePanel from "../components/checkout/CouponCodePanel";
 import CheckoutTimerBanner from "../components/checkout/CheckoutTimerBanner";
 import PrimaryButton from "../components/checkout/PrimaryButton";
@@ -18,15 +19,15 @@ const acceptedModes = ["UPI", "Cards", "Wallets", "Net banking"];
 const trustHighlights = [
   {
     id: "genuine",
-    lines: ["100% genuine", "product"],
+    lines: ["Quality", "Assurance"],
   },
   {
     id: "secure",
-    lines: ["100% secure", "payment"],
+    lines: ["100% secure", "payments"],
   },
   {
     id: "returns",
-    lines: ["Easy returns &", "instant refunds"],
+    lines: ["Fast & reliable", "checkout"],
   },
 ];
 
@@ -264,7 +265,7 @@ function CheckoutPayment() {
   const footerCtaLabel = isSubmitting
     ? !isOnlineSelected
       ? "Securing order..."
-      : "Opening payment..."
+      : "Processing Payment..."
     : !isOnlineSelected
       ? "Place order"
       : `Pay ${formatCurrency(session.priceSummary.total)}`;
@@ -272,7 +273,7 @@ function CheckoutPayment() {
   const mobileCtaLabel = isSubmitting
     ? !isOnlineSelected
       ? "Securing..."
-      : "Opening..."
+      : "Processing..."
     : !isOnlineSelected
       ? "Place order"
       : "Pay now";
@@ -416,10 +417,9 @@ function CheckoutPayment() {
     <section className="container-shell py-10 sm:py-12">
       <div className="space-y-4">
         <div className="space-y-3">
-          <p className="checkout-kicker">Payment step</p>
-          <h1 className="page-title">Choose your payment method</h1>
+          <h1 className="page-title">Payment</h1>
           <p className="page-subtitle max-w-[760px]">
-            Select one of the two final payment options and complete the order through Razorpay or on delivery.
+            Choose your payment method.
           </p>
         </div>
 
@@ -437,15 +437,13 @@ function CheckoutPayment() {
           data-testid="checkout-payment-frame"
           className="checkout-panel space-y-5 overflow-hidden rounded-[24px] px-5 py-6 sm:px-7"
         >
-          <div className="checkout-soft-panel px-4 py-3 text-center text-sm font-medium text-brand-dark">
-            Trusted by CandleOra customers
-          </div>
+          <p className="text-sm leading-6 text-black/58">Select a payment option to complete your order.</p>
 
           <div className="space-y-4">
             <PaymentChoiceCard
               selected={isOnlineSelected}
               title="Online payment"
-              subtitle="Continue to Razorpay and choose UPI, cards, wallets, or net banking in one secure payment sheet."
+              subtitle="Secure online payment powered by Razorpay."
               badge="Recommended"
               highlight={
                 session.priceSummary.savings > 0
@@ -461,7 +459,7 @@ function CheckoutPayment() {
             <PaymentChoiceCard
               selected={!isOnlineSelected}
               title="Cash on delivery"
-              subtitle="Confirm the order now and pay when your package arrives at your doorstep."
+              subtitle="Pay when your order arrives at your doorstep."
               onClick={() => {
                 setPaymentMethod("COD");
                 setError("");
@@ -480,7 +478,7 @@ function CheckoutPayment() {
                 {(isOnlineSelected ? acceptedModes : ["Pay on delivery"]).map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-[#f1d7a1] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/58"
+                    className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/58"
                   >
                     {item}
                   </span>
@@ -488,13 +486,12 @@ function CheckoutPayment() {
               </div>
 
               <label className="flex items-center gap-3 text-sm text-black/68">
-                <input
-                  type="checkbox"
+                <CandleCheckbox
                   checked={Boolean(session.whatsappOptIn)}
                   onChange={(event) => setWhatsappOptIn(event.target.checked)}
-                  className="h-4 w-4 rounded border-[#f1b85a] text-brand-primary"
+                  className="h-4 w-4"
                 />
-                WhatsApp updates
+                Get order updates on WhatsApp
               </label>
             </div>
           </div>
@@ -508,20 +505,16 @@ function CheckoutPayment() {
 
         <div data-testid="checkout-payment-sidebar" className="space-y-4">
           <SidePanel
-            title={`Delivering order to ${selectedAddress.recipientName}`}
-            subtitle={selectedAddress.label ? selectedAddress.label : "Selected address"}
+            title="Delivering to"
+            subtitle=""
             open={openPanels.delivery}
             onToggle={() => togglePanel("delivery")}
           >
             <div className="space-y-2 text-sm leading-6 text-black/62">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {selectedAddress.label ? (
-                    <span className="rounded-[8px] border border-[#f1d7a1] bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#a56a00]">
-                      {selectedAddress.label}
-                    </span>
-                  ) : null}
-                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b27d1d]">
+                  Delivery details
+                </span>
                 <Link to="/checkout/address" className="text-sm font-semibold text-[#a56a00] hover:underline">
                   Change
                 </Link>
@@ -563,44 +556,40 @@ function CheckoutPayment() {
               {session.items.map((item, index) => (
                 <div
                   key={`${item.productId}-${index}`}
-                  className="checkout-soft-panel rounded-[16px] px-4 py-4"
+                  className="flex items-start justify-between gap-4 border-b border-black/8 pb-3 last:border-b-0 last:pb-0"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
-                      <p className="mt-1 text-sm text-black/56">
-                        Qty {item.quantity}
-                        {item.variantLabel ? ` | ${item.variantLabel}` : ""}
-                      </p>
-                    </div>
-                    {item.stockSnapshot ? (
-                      <span className="shrink-0 rounded-full border border-[#f1d7a1] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a56a00]">
-                        Stock {item.stockSnapshot}
-                      </span>
-                    ) : null}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-brand-dark">{item.productName}</p>
+                    <p className="mt-1 text-sm text-black/56">
+                      Qty {item.quantity}
+                      {item.variantLabel ? ` | ${item.variantLabel}` : ""}
+                    </p>
                   </div>
+                  <span className="shrink-0 text-sm font-medium text-black/54">
+                    {formatCurrency(Number(item.lineTotal ?? Number(item.price) * Number(item.quantity ?? 1)))}
+                  </span>
                 </div>
               ))}
             </div>
           </SidePanel>
 
           <SidePanel
-            title="Price Summary"
+            title="Order Summary"
             subtitle={`${session.items.length} item${session.items.length === 1 ? "" : "s"}`}
             open={openPanels.summary}
             onToggle={() => togglePanel("summary")}
           >
-            <div className="space-y-4">
-              <div className="space-y-3 text-sm text-black/64">
-                <div className="flex items-center justify-between">
-                  <span>Product total</span>
-                  <span>{formatCurrency(session.priceSummary.subtotal)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Total discounts</span>
-                  <span className={session.priceSummary.discount > 0 ? "text-success" : ""}>
-                    {session.priceSummary.discount > 0
-                      ? `-${formatCurrency(session.priceSummary.discount)}`
+              <div className="space-y-4">
+                <div className="space-y-3 text-sm text-black/64">
+                  <div className="flex items-center justify-between">
+                    <span>Item Total</span>
+                    <span>{formatCurrency(session.priceSummary.subtotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Total Discounts</span>
+                    <span className={session.priceSummary.discount > 0 ? "text-success" : ""}>
+                      {session.priceSummary.discount > 0
+                        ? `-${formatCurrency(session.priceSummary.discount)}`
                       : formatCurrency(0)}
                   </span>
                 </div>
@@ -614,22 +603,18 @@ function CheckoutPayment() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-black/8 pt-4">
-                <span className="text-base font-semibold text-brand-dark">Total</span>
-                <span className="font-display text-[1.8rem] font-semibold tracking-[-0.04em] text-brand-dark">
-                  {formatCurrency(session.priceSummary.total)}
-                </span>
-              </div>
+                <div className="flex items-center justify-between border-t border-black/8 pt-4">
+                  <span className="text-base font-semibold text-brand-dark">Total</span>
+                  <span className="font-display text-[1.8rem] font-semibold tracking-[-0.04em] text-brand-dark">
+                    {formatCurrency(session.priceSummary.total)}
+                  </span>
+                </div>
 
-              {session.priceSummary.savings > 0 ? (
-                <div className="checkout-banner-success px-4 py-3 text-sm font-medium">
-                  You're saving {formatCurrency(session.priceSummary.savings)} on this order.
-                </div>
-              ) : (
-                <div className="checkout-banner-success px-4 py-3 text-sm font-medium">
-                  Free delivery is already included with this order.
-                </div>
-              )}
+                {session.priceSummary.savings > 0 ? (
+                  <div className="text-sm font-medium text-success">
+                    You&apos;re saving {formatCurrency(session.priceSummary.savings)} on this order.
+                  </div>
+                ) : null}
             </div>
           </SidePanel>
 

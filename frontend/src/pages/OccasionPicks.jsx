@@ -1,6 +1,7 @@
 import { useDeferredValue, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import CandleCheckbox from "../components/CandleCheckbox";
 import LazyProductCard from "../components/LazyProductCard";
 import StatusView from "../components/StatusView";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
@@ -20,7 +21,7 @@ const priceRanges = [
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="11" cy="11" r="6.5" />
       <path d="M16 16L21 21" strokeLinecap="round" />
     </svg>
@@ -43,18 +44,19 @@ function OccasionPicks() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
+  const [selectedOccasion, setSelectedOccasion] = useState(occasionBuckets[0]);
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
   const trimmedSearch = deferredSearch.trim();
   const productsQuery = useInfiniteQuery({
-    queryKey: ["catalog", "occasion-picks", trimmedSearch, selectedCategory, activeRange?.id ?? ""],
+    queryKey: ["catalog", "occasion-picks", trimmedSearch, selectedCategory, selectedOccasion, activeRange?.id ?? ""],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       catalogApi.getProducts({
         page: pageParam,
         size: pageSize,
-        occasions: occasionBuckets.join(","),
+        occasions: selectedOccasion,
         search: trimmedSearch || undefined,
         category: selectedCategory || undefined,
         minPrice: activeRange?.min,
@@ -92,8 +94,8 @@ function OccasionPicks() {
                   onClick={() => setSelectedCategory(item.slug)}
                   className={`flex w-full items-center justify-between rounded-full px-4 py-2 text-left text-[0.96rem] leading-[1.05] transition ${
                     selectedCategory === item.slug
-                      ? "bg-brand-primary text-black"
-                      : "text-black/82 hover:bg-black/5 hover:text-black"
+                      ? "font-semibold text-black"
+                      : "text-black/82 hover:text-black"
                   }`}
                 >
                   <span className="whitespace-nowrap">{item.name}</span>
@@ -106,15 +108,14 @@ function OccasionPicks() {
             <div className="space-y-1.5">
               {priceRanges.map((range) => (
                 <label key={range.id} className="flex items-center gap-2.5 text-[0.94rem] leading-none text-black/82">
-                  <input
-                    type="checkbox"
+                  <CandleCheckbox
                     checked={selectedPriceRange === range.id}
                     onChange={() =>
                       setSelectedPriceRange((currentRange) =>
                         currentRange === range.id ? "" : range.id,
                       )
                     }
-                    className="h-4 w-4 accent-black"
+                    className="h-4 w-4"
                   />
                   <span>{range.label}</span>
                 </label>
@@ -129,6 +130,23 @@ function OccasionPicks() {
               Occasion Picks
             </h1>
 
+            <div className="flex flex-wrap gap-3">
+              {occasionBuckets.map((occasion) => (
+                <button
+                  key={occasion}
+                  type="button"
+                  onClick={() => setSelectedOccasion(occasion)}
+                  className={`rounded-full px-3 py-1.5 text-sm transition ${
+                    selectedOccasion === occasion
+                      ? "font-semibold text-black"
+                      : "text-black/58 hover:text-black"
+                  }`}
+                >
+                  {occasion}
+                </button>
+              ))}
+            </div>
+
             <label className="flex items-center gap-3 rounded-full border border-black/15 px-5 py-3">
               <input
                 type="search"
@@ -142,7 +160,9 @@ function OccasionPicks() {
               </span>
             </label>
 
-            <p className="text-sm text-black/76">Showing {showingFrom}-{showingTo} of {totalElements} item(s)</p>
+            <p className="text-sm text-black/76">
+              Showing {showingFrom}-{showingTo} of {totalElements} item(s) for {selectedOccasion}
+            </p>
           </div>
 
           {isInitialLoading ? (

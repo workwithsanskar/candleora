@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import CandleSelectControl from "../components/CandleSelectControl";
 import Modal from "../components/Modal";
 import ReplaceModal from "../components/ReplaceModal";
 import StatusView from "../components/StatusView";
@@ -10,7 +11,8 @@ import {
   SUPPORT_PHONE_DISPLAY,
   SUPPORT_WHATSAPP_URL,
 } from "../constants/support";
-import { orderApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { catalogApi, orderApi } from "../services/api";
 import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
 import {
   formatApiError,
@@ -35,6 +37,15 @@ const CANCELLATION_POLICY_COPY =
   "You can cancel your order within 24 hours of placing it.";
 const REPLACEMENT_POLICY_COPY =
   "You can request a replacement within 3 days of delivery only if the item is damaged or broken.";
+
+function buildReviewDraft(reviewerName = "", reviewerEmail = "", rating = 5, message = "") {
+  return {
+    reviewerName,
+    reviewerEmail,
+    rating,
+    message,
+  };
+}
 
 function formatPaymentProviderLabel(provider) {
   const key = String(provider ?? "").toUpperCase();
@@ -640,6 +651,7 @@ function ContactSupportCard({
 function OrderDetail({ readOnly = false }) {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const prefersReducedMotion = useReducedMotion();
   const email = readOnly ? searchParams.get("email")?.trim().toLowerCase() ?? "" : "";
   const [order, setOrder] = useState(null);
@@ -656,6 +668,15 @@ function OrderDetail({ readOnly = false }) {
   const [isSupportInfoOpen, setIsSupportInfoOpen] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [isCancelSuccessOpen, setIsCancelSuccessOpen] = useState(false);
+  const [isRateModalOpen, setIsRateModalOpen] = useState(false);
+  const [selectedReviewItemId, setSelectedReviewItemId] = useState("");
+  const [reviewDraft, setReviewDraft] = useState(() => buildReviewDraft());
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
+  const [isLoadingReviewSummary, setIsLoadingReviewSummary] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const hasHandledRateParamRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -706,6 +727,116 @@ function OrderDetail({ readOnly = false }) {
 
     return () => window.clearInterval(intervalId);
   }, [email, id, order?.status, order?.trackingNumber, readOnly]);
+
+  useEffect(() => {
+    const orderItems = Array.isArray(order?.items) ? order.items : [];
+    const preferredName = user?.name?.trim() || order?.shippingName || "";
+    const preferredEmail =
+      user?.email?.trim()?.toLowerCase() || order?.contactEmail?.trim()?.toLowerCase() || "";
+
+    setReviewDraft(buildReviewDraft(preferredName, preferredEmail));
+
+    if (!orderItems.length) {
+      setSelectedReviewItemId("");
+      return;
+    }
+
+    setSelectedReviewItemId((current) =>
+      current && orderItems.some((item) => String(item.id) === String(current))
+        ? current
+        : String(orderItems[0].id),
+    );
+  }, [order?.id, order?.items, order?.shippingName, order?.contactEmail, user?.name, user?.email]);
+
+  useEffect(() => {
+    if (
+      readOnly ||
+      hasHandledRateParamRef.current ||
+      searchParams.get("rate") !== "true" ||
+      order?.status !== "DELIVERED" ||
+      !Array.isArray(order?.items) ||
+      order.items.length === 0
+    ) {
+      return;
+    }
+
+    hasHandledRateParamRef.current = true;
+    setIsRateModalOpen(true);
+  }, [order?.id, order?.items, order?.status, readOnly, searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const orderItems = Array.isArray(order?.items) ? order.items : [];
+    const selectedItem =
+      orderItems.find((item) => String(item.id) === String(selectedReviewItemId)) ??
+      orderItems[0] ??
+      null;
+
+    if (!isRateModalOpen || !selectedItem?.productId) {
+      if (!isRateModalOpen) {
+        setReviewSummary(null);
+        setReviewError("");
+        setReviewSuccess("");
+      }
+      return undefined;
+    }
+
+    async function loadReviewSummary() {
+      const preferredName = user?.name?.trim() || order?.shippingName || "";
+      const preferredEmail =
+        user?.email?.trim()?.toLowerCase() || order?.contactEmail?.trim()?.toLowerCase() || "";
+
+      setIsLoadingReviewSummary(true);
+      setReviewError("");
+      setReviewSuccess("");
+
+      try {
+        const summary = await catalogApi.getProductReviews(selectedItem.productId);
+        if (cancelled) {
+          return;
+        }
+
+        setReviewSummary(summary);
+
+        if (summary?.currentUserReview) {
+          setReviewDraft(
+            buildReviewDraft(
+              summary.currentUserReview.reviewerName || preferredName,
+              preferredEmail,
+              Number(summary.currentUserReview.rating ?? 5),
+              summary.currentUserReview.message || "",
+            ),
+          );
+          return;
+        }
+
+        setReviewDraft(buildReviewDraft(preferredName, preferredEmail));
+      } catch (nextError) {
+        if (!cancelled) {
+          setReviewSummary(null);
+          setReviewError(formatApiError(nextError));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingReviewSummary(false);
+        }
+      }
+    }
+
+    loadReviewSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isRateModalOpen,
+    order?.contactEmail,
+    order?.items,
+    order?.shippingName,
+    selectedReviewItemId,
+    user?.email,
+    user?.name,
+  ]);
 
   if (isLoading) {
     return (
@@ -767,6 +898,13 @@ function OrderDetail({ readOnly = false }) {
   const replaceableItems = items.filter((item) =>
     canRequestReplacement(order, itemReplacement(replacements, item.id), readOnly),
   );
+  const reviewableItems = items.filter((item) => Boolean(item.productId));
+  const selectedReviewItem =
+    reviewableItems.find((item) => String(item.id) === String(selectedReviewItemId)) ??
+    reviewableItems[0] ??
+    null;
+  const currentUserReview = reviewSummary?.currentUserReview ?? null;
+  const canRateOrder = !readOnly && order.status === "DELIVERED" && reviewableItems.length > 0;
   const cancellationHelperText = readOnly
     ? "Manage cancellations after sign-in."
     : liveCanCancel
@@ -827,6 +965,22 @@ function OrderDetail({ readOnly = false }) {
     setReplacementItem(replaceableItems[0]);
   }
 
+  function handleOpenRateModal() {
+    if (!canRateOrder) {
+      return;
+    }
+
+    setReviewError("");
+    setReviewSuccess("");
+    setIsRateModalOpen(true);
+  }
+
+  function handleCloseRateModal() {
+    setIsRateModalOpen(false);
+    setReviewError("");
+    setReviewSuccess("");
+  }
+
   function handleOpenCancelConfirm() {
     if (readOnly || !liveCanCancel || isCancelling) {
       return;
@@ -852,6 +1006,47 @@ function OrderDetail({ readOnly = false }) {
       setCancelError(formatApiError(nextError));
     } finally {
       setIsCancelling(false);
+    }
+  }
+
+  async function handleSubmitReview() {
+    if (
+      !selectedReviewItem?.productId ||
+      isSubmittingReview ||
+      Boolean(currentUserReview)
+    ) {
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    setReviewError("");
+    setReviewSuccess("");
+
+    try {
+      const summary = await catalogApi.createProductReview(String(selectedReviewItem.productId), {
+        reviewerName: reviewDraft.reviewerName.trim(),
+        reviewerEmail: reviewDraft.reviewerEmail.trim().toLowerCase(),
+        rating: Number(reviewDraft.rating),
+        message: reviewDraft.message.trim(),
+      });
+
+      setReviewSummary(summary);
+      setReviewSuccess("Thanks for sharing your review.");
+
+      if (summary?.currentUserReview) {
+        setReviewDraft(
+          buildReviewDraft(
+            summary.currentUserReview.reviewerName || reviewDraft.reviewerName.trim(),
+            reviewDraft.reviewerEmail.trim().toLowerCase(),
+            Number(summary.currentUserReview.rating ?? reviewDraft.rating),
+            summary.currentUserReview.message || reviewDraft.message.trim(),
+          ),
+        );
+      }
+    } catch (nextError) {
+      setReviewError(formatApiError(nextError));
+    } finally {
+      setIsSubmittingReview(false);
     }
   }
 
@@ -919,6 +1114,16 @@ function OrderDetail({ readOnly = false }) {
                     disabled={isDownloadingInvoice}
                   >
                     {isDownloadingInvoice ? "Preparing invoice..." : "Invoice"}
+                  </button>
+                ) : null}
+
+                {canRateOrder ? (
+                  <button
+                    type="button"
+                    className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-black/12 bg-white px-5 py-3 text-sm font-semibold text-brand-dark transition hover:bg-black/[0.03]"
+                    onClick={handleOpenRateModal}
+                  >
+                    Rate Order
                   </button>
                 ) : null}
 
@@ -1120,11 +1325,11 @@ function OrderDetail({ readOnly = false }) {
                 </div>
               </SidePanel>
 
-              <SidePanel title="Price summary">
+              <SidePanel title="Order Summary">
                 <div className="space-y-3">
-                  <SummaryRow label="Product total" value={formatCurrency(order.subtotalAmount)} />
+                  <SummaryRow label="Item Total" value={formatCurrency(order.subtotalAmount)} />
                   <SummaryRow
-                    label="Total discount"
+                    label="Total Discounts"
                     value={formatCurrency(order.discountAmount)}
                     valueClassName="text-success"
                   />
@@ -1143,6 +1348,170 @@ function OrderDetail({ readOnly = false }) {
           </div>
         </m.div>
       </div>
+
+      <Modal
+        isOpen={isRateModalOpen}
+        onClose={handleCloseRateModal}
+        kicker="Order feedback"
+        title="Rate your order"
+        description="Share your feedback in a quick popup instead of the main order page."
+        maxWidthClass="max-w-[640px]"
+      >
+        <div className="space-y-4">
+          {reviewableItems.length > 1 ? (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-black/42">
+                Select item
+              </label>
+              <CandleSelectControl
+                value={selectedReviewItemId}
+                onChange={(nextValue) => setSelectedReviewItemId(String(nextValue))}
+                options={reviewableItems.map((item) => ({
+                  value: String(item.id),
+                  label: item.productName,
+                }))}
+                placeholder="Select item"
+                buttonClassName="!h-11 !rounded-2xl"
+              />
+            </div>
+          ) : null}
+
+          {selectedReviewItem ? (
+            <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                Selected item
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-16 w-16 overflow-hidden rounded-[18px] bg-[#f5efe4]">
+                  {selectedReviewItem.imageUrl ? (
+                    <img
+                      src={selectedReviewItem.imageUrl}
+                      alt={selectedReviewItem.productName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-dark">{selectedReviewItem.productName}</p>
+                  <p className="mt-1 text-sm text-black/56">
+                    Quantity {selectedReviewItem.quantity} • {formatCurrency(selectedReviewItem.price)} each
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-black/42">
+                Name
+              </label>
+              <input
+                value={reviewDraft.reviewerName}
+                readOnly
+                className="h-11 rounded-2xl border border-black/10 bg-[#f8f5ef] px-4 text-sm text-brand-dark outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-black/42">
+                Email
+              </label>
+              <input
+                value={reviewDraft.reviewerEmail}
+                readOnly
+                className="h-11 rounded-2xl border border-black/10 bg-[#f8f5ef] px-4 text-sm text-brand-dark outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-black/42">
+              Rating
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((ratingValue) => (
+                <button
+                  key={ratingValue}
+                  type="button"
+                  disabled={Boolean(currentUserReview) || isLoadingReviewSummary}
+                  onClick={() =>
+                    setReviewDraft((current) => ({
+                      ...current,
+                      rating: ratingValue,
+                    }))
+                  }
+                  className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    Number(reviewDraft.rating) === ratingValue
+                      ? "border-[#f0ad15] bg-[#fff5df] text-brand-dark"
+                      : "border-black/10 bg-white text-brand-dark hover:border-black/20"
+                  } disabled:cursor-not-allowed disabled:opacity-70`}
+                >
+                  <span aria-hidden="true">★</span>
+                  {ratingValue}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.18em] text-black/42">
+              Review
+            </label>
+            <textarea
+              rows="5"
+              value={reviewDraft.message}
+              onChange={(event) =>
+                setReviewDraft((current) => ({
+                  ...current,
+                  message: event.target.value,
+                }))
+              }
+              placeholder="Share your experience with the fragrance, finish, packaging, and burn quality..."
+              disabled={Boolean(currentUserReview) || isLoadingReviewSummary}
+              className="min-h-[140px] rounded-[22px] border border-black/10 bg-white px-4 py-3 text-sm leading-7 text-brand-dark outline-none transition placeholder:text-black/38 focus:border-black/20 disabled:bg-[#f8f5ef]"
+            />
+          </div>
+
+          {isLoadingReviewSummary ? (
+            <p className="text-sm text-black/58">Loading your saved review...</p>
+          ) : null}
+          {reviewError ? <p className="text-sm text-danger">{reviewError}</p> : null}
+          {reviewSuccess ? <p className="text-sm text-success">{reviewSuccess}</p> : null}
+          {currentUserReview ? (
+            <p className="text-sm text-black/58">
+              You have already reviewed this product. Your saved review is shown above.
+            </p>
+          ) : null}
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              className="checkout-action-secondary"
+              onClick={handleCloseRateModal}
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              className="checkout-action-primary"
+              onClick={handleSubmitReview}
+              disabled={
+                isSubmittingReview ||
+                isLoadingReviewSummary ||
+                Boolean(currentUserReview) ||
+                !reviewDraft.message.trim()
+              }
+            >
+              {currentUserReview
+                ? "Review Posted"
+                : isSubmittingReview
+                  ? "Submitting..."
+                  : "Submit Review"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <ReplaceModal
         isOpen={Boolean(replacementItem)}

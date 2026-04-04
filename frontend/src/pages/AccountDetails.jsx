@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import CandleDatePicker from "../components/CandleDatePicker";
 import Modal from "../components/Modal";
 import AddressEditorForm from "../components/checkout/AddressEditorForm";
 import PrimaryButton from "../components/checkout/PrimaryButton";
@@ -199,10 +200,9 @@ function AccountDetails() {
     <section className="container-shell py-10 sm:py-12">
       <div className="mx-auto max-w-[1160px] space-y-8">
         <div className="space-y-3">
-          <p className="checkout-kicker">My account</p>
-          <h1 className="page-title">Account details</h1>
+          <h1 className="page-title">Account Details</h1>
           <p className="page-subtitle max-w-[820px]">
-            Keep your account basics current and manage saved delivery addresses from one premium workspace.
+            Update your personal details and address for a smoother checkout.
           </p>
         </div>
 
@@ -212,12 +212,11 @@ function AccountDetails() {
         >
           <div className="space-y-5">
             <div>
-              <p className="checkout-kicker">Basic information</p>
-              <h2 className="panel-title mt-2">Personal details</h2>
+              <h2 className="text-[1.05rem] font-semibold text-black">Basic Details</h2>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <InputField label="First name" required>
+              <InputField label="First Name" required>
                 <input
                   value={form.firstName}
                   onChange={(event) => handleChange("firstName", event.target.value)}
@@ -225,7 +224,7 @@ function AccountDetails() {
                 />
               </InputField>
 
-              <InputField label="Last name">
+              <InputField label="Last Name">
                 <input
                   value={form.lastName}
                   onChange={(event) => handleChange("lastName", event.target.value)}
@@ -233,7 +232,7 @@ function AccountDetails() {
                 />
               </InputField>
 
-              <InputField label="Email address">
+              <InputField label="Email Address">
                 <input
                   value={form.email}
                   disabled
@@ -241,7 +240,7 @@ function AccountDetails() {
                 />
               </InputField>
 
-              <InputField label="Mobile number" required>
+              <InputField label="Mobile No." required>
                 <input
                   value={form.phoneNumber}
                   onChange={(event) => handleChange("phoneNumber", event.target.value)}
@@ -259,11 +258,10 @@ function AccountDetails() {
               </InputField>
 
               <InputField label="Date of birth">
-                <input
-                  type="date"
+                <CandleDatePicker
                   value={form.dateOfBirth || ""}
-                  onChange={(event) => handleChange("dateOfBirth", event.target.value)}
-                  className="checkout-input"
+                  onChange={(nextValue) => handleChange("dateOfBirth", nextValue)}
+                  buttonClassName="!h-[50px] !rounded-full"
                 />
               </InputField>
             </div>
@@ -273,19 +271,19 @@ function AccountDetails() {
 
             <div className="flex flex-wrap gap-3">
               <PrimaryButton type="submit" disabled={isSaving} className="min-w-[200px]">
-                {isSaving ? "Saving..." : "Save changes"}
+                {isSaving ? "Saving..." : "Save Changes"}
               </PrimaryButton>
               <Link to="/profile" className="checkout-action-secondary min-w-[160px] text-center">
-                Back to overview
+                Back to Overview
               </Link>
             </div>
           </div>
 
           <aside className="checkout-soft-panel h-fit p-5">
-            <p className="checkout-kicker">Notes</p>
+            <p className="text-[1.05rem] font-semibold text-black">Notes</p>
             <div className="mt-3 space-y-3 text-sm leading-7 text-black/62">
-              <p>Your email stays tied to the sign-in method already linked to this CandleOra account.</p>
-              <p>Saved addresses are managed separately below and reused automatically across checkout.</p>
+              <p>- Email is linked to your login method.</p>
+              <p>- Addresses saved here are used at checkout.</p>
             </div>
           </aside>
         </form>
@@ -293,15 +291,14 @@ function AccountDetails() {
         <section ref={addressSectionRef} id="addresses" className="space-y-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="checkout-kicker">Saved addresses</p>
-              <h2 className="panel-title mt-2">Delivery destinations</h2>
+              <h2 className="text-[1.05rem] font-semibold text-black">Delivery Addresses</h2>
               <p className="mt-3 max-w-[720px] text-sm leading-7 text-black/62">
-                These saved addresses are shared across your account and the redesigned checkout.
+                Enter your address details to save and use at checkout.
               </p>
             </div>
 
             <SecondaryButton onClick={openAddModal}>
-              Add new address
+              Add New Address
             </SecondaryButton>
           </div>
 
@@ -328,9 +325,9 @@ function AccountDetails() {
             </div>
           ) : (
             <div className="checkout-panel p-6 text-center">
-              <p className="text-lg font-semibold text-[#1A1A1A]">No saved addresses yet</p>
+              <p className="text-lg font-semibold text-[#1A1A1A]">No address saved yet.</p>
               <p className="mt-2 text-sm leading-6 text-black/60">
-                Add your first address and it will be ready on both your account and checkout pages.
+                Add a new address to get started.
               </p>
             </div>
           )}
@@ -340,16 +337,16 @@ function AccountDetails() {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingAddress?.id ? "Edit saved address" : "Add new saved address"}
-        kicker="CandleOra"
-        description="Saved addresses become the source of truth for delivery across account pages and checkout."
+        title={editingAddress?.id ? "Edit Address" : "Add New Address"}
+        kicker=""
+        description="Enter your delivery details to receive your order."
         maxWidthClass="max-w-[940px]"
       >
         {addressSaveError ? <p className="mb-4 text-sm font-medium text-[#c93232]">{addressSaveError}</p> : null}
         <AddressEditorForm
           initialValue={editingAddress}
           isSubmitting={isMutating}
-          submitLabel={editingAddress?.id ? "Update address" : "Save address"}
+          submitLabel={editingAddress?.id ? "Save Address" : "Save Address"}
           onSubmit={handleSaveAddress}
           onCancel={closeModal}
         />

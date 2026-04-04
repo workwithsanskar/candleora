@@ -43,6 +43,7 @@ function CheckoutAddress() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [addressError, setAddressError] = useState("");
+  const [highlightSelectedAddress, setHighlightSelectedAddress] = useState(false);
   const addressesSectionRef = useRef(null);
   const hasAutoOpenedEmptyStateRef = useRef(false);
 
@@ -188,6 +189,12 @@ function CheckoutAddress() {
     navigate("/checkout/payment");
   };
 
+  const handleFocusSelectedAddress = () => {
+    addressesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setHighlightSelectedAddress(true);
+    window.setTimeout(() => setHighlightSelectedAddress(false), 1800);
+  };
+
   if (!hasActiveSession || !session.items.length) {
     return (
       <section className="container-shell py-16">
@@ -209,30 +216,16 @@ function CheckoutAddress() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <div className="space-y-5" ref={addressesSectionRef}>
           <div className="space-y-2">
-            <p className="checkout-kicker">Delivery step</p>
-            <h1 className="page-title">Choose your delivery address</h1>
+            <h1 className="page-title">Delivery Address</h1>
             <p className="page-subtitle max-w-[720px]">
-              Pick a saved address or add a new one without leaving checkout.
+              Select a saved address or add a new one.
             </p>
-            {addresses.length ? (
-              <div className="flex flex-wrap items-center gap-2 pt-0.5 text-sm text-black/58">
-                <span className="rounded-full border border-black/10 bg-white px-3 py-1.5">
-                  {addresses.length} saved address{addresses.length === 1 ? "" : "es"}
-                </span>
-                {selectedAddress ? (
-                  <span className="rounded-full border border-[#F1B85A] bg-[#fff5df] px-3 py-1.5 text-[#a56a00]">
-                    One address selected
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
           </div>
 
-          <div className="checkout-panel p-4 sm:p-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-              <label className="block flex-1">
-                <span className="checkout-kicker">Find a saved address</span>
-                <div className="relative mt-2.5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <label className="block flex-1">
+              <span className="text-sm font-medium text-black">Search saved addresses</span>
+              <div className="relative mt-2.5">
                   <svg
                     viewBox="0 0 24 24"
                     className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-black/35"
@@ -243,23 +236,22 @@ function CheckoutAddress() {
                     <circle cx="11" cy="11" r="7" />
                     <path d="M20 20L17 17" strokeLinecap="round" />
                   </svg>
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search address by name or phone number"
-                    className="checkout-input w-full pl-12"
-                  />
-                </div>
-              </label>
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by name or phone number"
+                  className="checkout-input w-full pl-12"
+                />
+              </div>
+            </label>
 
-              <button
-                type="button"
-                onClick={openAddModal}
-                className="checkout-action-secondary h-[52px] whitespace-nowrap lg:min-w-[210px]"
-              >
-                Add new address
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="checkout-action-secondary h-[52px] whitespace-nowrap lg:min-w-[210px]"
+            >
+              + Add new address
+            </button>
           </div>
 
           {legacyPrefill && !addresses.length ? (
@@ -272,13 +264,12 @@ function CheckoutAddress() {
             <StatusView title="Loading addresses" message="Fetching your saved CandleOra addresses." />
           ) : !addresses.length ? (
             <div className="checkout-panel p-5 text-center sm:p-6">
-              <p className="checkout-kicker">No saved address yet</p>
-              <h2 className="mt-2.5 panel-title">Add your first delivery address</h2>
+              <h2 className="panel-title">No address saved yet.</h2>
               <p className="mx-auto mt-2.5 max-w-[520px] text-sm leading-6 text-black/62">
-                Your saved addresses appear here and can be reused across checkout and the account workspace.
+                Add a new address to get started.
               </p>
               <PrimaryButton className="mt-4 min-w-[220px]" onClick={openAddModal}>
-                Add new address
+                Add New Address
               </PrimaryButton>
             </div>
           ) : visibleAddresses.length ? (
@@ -287,20 +278,19 @@ function CheckoutAddress() {
                 <section className="space-y-2">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                      <p className="checkout-kicker">Selected for delivery</p>
-                      <p className="text-sm leading-6 text-black/58">
-                        This is the address currently attached to checkout.
-                      </p>
+                      <p className="text-sm font-semibold text-black">Selected Address</p>
                     </div>
                   </div>
 
-                  <AddressCard
-                    address={selectedVisibleAddress}
-                    selected
-                    onSelect={(selected) => setSelectedAddress(selected.id)}
-                    onEdit={openEditModal}
-                    onRemove={handleDeleteAddress}
-                  />
+                  <div className={highlightSelectedAddress ? "rounded-[24px] border border-brand-primary/50 p-1 shadow-[0_0_0_4px_rgba(241,184,90,0.12)] transition" : "transition"}>
+                    <AddressCard
+                      address={selectedVisibleAddress}
+                      selected
+                      onSelect={(selected) => setSelectedAddress(selected.id)}
+                      onEdit={openEditModal}
+                      onRemove={handleDeleteAddress}
+                    />
+                  </div>
                 </section>
               ) : null}
 
@@ -352,11 +342,22 @@ function CheckoutAddress() {
                 Continue to payment
               </PrimaryButton>
             )}
-            note={selectedAddress ? "You can still switch or edit this address before payment." : "Select one saved address to continue into payment."}
+            note=""
             extraContent={selectedPreview ? (
-              <div className="checkout-soft-panel p-3.5 text-sm leading-6 text-black/62">
-                <p className="checkout-kicker">Selected address</p>
-                <p className="mt-2 font-semibold text-[#1A1A1A]">{selectedAddress.recipientName}</p>
+              <div className="rounded-[18px] border border-black/10 bg-white p-4 text-sm leading-6 text-black/62">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#1A1A1A]">Delivering to</p>
+                    <p className="mt-2 font-semibold text-[#1A1A1A]">{selectedAddress.recipientName}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleFocusSelectedAddress}
+                    className="text-sm font-semibold text-black transition hover:underline hover:underline-offset-4"
+                  >
+                    Change
+                  </button>
+                </div>
                 {selectedPreview.streetLine ? <p>{selectedPreview.streetLine}</p> : null}
                 {selectedPreview.regionLine ? <p>{selectedPreview.regionLine}</p> : null}
                 <p>{selectedAddress.phoneNumber}</p>

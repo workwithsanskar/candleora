@@ -131,17 +131,19 @@ describe("OccasionPicks", () => {
     return activeView;
   }
 
-  it("renders the screenshot-style occasion picks catalog with merged results", async () => {
+  it("renders the screenshot-style occasion picks catalog with the selected occasion tab", async () => {
     renderOccasionPicks();
 
     expect(await screen.findByText("Occasion Picks")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Birthday" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Wedding" })).toBeInTheDocument();
     expect(await screen.findByText("Golden Aura Holder Set")).toBeInTheDocument();
-    expect(screen.getAllByText("Showing 1-8 of 10 item(s)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Showing 1-8 of 10 item(s) for Birthday").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Load More" })).toBeInTheDocument();
     expect(mockCatalogApi.getProducts).toHaveBeenCalledTimes(1);
     expect(mockCatalogApi.getProducts).toHaveBeenCalledWith(
       expect.objectContaining({
-        occasions: "Birthday,Wedding,Relaxation,Housewarming",
+        occasions: "Birthday",
         page: 0,
         size: 8,
         sort: "popular",
@@ -151,11 +153,13 @@ describe("OccasionPicks", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load More" }));
 
     expect(await screen.findByText("Warm Welcome Holder")).toBeInTheDocument();
-    expect(screen.getAllByText("Showing 1-10 of 10 item(s)")).toHaveLength(2);
+    expect(screen.getAllByText("Showing 1-10 of 10 item(s) for Birthday")).toHaveLength(1);
   });
 
-  it("filters the merged occasion picks by search text", async () => {
+  it("filters the selected occasion picks by search text", async () => {
     renderOccasionPicks();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Relaxation" }));
 
     fireEvent.change((await screen.findAllByPlaceholderText("Search An Item"))[0], {
       target: { value: "relaxing" },
@@ -166,7 +170,7 @@ describe("OccasionPicks", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText("Showing 1-1 of 1 item(s)").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Showing 1-1 of 1 item(s) for Relaxation").length).toBeGreaterThan(0);
     });
   });
 });

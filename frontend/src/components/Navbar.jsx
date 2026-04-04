@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { contentApi } from "../services/api";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
 import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
@@ -17,6 +19,14 @@ const desktopLinks = [
   { label: "About Us", to: "/about-us" },
   { label: "Contact", to: "/contact" },
   { label: "Orders", to: "/orders" },
+];
+
+const FALLBACK_ANNOUNCEMENTS = [
+  {
+    id: "fallback-free-delivery",
+    message: "Free delivery & free gift when you spend over Rs. 1999/-",
+    orderIndex: 0,
+  },
 ];
 
 function UserIcon() {
@@ -71,7 +81,7 @@ function BagIcon({ filled = false }) {
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="11" cy="11" r="6.5" />
       <path d="M16 16L21 21" strokeLinecap="round" />
     </svg>
@@ -168,6 +178,8 @@ function QuantityControl({ quantity, onDecrease, onIncrease }) {
 }
 
 function Navbar() {
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
+  const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activePanel, setActivePanel] = useState(null);
@@ -177,6 +189,11 @@ function Navbar() {
   const { isAuthenticated, logout, user } = useAuth();
   const { items: cartItems, cartCount, grandTotal, updateQuantity } = useCart();
   const { items: wishlistItems, wishlistCount, removeFromWishlist } = useWishlist();
+  const announcementsQuery = useQuery({
+    queryKey: ["content", "announcements"],
+    queryFn: () => contentApi.getAnnouncements(),
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 6);
@@ -212,6 +229,45 @@ function Navbar() {
     };
   }, [activePanel]);
 
+  const announcements = useMemo(() => {
+    if (Array.isArray(announcementsQuery.data)) {
+      return announcementsQuery.data;
+    }
+
+    if (announcementsQuery.isError) {
+      return FALLBACK_ANNOUNCEMENTS;
+    }
+
+    return [];
+  }, [announcementsQuery.data, announcementsQuery.isError]);
+
+  const announcementSignature = useMemo(
+    () =>
+      announcements
+        .map((announcement) => `${announcement.id}:${announcement.orderIndex}:${announcement.message}`)
+        .join("|"),
+    [announcements],
+  );
+
+  const currentAnnouncement = announcements[activeAnnouncementIndex] ?? null;
+
+  useEffect(() => {
+    setActiveAnnouncementIndex(0);
+    setShowAnnouncement(true);
+  }, [announcementSignature]);
+
+  useEffect(() => {
+    if (announcements.length <= 1) {
+      return undefined;
+    }
+
+    const rotationTimer = window.setInterval(() => {
+      setActiveAnnouncementIndex((currentIndex) => (currentIndex + 1) % announcements.length);
+    }, 5000);
+
+    return () => window.clearInterval(rotationTimer);
+  }, [announcements]);
+
   const closeMenus = () => {
     setIsOpen(false);
     setActivePanel(null);
@@ -236,6 +292,38 @@ function Navbar() {
         isScrolled ? "shadow-[0_8px_24px_rgba(0,0,0,0.08)]" : ""
       }`}
     >
+      {showAnnouncement && currentAnnouncement ? (
+        <div className="bg-black text-white">
+          <div className="container-shell flex min-h-[34px] items-center justify-center gap-3 py-1 text-center">
+            <div className="flex flex-1 items-center justify-center overflow-hidden">
+              <AnimatePresence mode="wait" initial={false}>
+                <m.p
+                  key={currentAnnouncement.id}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white sm:text-[12px]"
+                >
+                  {currentAnnouncement.message}
+                </m.p>
+              </AnimatePresence>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAnnouncement(false)}
+              aria-label="Dismiss announcement"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 6L18 18" strokeLinecap="round" />
+                <path d="M18 6L6 18" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="container-shell">
         <div className="flex min-h-[80px] items-center justify-between gap-4">
           <Link to="/" className="shrink-0" onClick={closeMenus}>
@@ -306,13 +394,6 @@ function Navbar() {
                         className="btn btn-outline"
                       >
                         My Account
-                      </Link>
-                      <Link
-                        to="/orders"
-                        onClick={closeMenus}
-                        className="btn btn-outline"
-                      >
-                        My Orders
                       </Link>
                       <button
                         type="button"

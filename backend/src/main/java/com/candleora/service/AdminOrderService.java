@@ -14,16 +14,20 @@ import com.candleora.entity.OrderStatus;
 import com.candleora.entity.OrderTrackingEvent;
 import com.candleora.entity.PaymentStatus;
 import com.candleora.entity.Product;
+import com.candleora.entity.ReplacementRequest;
 import com.candleora.repository.CustomerOrderRepository;
 import com.candleora.repository.ProductRepository;
+import com.candleora.repository.ReplacementRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -51,16 +55,19 @@ public class AdminOrderService {
 
     private final CustomerOrderRepository customerOrderRepository;
     private final ProductRepository productRepository;
+    private final ReplacementRepository replacementRepository;
     private final InventoryService inventoryService;
     private final ZoneId zoneId = ZoneId.systemDefault();
 
     public AdminOrderService(
         CustomerOrderRepository customerOrderRepository,
         ProductRepository productRepository,
+        ReplacementRepository replacementRepository,
         InventoryService inventoryService
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.productRepository = productRepository;
+        this.replacementRepository = replacementRepository;
         this.inventoryService = inventoryService;
     }
 
@@ -75,27 +82,40 @@ public class AdminOrderService {
         int size
     ) {
         Specification<CustomerOrder> specification = buildSpecification(search, status, startDate, endDate, reviewed);
-        Page<AdminOrderSummaryResponse> orderPage = customerOrderRepository.findAll(
+        Page<CustomerOrder> orderPage = customerOrderRepository.findAll(
             specification,
             PageRequest.of(
                 Math.max(page, 0),
                 Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
                 Sort.by(Sort.Order.desc("createdAt"))
             )
-        ).map(this::toSummary);
+        );
 
-        return PagedResponse.from(orderPage);
+        Map<Long, ReplacementRequest> latestReplacements = resolveLatestReplacements(orderPage.getContent());
+        List<AdminOrderSummaryResponse> summaries = orderPage.getContent().stream()
+            .map(order -> toSummary(order, latestReplacements.get(order.getId())))
+            .toList();
+
+        return new PagedResponse<>(
+            summaries,
+            orderPage.getNumber(),
+            orderPage.getSize(),
+            orderPage.getTotalElements(),
+            orderPage.getTotalPages()
+        );
     }
 
     @Transactional(readOnly = true)
     public AdminOrderDetailResponse getOrder(Long id) {
-        return toDetail(findOrder(id));
+        CustomerOrder order = findOrder(id);
+        return toDetail(order, resolveLatestReplacement(order.getId()));
     }
 
     public AdminOrderDetailResponse markReviewed(Long id) {
         CustomerOrder order = findOrder(id);
         applyAdminReviewed(order);
-        return toDetail(customerOrderRepository.save(order));
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        return toDetail(savedOrder, resolveLatestReplacement(savedOrder.getId()));
     }
 
     @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
@@ -106,7 +126,7 @@ public class AdminOrderService {
         OrderStatus previousStatus = order.getStatus();
 
         if (previousStatus == nextStatus) {
-            return toDetail(order);
+            return toDetail(order, resolveLatestReplacement(order.getId()));
         }
 
         if (previousStatus == OrderStatus.CANCELLED && nextStatus != OrderStatus.CANCELLED) {
@@ -151,7 +171,8 @@ public class AdminOrderService {
         }
 
         order.setStatus(nextStatus);
-        return toDetail(customerOrderRepository.save(order));
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        return toDetail(savedOrder, resolveLatestReplacement(savedOrder.getId()));
     }
 
     @CacheEvict(cacheNames = "adminAnalytics", allEntries = true)
@@ -166,7 +187,8 @@ public class AdminOrderService {
         syncTrackingEvents(order, request.events());
         advanceStatusFromTracking(order);
 
-        return toDetail(customerOrderRepository.save(order));
+        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        return toDetail(savedOrder, resolveLatestReplacement(savedOrder.getId()));
     }
 
     private Specification<CustomerOrder> buildSpecification(
@@ -179,10 +201,21 @@ public class AdminOrderService {
         Specification<CustomerOrder> specification = Specification.where(null);
 
         if (StringUtils.hasText(status)) {
-            OrderStatus parsedStatus = parseStatus(status);
-            specification = specification.and((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("status"), parsedStatus)
-            );
+            String normalizedStatus = status.trim().toUpperCase(Locale.ROOT);
+            if ("REPLACEMENT".equals(normalizedStatus)) {
+                specification = specification.and((root, query, criteriaBuilder) -> {
+                    var subquery = query.subquery(Long.class);
+                    var replacementRoot = subquery.from(ReplacementRequest.class);
+                    subquery.select(replacementRoot.get("id"));
+                    subquery.where(criteriaBuilder.equal(replacementRoot.get("order"), root));
+                    return criteriaBuilder.exists(subquery);
+                });
+            } else {
+                OrderStatus parsedStatus = parseStatus(status);
+                specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("status"), parsedStatus)
+                );
+            }
         }
 
         if (StringUtils.hasText(search)) {
@@ -366,13 +399,36 @@ public class AdminOrderService {
         }
     }
 
-    private AdminOrderSummaryResponse toSummary(CustomerOrder order) {
+    private Map<Long, ReplacementRequest> resolveLatestReplacements(List<CustomerOrder> orders) {
+        Set<Long> orderIds = orders.stream()
+            .map(CustomerOrder::getId)
+            .collect(java.util.stream.Collectors.toSet());
+
+        if (orderIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, ReplacementRequest> replacementsByOrderId = new LinkedHashMap<>();
+        for (ReplacementRequest replacement : replacementRepository.findByOrderIdInOrderByRequestedAtDesc(orderIds)) {
+            replacementsByOrderId.putIfAbsent(replacement.getOrder().getId(), replacement);
+        }
+
+        return replacementsByOrderId;
+    }
+
+    private ReplacementRequest resolveLatestReplacement(Long orderId) {
+        return replacementRepository.findTopByOrderIdOrderByRequestedAtDesc(orderId).orElse(null);
+    }
+
+    private AdminOrderSummaryResponse toSummary(CustomerOrder order, ReplacementRequest replacement) {
         return new AdminOrderSummaryResponse(
             order.getId(),
             order.getShippingName(),
             order.getContactEmail(),
             order.getTotalAmount(),
             order.getStatus().name(),
+            replacement != null,
+            replacement != null ? replacement.getStatus().name() : null,
             order.getPaymentStatus().name(),
             order.getPaymentMethod(),
             order.getItems().size(),
@@ -381,7 +437,7 @@ public class AdminOrderService {
         );
     }
 
-    private AdminOrderDetailResponse toDetail(CustomerOrder order) {
+    private AdminOrderDetailResponse toDetail(CustomerOrder order, ReplacementRequest replacement) {
         BigDecimal subtotalAmount = order.getSubtotalAmount() != null ? order.getSubtotalAmount() : order.getTotalAmount();
         BigDecimal discountAmount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
 
@@ -393,6 +449,8 @@ public class AdminOrderService {
             order.getPhone(),
             order.getAlternatePhoneNumber(),
             order.getStatus().name(),
+            replacement != null,
+            replacement != null ? replacement.getStatus().name() : null,
             order.getPaymentStatus().name(),
             order.getPaymentMethod(),
             order.getTotalAmount(),

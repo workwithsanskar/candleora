@@ -273,11 +273,11 @@ function ReplaceModal({ isOpen, onClose, orderId, item, items, onSuccess }) {
       onClose={onClose}
       title={view === "success" ? "Replacement submitted" : "Replacement request"}
       description=""
-      maxWidthClass="max-w-[640px]"
-      bodyScrollable={false}
-      headerClassName="!px-4 !py-3 sm:!px-5 sm:!py-3.5"
-      titleClassName="text-[clamp(1.45rem,3.8vw,1.9rem)] leading-[1]"
-      bodyClassName="!px-4 !py-4 sm:!px-5 sm:!py-5"
+      maxWidthClass="max-w-[1120px]"
+      bodyScrollable
+      headerClassName="!px-4 !py-2.5 sm:!px-5 sm:!py-3"
+      titleClassName="text-[clamp(1.35rem,3.4vw,1.8rem)] leading-[1]"
+      bodyClassName="!px-4 !py-3.5 sm:!px-5 sm:!py-4 lg:!px-6"
     >
       {view === "success" ? (
         <div className="space-y-4">
@@ -301,7 +301,7 @@ function ReplaceModal({ isOpen, onClose, orderId, item, items, onSuccess }) {
           </div>
         </div>
       ) : (
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {eligibleItems.length > 1 ? (
             <CandleSelect
               label="Product"
@@ -310,7 +310,7 @@ function ReplaceModal({ isOpen, onClose, orderId, item, items, onSuccess }) {
                 setSelectedItemId(nextValue);
                 setError("");
               }}
-              buttonClassName="!h-[52px] !rounded-[18px] !bg-white"
+              buttonClassName="!h-[48px] !rounded-[18px] !bg-white"
             >
               {eligibleItems.map((option) => (
                 <option key={option.id} value={option.id}>
@@ -320,180 +320,184 @@ function ReplaceModal({ isOpen, onClose, orderId, item, items, onSuccess }) {
             </CandleSelect>
           ) : null}
 
-          <section className="rounded-[26px] bg-[linear-gradient(135deg,#fff8ec_0%,#fffef9_100%)] px-4 py-4">
+          <section className="rounded-[24px] border border-[#f2d29a] bg-[linear-gradient(135deg,#fff8ec_0%,#fffef9_100%)] px-4 py-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
               Product
             </p>
-            <p className="mt-1.5 text-[1.05rem] font-semibold leading-6 text-brand-dark">
+            <p className="mt-1 text-[1.02rem] font-semibold leading-6 text-brand-dark">
               {selectedItem?.productName ?? "Order item"}
             </p>
             <p className="mt-1 text-sm text-black/56">Qty: {selectedItem?.quantity ?? 1}</p>
           </section>
 
-          <CandleSelect
-            label="Reason"
-            required
-            value={reason}
-            onChange={(nextValue) => {
-              setReason(nextValue);
-              setError("");
-            }}
-            buttonClassName="!h-[52px] !rounded-[18px] !bg-white"
-          >
-            <option value="">Select reason</option>
-            {REPLACEMENT_REASONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </CandleSelect>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px] xl:grid-cols-[minmax(0,1fr)_350px]">
+            <div className="space-y-4">
+              <CandleSelect
+                label="Reason"
+                required
+                value={reason}
+                onChange={(nextValue) => {
+                  setReason(nextValue);
+                  setError("");
+                }}
+                buttonClassName="!h-[48px] !rounded-[18px] !bg-white"
+              >
+                <option value="">Select reason</option>
+                {REPLACEMENT_REASONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </CandleSelect>
 
-          <section className="space-y-3">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <RequiredLabel>Upload photos / videos</RequiredLabel>
-              <span className="text-[11px] font-medium text-black/44">
-                {ACCEPTED_PROOF_HELPER}
-              </span>
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-brand-dark">Additional note</span>
+                <textarea
+                  value={customerNote}
+                  onChange={(event) => setCustomerNote(event.target.value)}
+                  className="checkout-textarea stealth-scrollbar min-h-[180px] resize-none overflow-y-auto !rounded-[18px] !px-4 !py-3"
+                  placeholder="Write here..."
+                />
+              </label>
+
+              <p className="text-sm leading-6 text-black/58">
+                You can also share this on{" "}
+                <a
+                  href={SUPPORT_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-dark underline underline-offset-4"
+                  aria-label={`Open WhatsApp chat with CandleOra at ${SUPPORT_PHONE_DISPLAY}`}
+                >
+                  WhatsApp
+                </a>{" "}
+                or{" "}
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="font-semibold text-brand-dark underline underline-offset-4"
+                  aria-label={`Email CandleOra at ${SUPPORT_EMAIL}`}
+                >
+                  Email
+                </a>
+                .
+              </p>
             </div>
 
-            <button
-              type="button"
-              className="flex w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#f1c979] bg-[#fffaf4] px-5 py-6 text-center transition hover:border-[#e0aa44] hover:bg-[#fff6e8]"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#a86a00] shadow-[0_10px_24px_rgba(241,184,90,0.2)]">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path d="M12 16V7" strokeLinecap="round" />
-                  <path
-                    d="M8.5 10.5L12 7L15.5 10.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M6 17.5H18" strokeLinecap="round" />
-                </svg>
-              </span>
-              <span className="mt-3 text-sm font-semibold text-brand-dark">
-                {files.length ? "Add more files" : "Add photos"}
-              </span>
-              <span className="mt-1 text-xs leading-6 text-black/54">{selectedFileSummary}</span>
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept={ACCEPTED_PROOF_EXTENSIONS}
-              onChange={handleFilesSelected}
-              className="hidden"
-            />
-
-            {files.length ? (
-              <div className="overflow-hidden rounded-[22px] border border-black/8 bg-white">
-                <div className="border-b border-black/6 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
-                    Uploaded files
-                  </p>
-                </div>
-                <div className="divide-y divide-black/6">
-                  {files.map((file) => {
-                    const isVideo = isVideoProofFile(file);
-
-                    return (
-                      <div key={fileKey(file)} className="flex items-center gap-3 px-4 py-3">
-                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff7e8] text-[#a86a00]">
-                          {isVideo ? (
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="h-4.5 w-4.5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                            >
-                              <rect x="4" y="6" width="11" height="12" rx="2" />
-                              <path d="M15 10L20 7.5V16.5L15 14" strokeLinejoin="round" />
-                            </svg>
-                          ) : (
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="h-4.5 w-4.5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                            >
-                              <rect x="4" y="5" width="16" height="14" rx="2" />
-                              <circle cx="9" cy="10" r="1.5" />
-                              <path d="M6.5 16L11.2 11.3C11.6 10.9 12.2 10.9 12.6 11.3L14.2 12.9" />
-                              <path d="M13.4 12.1L15.3 10.2C15.7 9.8 16.3 9.8 16.7 10.2L19 12.5" />
-                            </svg>
-                          )}
-                        </span>
-
-                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">
-                          {file.name}
-                        </p>
-
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#c63d3d] transition hover:bg-[#fff3f3]"
-                          onClick={() => removeSelectedFile(fileKey(file))}
-                          aria-label={`Remove ${file.name}`}
-                        >
-                          <svg
-                            viewBox="0 0 16 16"
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                          >
-                            <path d="M4 4L12 12" strokeLinecap="round" />
-                            <path d="M12 4L4 12" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+            <section className="space-y-3 rounded-[24px] border border-[#f2d29a] bg-[#fffdfa] p-4">
+              <div className="flex flex-wrap items-end justify-between gap-2">
+                <RequiredLabel>Proof upload</RequiredLabel>
+                <span className="text-[11px] font-medium text-black/44">
+                  {ACCEPTED_PROOF_HELPER}
+                </span>
               </div>
-            ) : null}
-          </section>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-brand-dark">Additional note</span>
-            <textarea
-              value={customerNote}
-              onChange={(event) => setCustomerNote(event.target.value)}
-              className="checkout-textarea stealth-scrollbar min-h-[104px] resize-none overflow-y-auto !rounded-[18px] !px-4 !py-3"
-              placeholder="Write here..."
-            />
-          </label>
+              <button
+                type="button"
+                className="flex min-h-[184px] w-full flex-col items-center justify-center rounded-[24px] border border-dashed border-[#f1c979] bg-[#fffaf4] px-5 py-5 text-center transition hover:border-[#e0aa44] hover:bg-[#fff6e8]"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#a86a00] shadow-[0_10px_24px_rgba(241,184,90,0.2)]">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path d="M12 16V7" strokeLinecap="round" />
+                    <path
+                      d="M8.5 10.5L12 7L15.5 10.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M6 17.5H18" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span className="mt-2.5 text-sm font-semibold text-brand-dark">
+                  {files.length ? "Add more files" : "Add photos"}
+                </span>
+                <span className="mt-1 text-xs leading-6 text-black/54">{selectedFileSummary}</span>
+              </button>
 
-          <p className="text-sm leading-6 text-black/58">
-            You can also share this on{" "}
-            <a
-              href={SUPPORT_WHATSAPP_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-brand-dark underline underline-offset-4"
-              aria-label={`Open WhatsApp chat with CandleOra at ${SUPPORT_PHONE_DISPLAY}`}
-            >
-              WhatsApp
-            </a>{" "}
-            or{" "}
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="font-semibold text-brand-dark underline underline-offset-4"
-              aria-label={`Email CandleOra at ${SUPPORT_EMAIL}`}
-            >
-              Email
-            </a>
-            .
-          </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={ACCEPTED_PROOF_EXTENSIONS}
+                onChange={handleFilesSelected}
+                className="hidden"
+              />
+
+              {files.length ? (
+                <div className="overflow-hidden rounded-[22px] border border-black/8 bg-white">
+                  <div className="border-b border-black/6 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-black/42">
+                      Uploaded files
+                    </p>
+                  </div>
+                  <div className="stealth-scrollbar max-h-[232px] divide-y divide-black/6 overflow-y-auto scroll-smooth">
+                    {files.map((file) => {
+                      const isVideo = isVideoProofFile(file);
+
+                      return (
+                        <div key={fileKey(file)} className="flex items-center gap-3 px-4 py-3">
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff7e8] text-[#a86a00]">
+                            {isVideo ? (
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-4.5 w-4.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                              >
+                                <rect x="4" y="6" width="11" height="12" rx="2" />
+                                <path d="M15 10L20 7.5V16.5L15 14" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-4.5 w-4.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                              >
+                                <rect x="4" y="5" width="16" height="14" rx="2" />
+                                <circle cx="9" cy="10" r="1.5" />
+                                <path d="M6.5 16L11.2 11.3C11.6 10.9 12.2 10.9 12.6 11.3L14.2 12.9" />
+                                <path d="M13.4 12.1L15.3 10.2C15.7 9.8 16.3 9.8 16.7 10.2L19 12.5" />
+                              </svg>
+                            )}
+                          </span>
+
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">
+                            {file.name}
+                          </p>
+
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#c63d3d] transition hover:bg-[#fff3f3]"
+                            onClick={() => removeSelectedFile(fileKey(file))}
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            <svg
+                              viewBox="0 0 16 16"
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                            >
+                              <path d="M4 4L12 12" strokeLinecap="round" />
+                              <path d="M12 4L4 12" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          </div>
 
           <div className="border-t border-black/8 pt-4">
             {errorContent ? (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import PhoneAuthPanel from "../components/PhoneAuthPanel";
+import CandleCheckbox from "../components/CandleCheckbox";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import signupImage from "../assets/designer/signup-candle-img.jpg";
@@ -224,12 +225,11 @@ function Signup() {
               </div>
 
               <label className="flex items-start gap-3 pt-1 text-[14px] leading-6 text-brand-dark/65">
-                <input
-                  type="checkbox"
+                <CandleCheckbox
                   name="acceptedTerms"
                   checked={form.acceptedTerms}
                   onChange={handleChange}
-                  className="mt-1 h-5 w-5 rounded border border-[#d6cec6]"
+                  className="mt-1"
                 />
                 <span>
                   I have read and agreed to the{" "}
@@ -263,11 +263,12 @@ function Signup() {
             <div className="mt-6 space-y-4 rounded-[20px] border border-black/10 bg-white p-4 sm:p-5">
               <div className="space-y-1 text-center">
                 <p className="text-sm font-semibold text-black">Or start with a faster method</p>
-                <p className="text-sm leading-6 text-black/60">
-                  {PHONE_AUTH_ENABLED
-                    ? "Continue with Google or create your account with a verified phone number."
-                    : "Continue with Google now. Phone OTP is kept in the codebase and can be re-enabled later."}
-                </p>
+                <p className="text-sm leading-6 text-black/60">Continue with Google for quick access.</p>
+                {PHONE_AUTH_ENABLED ? (
+                  <p className="text-sm leading-6 text-black/55">
+                    Or create your account with a verified phone number.
+                  </p>
+                ) : null}
               </div>
 
               <GoogleAuthButton

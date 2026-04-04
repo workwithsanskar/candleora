@@ -15,6 +15,8 @@ public record AdminOrderDetailResponse(
     String phone,
     String alternatePhoneNumber,
     String status,
+    boolean hasReplacement,
+    String replacementStatus,
     String paymentStatus,
     String paymentMethod,
     BigDecimal totalAmount,

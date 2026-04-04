@@ -291,7 +291,6 @@ function ProductDetail() {
     `${product.category?.name ?? "Candle collection"} finish suitable for styling shelves and tables.`,
     `Scent notes: ${product.scentNotes}.`,
     `Estimated burn time: ${product.burnTime}.`,
-    "Available pack sizes: 4, 6, and 8 pieces.",
   ];
   const lowStockThreshold = Number(product.lowStockThreshold ?? 10);
   const showLowStock = Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= lowStockThreshold;
@@ -299,6 +298,14 @@ function ProductDetail() {
 
   return (
     <section className="container-shell py-6 pb-28 sm:py-7 sm:pb-32 lg:py-5 lg:pb-8">
+      <Link
+        to="/shop"
+        className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-black transition hover:underline hover:underline-offset-4"
+      >
+        <span aria-hidden="true">&lt;</span>
+        <span>Back to shop</span>
+      </Link>
+
       <div className="balanced-split-layout grid gap-4 lg:grid-cols-[92px_minmax(0,472px)_minmax(0,420px)] lg:gap-7 xl:grid-cols-[96px_minmax(0,500px)_minmax(0,432px)] xl:gap-9">
         <div className="order-2 grid grid-cols-3 gap-3 self-start lg:order-1 lg:grid-cols-1 lg:gap-3.5 lg:self-start">
           {product.imageUrls.map((imageUrl) => (
@@ -377,12 +384,12 @@ function ProductDetail() {
 
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[2.05rem] font-semibold text-black">{formatCurrency(product.price)}</p>
-              <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
               {product.originalPrice > product.price ? (
                 <p className="text-sm text-black/35 line-through">
                   {formatCurrency(product.originalPrice)}
                 </p>
               ) : null}
+              <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
             </div>
           </div>
 
@@ -464,7 +471,7 @@ function ProductDetail() {
                 <circle cx="7" cy="18" r="1.8" />
                 <circle cx="18" cy="18" r="1.8" />
               </svg>
-              <p>Free worldwide shipping on all orders over Rs.1999</p>
+              <p>Free shipping on orders above ₹1999.</p>
             </div>
             <div className="flex items-start gap-3">
               <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -478,7 +485,7 @@ function ProductDetail() {
                 <path d="M16.3 7.7L19.1 4.9" />
                 <circle cx="12" cy="12" r="4.2" />
               </svg>
-              <p>Delivers in: 3-7 Working Days <span className="underline underline-offset-2">Shipping &amp; Return</span></p>
+              <p>Delivery within 3-7 working days.</p>
             </div>
           </div>
         </div>

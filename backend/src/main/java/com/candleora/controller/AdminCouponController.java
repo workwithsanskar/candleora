@@ -32,6 +32,11 @@ public class AdminCouponController {
         return couponService.listCoupons();
     }
 
+    @GetMapping("/{id}")
+    public CouponAdminResponse getCoupon(@PathVariable Long id) {
+        return couponService.getCoupon(id);
+    }
+
     @PostMapping
     public CouponAdminResponse createCoupon(@Valid @RequestBody AdminCouponRequest request) {
         return couponService.createCoupon(request);

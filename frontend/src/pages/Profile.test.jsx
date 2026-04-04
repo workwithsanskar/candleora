@@ -36,7 +36,9 @@ describe("Profile overview", () => {
     );
 
     expect(screen.getByText("My Account")).toBeInTheDocument();
-    expect(screen.getByText(/Welcome back, Ananya/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Manage your profile, orders, and preferences in one place."),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("profile-overview-grid").className).toContain("lg:grid-cols-4");
     expect(screen.getByRole("link", { name: /Orders/i })).toHaveAttribute("href", "/orders");
     expect(screen.getByRole("link", { name: /Addresses/i })).toHaveAttribute(
@@ -71,7 +73,9 @@ describe("Profile overview", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Review orders, manage account settings, and jump into the admin panel/i)).toBeInTheDocument();
+    expect(
+      screen.getByText("Manage your profile, orders, and preferences in one place."),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Admin Panel/i })).toHaveAttribute("href", "/admin");
     expect(screen.getByTestId("profile-overview-grid").className).toContain("lg:grid-cols-5");
   });

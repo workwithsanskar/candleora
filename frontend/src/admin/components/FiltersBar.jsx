@@ -5,7 +5,7 @@ function FiltersBar({ title, description, actions, children }) {
     <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h3 className="font-display text-2xl font-semibold text-brand-dark">{title}</h3>
+          <h3 className="text-2xl font-semibold text-brand-dark">{title}</h3>
           {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">{description}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div> : null}

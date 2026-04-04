@@ -9,6 +9,8 @@ public record AdminOrderSummaryResponse(
     String customerEmail,
     BigDecimal amount,
     String status,
+    boolean hasReplacement,
+    String replacementStatus,
     String paymentStatus,
     String paymentMethod,
     int itemsCount,

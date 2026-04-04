@@ -19,7 +19,7 @@ const priceRanges = [
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="11" cy="11" r="6.5" />
       <path d="M16 16L21 21" strokeLinecap="round" />
     </svg>
@@ -118,8 +118,8 @@ function Shop() {
                   onClick={() => setCategory(item.slug)}
                   className={`flex w-full items-center justify-between rounded-full px-4 py-2 text-left text-[0.96rem] leading-[1.05] transition ${
                     category === item.slug
-                      ? "bg-brand-primary text-black"
-                      : "text-black/82 hover:bg-black/5 hover:text-black"
+                      ? "font-semibold text-black"
+                      : "text-black/82 hover:text-black"
                   }`}
                 >
                   <span className="whitespace-nowrap">{item.name}</span>

@@ -4,8 +4,8 @@ import { formatCurrency } from "../../utils/format";
 function CheckoutPriceSummary({
   summary,
   itemCount,
-  title = "Price Summary",
-  kicker = "Checkout summary",
+  title = "Order Summary",
+  kicker = "",
   cta = null,
   note = "",
   sticky = false,
@@ -20,28 +20,28 @@ function CheckoutPriceSummary({
   return (
     <aside className={`${sticky ? "lg:sticky lg:top-24" : ""}`.trim()}>
       <div className="checkout-panel overflow-hidden">
-        <div className="border-b border-[#f2d29a] bg-[#fff7e8] px-5 py-4">
+        <div className="border-b border-black/8 bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="checkout-kicker">{kicker}</p>
-              <h2 className="mt-2 text-[1.75rem] font-semibold leading-[0.96] tracking-[-0.04em] text-[#1A1A1A] sm:text-[1.95rem]">
+              {kicker ? <p className="checkout-kicker">{kicker}</p> : null}
+              <h2 className={`${kicker ? "mt-2 " : ""}text-[1.18rem] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1A1A1A] sm:text-[1.28rem]`}>
                 {title}
               </h2>
             </div>
-            <span className="inline-flex h-[32px] shrink-0 items-center whitespace-nowrap rounded-full border border-[#f2d29a] bg-white px-3 py-0 text-[11px] font-semibold uppercase tracking-[0.16em] leading-none text-[#1A1A1A]">
+            <span className="inline-flex h-[30px] shrink-0 items-center whitespace-nowrap rounded-full border border-[#edd7aa] bg-[#fffdf7] px-3 py-0 text-[10px] font-semibold uppercase tracking-[0.16em] leading-none text-[#6f5431]">
               {itemCount} {itemCount === 1 ? "item" : "items"}
             </span>
           </div>
         </div>
 
         <div className="space-y-5 px-5 py-5">
-          <div className="checkout-soft-panel space-y-3 p-4">
+          <div className="space-y-3 border-b border-black/8 pb-4">
             <div className="flex items-center justify-between text-sm text-black/65">
-              <span>Product total</span>
+              <span>Item Total</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-black/65">
-              <span>Total discounts</span>
+              <span>Total Discounts</span>
               <span className={discount > 0 ? "text-[#027808]" : ""}>
                 {discount > 0 ? `-${formatCurrency(discount)}` : formatCurrency(0)}
               </span>
@@ -54,22 +54,18 @@ function CheckoutPriceSummary({
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-[#f2d29a] pt-5">
-            <span className="text-base font-semibold text-[#1A1A1A]">Order Total</span>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-base font-semibold text-[#1A1A1A]">Total</span>
             <span className="text-[2.05rem] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A] sm:text-[2.15rem]">
               {formatCurrency(total)}
             </span>
           </div>
 
           {savings > 0 ? (
-            <div className="checkout-banner-success px-4 py-3 text-sm font-medium">
+            <div className="text-sm font-medium text-success">
               You&apos;re saving {formatCurrency(savings)} on this order.
             </div>
-          ) : (
-            <div className="checkout-banner px-4 py-3 text-sm text-black/70">
-              Free delivery is already included with this order.
-            </div>
-          )}
+          ) : null}
 
           {cta}
           {note ? <p className="text-sm leading-6 text-black/58">{note}</p> : null}
@@ -99,8 +95,8 @@ CheckoutPriceSummary.propTypes = {
 
 CheckoutPriceSummary.defaultProps = {
   summary: null,
-  title: "Price Summary",
-  kicker: "Checkout summary",
+  title: "Order Summary",
+  kicker: "",
   cta: null,
   note: "",
   sticky: false,

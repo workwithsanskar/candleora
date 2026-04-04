@@ -56,9 +56,12 @@ describe("Orders", () => {
   it("renders loaded orders after the initial loading state", async () => {
     renderOrders();
 
-    expect(await screen.findByText("Order History")).toBeInTheDocument();
+    expect(await screen.findByText("Orders")).toBeInTheDocument();
+    expect(
+      screen.getByText("See your past purchases, track each order, and reorder your favourites in a click."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Amber Bloom Candle")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel order" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Amber Bloom Candle" })).toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import CandleCheckbox from "../../components/CandleCheckbox";
 import FiltersBar from "../components/FiltersBar";
 import Pagination from "../components/Pagination";
 import adminApi from "../services/adminApi";
@@ -155,7 +156,7 @@ function Replacements() {
             <thead className="bg-[#fbf7f0] text-left">
               <tr>
                 <th className="border-b border-black/8 px-4 py-4">
-                  <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} />
+                  <CandleCheckbox checked={isAllSelected} onChange={toggleSelectAll} className="h-4 w-4" />
                 </th>
                 <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Image</th>
                 <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Order</th>
@@ -199,10 +200,10 @@ function Replacements() {
                     return (
                       <tr key={replacement.id} className="align-top transition hover:bg-[#fbf7f0]">
                         <td className="border-b border-black/6 px-4 py-4">
-                          <input
-                            type="checkbox"
+                          <CandleCheckbox
                             checked={selectedIds.includes(replacement.id)}
                             onChange={() => toggleRow(replacement.id)}
+                            className="h-4 w-4"
                           />
                         </td>
                         <td className="border-b border-black/6 px-4 py-4">

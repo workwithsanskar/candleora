@@ -83,19 +83,13 @@ describe("Home", () => {
     return activeView;
   }
 
-  it("renders the redesigned recommendation cards with single-link call-to-actions", async () => {
+  it("matches the screenshot-style homepage sections without the extra recommendations block", async () => {
     renderHome();
 
-    expect(await screen.findByRole("heading", { name: "The Recommendations" })).toBeInTheDocument();
-
-    expect(screen.queryByRole("link", { name: /^Occasion Picks$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /^Candle Fixes$/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Occasion Picks$/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Candle Fixes$/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View Occasion Picks" })).toHaveAttribute("href", "/occasion-picks");
-    expect(screen.getByRole("link", { name: "View Candle Fixes" })).toHaveAttribute("href", "/candle-fixes");
-    expect(screen.getByText("Not sure which candle suits your celebration?")).toBeInTheDocument();
-    expect(screen.getByText("Quick solutions to fix every candle problem.")).toBeInTheDocument();
-    expect(screen.getAllByText("View")).toHaveLength(2);
+    expect(await screen.findByRole("heading", { name: "Our Best Selling Products" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "View Our Range Of Categories" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Our Happy Customers" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Frequently Asked Questions" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "The Recommendations" })).not.toBeInTheDocument();
   });
 });

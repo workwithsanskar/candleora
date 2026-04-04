@@ -133,20 +133,20 @@ function AdminSelect({
         aria-expanded={open}
         aria-controls={listboxId}
         disabled={disabled}
-        className={`flex h-11 w-full items-center justify-between gap-3 rounded-[22px] border border-black/10 bg-white px-4 text-left text-sm text-brand-dark outline-none transition hover:border-black/20 focus-visible:border-black/25 focus-visible:ring-2 focus-visible:ring-[#f3b33d]/35 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName}`}
+        className={`flex h-11 w-full items-center justify-between gap-3 rounded-[22px] border border-[#f2d29a] bg-[#fff8ec] px-4 text-left text-sm font-medium text-brand-dark outline-none transition hover:border-[#e0aa44] focus-visible:border-[#d7962f] focus-visible:ring-2 focus-visible:ring-[#f3b33d]/30 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName}`}
         onClick={() => {
           if (!disabled) {
             setOpen((current) => !current);
           }
         }}
       >
-        <span className={`truncate ${selectedOption ? "text-brand-dark" : "text-brand-muted"}`}>
+        <span className={`truncate ${selectedOption ? "text-brand-dark" : "text-black/52"}`}>
           {selectedOption?.label ?? placeholder}
         </span>
 
         <motion.svg
           viewBox="0 0 24 24"
-          className="h-4 w-4 shrink-0 text-brand-muted"
+          className="h-4 w-4 shrink-0 text-black/58"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.9"
@@ -162,7 +162,7 @@ function AdminSelect({
           <motion.div
             id={listboxId}
             role="listbox"
-            className={`absolute left-0 right-0 z-40 overflow-hidden rounded-[24px] border border-black/10 bg-[#fffaf3] p-2 shadow-[0_24px_60px_rgba(23,18,15,0.14)] ${menuPositionClassName}`}
+            className={`absolute left-0 right-0 z-40 overflow-hidden rounded-[24px] border border-[#f2d29a] bg-[#fffaf3] p-2 shadow-[0_24px_60px_rgba(23,18,15,0.14)] ${menuPositionClassName}`}
             initial={prefersReducedMotion ? false : { opacity: 0, y: placement === "top" ? 8 : -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0, y: placement === "top" ? 8 : -8, scale: 0.98 }}

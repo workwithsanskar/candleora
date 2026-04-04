@@ -16,11 +16,11 @@ const emptyForm = {
 };
 
 const fieldLabelClassName =
-  "text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-black/68";
+  "text-[14px] font-medium text-black";
 const fieldInputClassName =
-  "h-[48px] w-full rounded-[20px] border border-black/15 bg-white px-6 py-2.5 text-[0.94rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+  "h-[54px] w-full rounded-full border border-black/15 bg-white px-6 py-2.5 text-[0.98rem] text-black outline-none transition placeholder:text-black/38 focus:border-black";
 const fieldTextareaClassName =
-  "min-h-[76px] w-full rounded-[20px] border border-black/15 bg-white px-6 py-3.5 text-[0.94rem] text-black outline-none transition placeholder:text-black/32 focus:border-black";
+  "min-h-[104px] w-full rounded-[24px] border border-black/15 bg-white px-6 py-4 text-[0.98rem] text-black outline-none transition placeholder:text-black/38 focus:border-black";
 
 function buildInitialForm(user) {
   return {
@@ -114,30 +114,30 @@ function ContactUs() {
   return (
     <div className="bg-white">
       <section className="mx-auto w-full max-w-[1520px] px-4 py-2.5 sm:px-6 sm:py-3.5 lg:px-10 lg:py-4">
-        <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-candle">
-          <div className="bg-black px-6 py-2.5 sm:px-8 lg:px-10 lg:py-3">
+        <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
+          <div className="bg-black px-6 py-4 sm:px-8 lg:px-10">
             <h1 className="font-display text-[1.8rem] font-semibold leading-[1.05] text-white sm:text-[1.95rem]">
               Get In Touch With Us
             </h1>
           </div>
 
-          <div className="grid gap-3.5 px-6 py-3.5 sm:px-8 lg:grid-cols-[0.52fr_1.48fr] lg:gap-7 lg:px-10 lg:py-4">
-            <div className="space-y-2.5 pt-0.5">
-              <div className="border-b border-black/10 pb-2">
-                <p className="text-[0.98rem] font-medium text-black">Phone Number</p>
-                <p className="mt-0.5 text-[0.92rem] leading-5 text-black/68">8999908639</p>
+          <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[0.52fr_1.48fr] lg:gap-10 lg:px-10 lg:py-10">
+            <div className="space-y-6 pt-1">
+              <div className="border-b border-black/10 pb-5">
+                <p className="text-[1rem] font-medium text-black">Phone Number</p>
+                <p className="mt-1 text-[1rem] leading-6 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-2">
-                <p className="text-[0.98rem] font-medium text-black">Email Address</p>
-                <p className="mt-0.5 text-[0.93rem] leading-5.5 text-black/68">
+              <div className="border-b border-black/10 pb-5">
+                <p className="text-[1rem] font-medium text-black">Email Address</p>
+                <p className="mt-1 text-[1rem] leading-6 text-black/68">
                   candleora25@gmail.com
                 </p>
               </div>
 
               <div>
-                <p className="text-[0.98rem] font-medium text-black">Location</p>
-                <p className="mt-0.5 max-w-[360px] text-[0.92rem] leading-5 text-black/68">
+                <p className="text-[1rem] font-medium text-black">Location</p>
+                <p className="mt-1 max-w-[360px] text-[1rem] leading-7 text-black/68">
                   Nagpur, Maharashtra, India
                 </p>
               </div>
@@ -145,77 +145,74 @@ function ContactUs() {
 
             <div>
               <div className="max-w-[840px]">
-                <h2 className="font-display text-[1.7rem] font-semibold leading-[1.05] text-black sm:text-[1.85rem]">
+                <h2 className="text-[1.05rem] font-medium leading-7 text-black sm:text-[1.1rem]">
                   Send us a message
                 </h2>
-                <p className="mt-0.5 max-w-[760px] text-[0.9rem] leading-5 text-black/62">
+                <p className="mt-1 max-w-[760px] text-[1rem] leading-8 text-black/62">
                   Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
                 </p>
               </div>
 
-              <form
-                onSubmit={handleSubmit}
-                className="mt-2.5 rounded-[22px] border border-black/8 bg-[#fffdfa] p-3.5 sm:p-4 lg:p-4.5"
-              >
-                <div className="space-y-2.5">
-                <div className="grid gap-2.5 md:grid-cols-2">
-                  <label className="space-y-0.5">
-                    <span className={fieldLabelClassName}>Your name *</span>
+              <form onSubmit={handleSubmit} className="mt-6">
+                <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className={fieldLabelClassName}>Your name <span className="text-danger">*</span></span>
                     <input
                       type="text"
                       name="name"
                       value={form.name}
                       onChange={handleChange}
-                      placeholder="Enter your full name"
+                      placeholder="Your Name"
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-0.5">
-                    <span className={fieldLabelClassName}>Email address *</span>
+                  <label className="space-y-2">
+                    <span className={fieldLabelClassName}>Email address <span className="text-danger">*</span></span>
                     <input
                       type="email"
                       name="email"
                       value={form.email}
                       onChange={handleChange}
-                      placeholder="Enter your email address"
+                      placeholder="Your E-mail"
                       className={fieldInputClassName}
                     />
                   </label>
                 </div>
 
-                <div className="grid gap-2.5 md:grid-cols-2">
-                  <label className="space-y-0.5">
-                    <span className={fieldLabelClassName}>Phone number *</span>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className={fieldLabelClassName}>Phone number <span className="text-danger">*</span></span>
                     <input
                       type="tel"
                       name="phone"
                       value={form.phone}
                       onChange={handleChange}
-                      placeholder="Enter your mobile number"
+                      placeholder="Phone Number"
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-0.5">
-                    <span className={fieldLabelClassName}>Subject *</span>
+                  <label className="space-y-2">
+                    <span className={fieldLabelClassName}>Subject <span className="text-danger">*</span></span>
                     <input
                       type="text"
                       name="subject"
                       value={form.subject}
                       onChange={handleChange}
-                      placeholder="What do you need help with?"
+                      placeholder="Subject"
                       className={fieldInputClassName}
                     />
                   </label>
                 </div>
 
-                <label className="space-y-0.5">
-                  <span className={fieldLabelClassName}>Message *</span>
+                <label className="space-y-2">
+                  <span className={fieldLabelClassName}>Message <span className="text-danger">*</span></span>
                   <textarea
                     rows="2"
                     name="message"
                     value={form.message}
                     onChange={handleChange}
-                    placeholder="Tell us about your order, gifting request, custom requirement, or question."
+                    placeholder="Type Here..."
                     className={fieldTextareaClassName}
                   />
                 </label>
@@ -226,7 +223,7 @@ function ContactUs() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn-primary rounded-[12px] px-7 py-2.5 text-[0.94rem] disabled:opacity-60"
+                  className="inline-flex min-h-[54px] items-center justify-center rounded-full bg-[#2b2b2b] px-8 text-[1rem] font-semibold text-white transition hover:bg-black disabled:opacity-60"
                 >
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </button>

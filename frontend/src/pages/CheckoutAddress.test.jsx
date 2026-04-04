@@ -1,7 +1,7 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CheckoutAddress from "./CheckoutAddress";
 
 const {
@@ -105,6 +105,10 @@ describe("CheckoutAddress", () => {
     });
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("auto-opens the add-address modal for an empty state, preserves summary totals, and auto-selects the saved address", async () => {
     mockUseAddresses.mockReturnValue({
       addresses: [],
@@ -121,8 +125,9 @@ describe("CheckoutAddress", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole("heading", { name: "Delivery Address" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Add new saved address" })).toBeInTheDocument();
-    expect(screen.getByText("Order Total")).toBeInTheDocument();
+    expect(screen.getByText("Order Summary")).toBeInTheDocument();
     expect(screen.getAllByText("₹899").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Save address" }));
@@ -185,6 +190,9 @@ describe("CheckoutAddress", () => {
         <CheckoutAddress />
       </MemoryRouter>,
     );
+
+    expect(screen.getAllByText("Search saved addresses").length).toBeGreaterThan(0);
+    expect(screen.getByText("Saved addresses")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Aarav Mehta"));
     expect(mockSetSelectedAddress).toHaveBeenCalledWith(22);

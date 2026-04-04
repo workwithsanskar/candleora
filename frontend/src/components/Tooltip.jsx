@@ -6,7 +6,7 @@ function Tooltip({ content, children, position = "top", variant = "default", cla
   const isBottom = position === "bottom";
   const isSimple = variant === "simple";
   const baseClassName = isSimple
-    ? "pointer-events-none absolute left-1/2 z-[70] hidden -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[10px] border border-black/8 bg-[#e3e3e3] px-3 py-2 text-[11px] font-medium leading-none text-black shadow-[0_10px_24px_rgba(0,0,0,0.14)] transition duration-150 md:inline-flex"
+    ? "pointer-events-none absolute left-1/2 z-[70] hidden -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[10px] border border-black/8 bg-[#e3e3e3] px-3 py-2 text-[11px] font-medium leading-none text-black transition duration-150 md:inline-flex"
     : "pointer-events-none absolute left-1/2 z-[70] hidden min-h-[40px] -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[14px] border border-[#f3b33d]/55 bg-[#161616] px-4 py-2 text-[12px] font-medium leading-none text-white shadow-[0_16px_34px_rgba(0,0,0,0.24)] transition duration-150 md:inline-flex";
   const positionClassName = isBottom ? "top-full mt-3" : "bottom-full mb-3";
   const visibilityClassName = isVisible

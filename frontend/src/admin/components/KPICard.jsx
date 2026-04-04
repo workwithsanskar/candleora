@@ -11,7 +11,7 @@ function KPICard({ title, value, helper, change, isLoading }) {
         </div>
       ) : (
         <>
-          <h3 className="mt-4 font-display text-3xl font-semibold text-brand-dark">{value}</h3>
+          <h3 className="mt-4 text-3xl font-semibold text-brand-dark">{value}</h3>
           <div className="mt-3 flex items-center justify-between gap-3 text-sm">
             <span className="text-brand-muted">{helper}</span>
             {change ? (

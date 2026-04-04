@@ -88,7 +88,7 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
   const cartButtonIcon = isInCart ? "added" : "add";
   const cartButtonClasses =
     item.stock <= 0
-      ? "cursor-not-allowed bg-black/15 text-black/45"
+      ? "cursor-not-allowed bg-black/12 text-black/45"
       : isInCart
         ? "bg-[#058b1f] text-white"
         : "bg-brand-primary text-black";
@@ -99,7 +99,11 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
   });
 
   return (
-    <article className="group mx-auto w-full max-w-[250px] transition duration-300 hover:-translate-y-1">
+    <article
+      className={`group mx-auto w-full max-w-[250px] transition duration-300 hover:-translate-y-1 ${
+        item.stock <= 0 ? "opacity-60" : ""
+      }`}
+    >
       <div className="relative h-[314px] w-full overflow-hidden rounded-[14px] bg-[#d0d0d0]">
         <Link to={productPath} className="block h-full w-full">
           <img

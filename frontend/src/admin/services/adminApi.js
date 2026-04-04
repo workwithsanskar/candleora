@@ -49,6 +49,7 @@ const adminApi = {
     api.post("/admin/replacements/bulk-approve", payload).then(unwrap),
   getProducts: (params = {}) =>
     api.get("/admin/products", { params: withDefinedParams(params) }).then(unwrap),
+  getProduct: (id) => api.get(`/admin/products/${id}`).then(unwrap),
   getProductOptions: () => api.get("/admin/products/options").then(unwrap),
   createProduct: (payload) => api.post("/admin/products", payload).then(unwrap),
   updateProduct: (id, payload) => api.put(`/admin/products/${id}`, payload).then(unwrap),
@@ -57,9 +58,19 @@ const adminApi = {
   adjustProductInventory: (id, payload) =>
     api.post(`/admin/products/${id}/inventory-adjustments`, payload).then(unwrap),
   getCoupons: () => api.get("/admin/coupons").then(unwrap),
+  getCoupon: (id) => api.get(`/admin/coupons/${id}`).then(unwrap),
   createCoupon: (payload) => api.post("/admin/coupons", payload).then(unwrap),
   updateCoupon: (id, payload) => api.put(`/admin/coupons/${id}`, payload).then(unwrap),
   deleteCoupon: (id) => api.delete(`/admin/coupons/${id}`).then(unwrap),
+  getAnnouncements: () => api.get("/admin/announcements").then(unwrap),
+  createAnnouncement: (payload) => api.post("/admin/announcements", payload).then(unwrap),
+  updateAnnouncement: (id, payload) => api.put(`/admin/announcements/${id}`, payload).then(unwrap),
+  deleteAnnouncement: (id) => api.delete(`/admin/announcements/${id}`).then(unwrap),
+  getFestiveBanners: () => api.get("/admin/banners").then(unwrap),
+  getFestiveBanner: (id) => api.get(`/admin/banners/${id}`).then(unwrap),
+  createFestiveBanner: (payload) => api.post("/admin/banners", payload).then(unwrap),
+  updateFestiveBanner: (id, payload) => api.put(`/admin/banners/${id}`, payload).then(unwrap),
+  deleteFestiveBanner: (id) => api.delete(`/admin/banners/${id}`).then(unwrap),
   getCustomers: (params = {}) =>
     api.get("/admin/customers", { params: withDefinedParams(params) }).then(unwrap),
   getCustomer: (id) => api.get(`/admin/customers/${id}`).then(unwrap),

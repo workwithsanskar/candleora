@@ -2,31 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import heroImage from "../assets/designer/image-optimized.jpg";
-import bookshelfImage from "../assets/designer/occasion-picks-card.jpeg";
-import candleFixesCard from "../assets/designer/candle-fixes-home-card.jpeg";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
-import Recommendations from "../components/Recommendations";
 import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
 import { formatApiError } from "../utils/format";
-
-const recommendationCards = [
-  {
-    title: "Occasion Picks",
-    image: bookshelfImage,
-    description: "Not sure which candle suits your celebration?",
-    to: "/occasion-picks",
-  },
-  {
-    title: "Candle Fixes",
-    image: candleFixesCard,
-    description: "Quick solutions to fix every candle problem.",
-    to: "/candle-fixes",
-  },
-];
 
 const customerStories = [
   {
@@ -151,14 +133,14 @@ function Home() {
           <div className="w-full px-6 sm:px-10 lg:px-[128px] xl:px-[136px]">
             <div className="max-w-[680px] pt-[56px] text-left sm:pt-[74px] lg:w-[666px] lg:max-w-none lg:pt-[132px] xl:pt-[146px]">
               <h1
-                className="text-[1.95rem] font-bold leading-[1.02] tracking-normal text-white sm:text-[2.45rem] sm:leading-[1.02] lg:w-[666px] lg:text-[40px] lg:leading-[1]"
+                className="text-[1.95rem] font-bold leading-[1.12] tracking-normal text-white sm:text-[2.45rem] sm:leading-[1.1] lg:w-[666px] lg:text-[40px] lg:leading-[1.14]"
                 style={{ fontFamily: '"Oxygen", "Segoe UI", sans-serif' }}
               >
                 Crafting Comfort, Redefining Spaces. Your Home, Your Signature Style!
               </h1>
               <Link
                 to="/shop"
-                className="mt-3 inline-flex h-[45px] min-w-[143px] items-center justify-center rounded-[5px] bg-white px-5 text-[16px] font-bold tracking-[0.01em] text-[#1A1A1A] shadow-[0_4px_4px_rgba(0,0,0,0.25)] lg:mt-3.5"
+                className="mt-5 inline-flex h-[46px] min-w-[142px] items-center justify-center rounded-[6px] bg-[#f3b33d] px-5 text-[16px] font-semibold tracking-[0.01em] text-[#1A1A1A] transition hover:bg-[#e8a92f] lg:mt-6"
               >
                 Shop Now
               </Link>
@@ -222,25 +204,7 @@ function Home() {
         </Reveal>
       </section>
 
-      <section className="bg-brand-primary py-4">
-        <p className="text-center text-base font-semibold text-black sm:text-[1.1rem]">
-          Free Delivery &amp; Free Gift when you spend over Rs. 1999/-
-        </p>
-      </section>
-
-      <section id="recommendations" className="container-shell py-12 sm:py-14">
-        <Reveal delay={0.08}>
-          <h2 className="section-title">
-            The Recommendations
-          </h2>
-
-          <div className="mt-8">
-            <Recommendations cards={recommendationCards} />
-          </div>
-        </Reveal>
-      </section>
-
-      <section className="container-shell pt-4 pb-8 sm:pt-6 sm:pb-10">
+      <section className="container-shell pt-12 pb-8 sm:pt-14 sm:pb-10">
         <Reveal delay={0.1}>
           <div className="flex items-center justify-between gap-4">
             <h2 className="section-title">Our Happy Customers</h2>

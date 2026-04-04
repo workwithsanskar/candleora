@@ -44,7 +44,7 @@ function FAQ() {
             Frequently Asked Questions
           </h1>
           <p className="mt-4 text-sm leading-7 text-black/62">
-            Find clear answers for shipping, burn time, candle care, and the details that help you choose with confidence.
+            Find clear answers for wax types, shipping, candle care, and the details that help you choose with confidence.
           </p>
         </div>
 
@@ -58,7 +58,7 @@ function FAQ() {
               const isOpen = expandedId === faq.id;
 
               return (
-                <article key={faq.id} className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-candle">
+                <article key={faq.id} className="rounded-[18px] border border-black/10 bg-white px-5 py-4">
                   <button
                     type="button"
                     onClick={() => setExpandedId(isOpen ? null : faq.id)}

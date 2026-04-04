@@ -1,89 +1,89 @@
 export const legalContact = {
-  supportEmail: "support@candleora.com",
+  supportEmail: "candleora25@gmail.com",
   businessName: "CandleOra",
 };
 
 export const termsSections = [
   {
-    heading: "1. Acceptance Of Terms",
+    heading: "1. Acceptance of Terms",
     paragraphs: [
-      "These Terms & Conditions govern your access to and use of the CandleOra website, product catalog, customer account, and related services. By browsing the site, creating an account, or placing an order, you agree to be bound by these terms.",
-      "If you do not agree with any part of these terms, you should discontinue use of the website and refrain from placing an order.",
+      "By accessing or using the CandleOra website, creating an account, or placing an order, you agree to be bound by these Terms & Conditions. If you do not agree, please discontinue use of the website.",
     ],
   },
   {
-    heading: "2. Eligibility And Account Responsibility",
+    heading: "2. Eligibility and Account Responsibility",
     paragraphs: [
-      "You must provide accurate, current, and complete information when creating an account or placing an order. You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.",
-      "CandleOra may suspend or restrict access to accounts that contain false information, violate these terms, or create risk for customers, payments, or order fulfillment.",
+      "You agree to provide accurate and complete information. You are responsible for maintaining the confidentiality of your account credentials and all activity under your account. CandleOra may suspend or terminate accounts that violate these terms.",
     ],
   },
   {
     heading: "3. Product Information",
     paragraphs: [
-      "We make reasonable efforts to display product names, descriptions, fragrance notes, colors, dimensions, and burn-time estimates as accurately as possible. Because CandleOra products are handcrafted, minor variations in color, finish, texture, packaging, or decorative details may occur.",
-      "Lifestyle images are intended for presentation and inspiration. Product appearance may vary slightly due to screen settings, lighting, or handmade production differences.",
+      "We strive to display product details, colors, and descriptions as accurately as possible. As our products are handmade, slight variations in color, finish, or design may occur. Images are for reference and may vary due to lighting or screen settings.",
     ],
   },
   {
-    heading: "4. Pricing And Availability",
+    heading: "4. Pricing and Availability",
     paragraphs: [
-      "All prices displayed on the site are listed in Indian Rupees unless otherwise stated. Pricing, discounts, bundles, and promotional offers may be updated, modified, or withdrawn without prior notice.",
-      "Product availability depends on current stock levels. Items shown as available may become unavailable before checkout is completed. CandleOra reserves the right to cancel or limit quantities on any order when stock inaccuracies, pricing errors, or operational issues occur.",
+      "All prices are listed in INR unless stated otherwise. Prices, offers, and availability may change without notice. We reserve the right to cancel or limit orders due to stock issues, pricing errors, or operational concerns.",
     ],
   },
   {
-    heading: "5. Orders And Payment",
+    heading: "5. Orders and Payment",
     paragraphs: [
-      "Placing an order on the website constitutes an offer to purchase. An order is considered accepted only after CandleOra confirms it through the order workflow and payment verification, where applicable.",
-      "We may use third-party payment partners to process online transactions. You agree to provide valid payment information and authorize CandleOra and its payment partners to collect the full order amount, including applicable taxes, shipping charges, and any clearly disclosed fees.",
+      "Orders are confirmed only after successful payment verification. We use secure third-party payment providers and do not store full payment details.",
+      "Cash on Delivery (COD), where the customer is available at the door and before uncovering or unpacking the item, may be subject to verification or restrictions.",
     ],
   },
   {
-    heading: "6. Shipping And Delivery",
+    heading: "6. Shipping and Delivery",
     paragraphs: [
-      "Shipping timelines shown on the website are estimates and may vary based on destination, courier capacity, weather conditions, public holidays, or other events outside our direct control.",
-      "The customer is responsible for providing an accurate shipping address, phone number, and delivery instructions. CandleOra is not responsible for delays, return-to-origin charges, or failed delivery attempts caused by incomplete or incorrect shipping details.",
+      "Delivery timelines are estimates and may vary due to external factors such as courier delays, weather, or public holidays. Customers are responsible for providing accurate shipping details. We are not liable for delays caused by incorrect information.",
     ],
   },
   {
-    heading: "7. Cancellations, Returns, And Refunds",
+    heading: "7. Cancellations, Replacement, and Refunds",
     paragraphs: [
-      "Cancellation, return, replacement, and refund decisions are subject to CandleOra's order review, product condition checks, and the specific circumstances of the request.",
-      "Damaged, defective, or incorrect items should be reported as soon as possible after delivery with sufficient supporting details, including order reference and product images where relevant. Approved refunds, replacements, or credits will be processed through the original payment method or another mutually agreed method, subject to payment-provider timelines.",
+      "All requests are subject to review based on product condition and order details. Damaged or incorrect items must be reported promptly with supporting images.",
+      "Cancellation Policy: You can cancel your order within 24 hours of placing it.",
+      "Replacement Policy: You can request a replacement within 48 hours of delivery only if the item is damaged or broken. Share proof (image or video) while raising the request. Only one-time replacement is allowed.",
+      "Go to Orders > Tracking ID > Cancel or Replace to initiate cancellations or replacements.",
     ],
   },
   {
     heading: "8. User Conduct",
     paragraphs: [
-      "You agree not to misuse the website, interfere with its operation, attempt unauthorized access, introduce malicious code, scrape protected content, abuse promotional offers, or use the site in a way that harms CandleOra, its customers, or its service providers.",
-      "Any fraudulent activity, attempted chargeback abuse, or misuse of account features may lead to order cancellation, account suspension, or legal action where appropriate.",
+      "You agree not to misuse the website, attempt unauthorized access, disrupt services, or engage in fraudulent activities. Violations may result in account suspension, order cancellation, or legal action.",
     ],
   },
   {
     heading: "9. Intellectual Property",
     paragraphs: [
-      "All website content, including CandleOra branding, logos, graphics, product photography, copy, design, layouts, and software elements, is owned by or licensed to CandleOra and is protected by applicable intellectual property laws.",
-      "You may not reproduce, distribute, publish, modify, or commercially exploit any part of the website content without prior written permission from CandleOra.",
+      "All content on this website, including branding, images, and design, is owned by CandleOra and protected by applicable laws. Unauthorized use is strictly prohibited.",
     ],
   },
   {
-    heading: "10. Limitation Of Liability",
+    heading: "10. Limitation of Liability",
     paragraphs: [
-      "To the maximum extent permitted by law, CandleOra shall not be liable for indirect, incidental, special, or consequential damages arising from use of the website, delays in delivery, temporary service interruptions, third-party service failures, or inability to use the site.",
-      "Where liability cannot be excluded, CandleOra's aggregate liability shall be limited to the amount paid by the customer for the specific order giving rise to the claim.",
+      "To the extent permitted by law, CandleOra is not liable for indirect or consequential damages, including loss of data, revenue, or business opportunities. Liability, if applicable, is limited to the amount paid for the order.",
     ],
   },
   {
-    heading: "11. Governing Law",
+    heading: "11. Force Majeure",
     paragraphs: [
-      "These Terms & Conditions shall be governed by and interpreted in accordance with the laws applicable in India. Any disputes arising out of the use of the website or any order placed through CandleOra shall be subject to the jurisdiction of the competent courts determined by applicable law.",
+      "CandleOra is not responsible for delays or failure to perform due to events beyond our control, including natural disasters, strikes, or courier disruptions.",
     ],
   },
   {
-    heading: "12. Contact",
+    heading: "12. Governing Law",
     paragraphs: [
-      `For questions relating to these terms, orders, or customer support, please contact ${legalContact.businessName} at ${legalContact.supportEmail}.`,
+      "These Terms are governed by the laws of India. Any disputes will be subject to the jurisdiction of applicable courts in India.",
+    ],
+  },
+  {
+    heading: "13. Contact",
+    paragraphs: [
+      `For any questions or concerns, please contact us at: ${legalContact.supportEmail}`,
     ],
   },
 ];

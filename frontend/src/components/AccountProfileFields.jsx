@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import CandleDatePicker from "./CandleDatePicker";
 import CandleSelectControl from "./CandleSelectControl";
 
 const inputClassName =
@@ -130,12 +131,12 @@ function AccountProfileFields({
 
         <Field label="Date of birth">
           <div className="space-y-1.5">
-            <input
-              type="date"
-              name="dateOfBirth"
+            <CandleDatePicker
               value={form.dateOfBirth}
-              onChange={onChange}
-              className={inputClassName}
+              onChange={(nextValue) =>
+                onChange({ target: { name: "dateOfBirth", value: nextValue } })
+              }
+              buttonClassName="!h-[48px] !rounded-[16px] !border-black/12 !bg-white focus-visible:!border-black/35 focus-visible:!ring-[#f3b33d]/20"
             />
             <p className="pl-1 text-[11px] font-medium uppercase tracking-[0.12em] text-black/42">
               mm/dd/yyyy

@@ -129,6 +129,8 @@ export const paymentApi = {
 };
 
 export const contentApi = {
+  getAnnouncements: () => api.get("/announcements").then(unwrap),
+  getActiveFestiveBanner: () => api.get("/banners/active").then(unwrap),
   getFixes: () => api.get("/fixes").then(unwrap),
   getGuides: () => api.get("/guides").then(unwrap),
   getFaqs: () => api.get("/faqs").then(unwrap),

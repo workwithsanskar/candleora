@@ -1,19 +1,13 @@
 const aboutParagraphs = [
   <>
-    We are passionate <span className="font-semibold text-black">artists and designers</span> who
-    create <span className="font-semibold text-black">handmade candles</span> for real moods,
-    moments, and memories. Every piece is made with intention so its fragrance, form, and feeling
-    speak to you in a personal way.
+    We are Passionate Artists and Designers who create Handmade Candles with Love,
+    Intention, and Care. Each candle Tells a Story and its Fragrance Speaks to Your
+    Soul, designed to make you feel the same joy and warmth we felt while making it.
   </>,
   <>
-    We love candles for the comfort and atmosphere they bring. To us, a candle is one of the{" "}
-    <span className="font-semibold text-black">best ways to lift any mood</span> and turn a simple
-    gift into something meaningful.
-  </>,
-  <>
-    Explore our gallery and you will find something that fits your moment. We believe candles can{" "}
-    <span className="font-semibold text-black">say what words sometimes cannot</span>, helping you
-    share warmth, emotion, and intention beautifully.
+    We don&apos;t just make candles for business, we make them to Lift Moods, Inspire
+    Moments, and Bring Meaningful Gifts to life. Explore our Gallery and find a candle
+    that Resonates with Your Heart, helping you Say What Words Cannot.
   </>,
 ];
 
@@ -45,13 +39,7 @@ function AboutUs() {
     <div className="bg-white">
       <section className="py-8 sm:py-10 lg:py-12">
         <div className="relative mx-auto w-full max-w-[1260px] px-3 sm:px-4 lg:px-5">
-          <div className="mx-auto flex max-w-max items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-brand-primary">
-            <span className="h-px w-8 bg-[#d8c3a2]" />
-            <span>CandleOra Story</span>
-            <span className="h-px w-8 bg-[#d8c3a2]" />
-          </div>
-
-          <h1 className="mt-4 mx-auto w-full text-center font-display text-[clamp(2.1rem,3.1vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#242424] md:whitespace-nowrap">
+          <h1 className="mx-auto w-full text-center font-display text-[clamp(2.1rem,3.1vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#242424] md:whitespace-nowrap">
             Who We Are{" "}
             <span className="font-sans font-medium text-black">
               &amp;
@@ -63,15 +51,9 @@ function AboutUs() {
 
           <div className="balanced-split-layout mt-6 grid gap-6 sm:mt-7 sm:gap-7 lg:mt-8 lg:grid-cols-[minmax(0,392px)_minmax(480px,592px)] lg:justify-center lg:gap-[42px]">
             <div className="max-w-[392px]">
-              <div className="mb-4 h-px w-20 bg-[#e6d8c2]" />
-              <div className="space-y-4 text-[14.5px] leading-[1.58] text-[#646464] sm:text-[15px]">
+              <div className="space-y-5 text-[14.5px] leading-[1.72] text-[#646464] sm:text-[15px]">
                 {aboutParagraphs.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className={index === 0 ? "text-[#5f5f5f]" : ""}
-                  >
-                    {paragraph}
-                  </p>
+                  <p key={index}>{paragraph}</p>
                 ))}
               </div>
             </div>

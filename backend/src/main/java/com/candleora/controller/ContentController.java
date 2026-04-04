@@ -1,10 +1,12 @@
 package com.candleora.controller;
 
+import com.candleora.dto.content.AnnouncementResponse;
 import com.candleora.dto.content.CandleFixResponse;
 import com.candleora.dto.content.ContactMessageRequest;
 import com.candleora.dto.content.ContactMessageResponse;
 import com.candleora.dto.content.FaqResponse;
 import com.candleora.dto.content.StylingGuideResponse;
+import com.candleora.service.AnnouncementService;
 import com.candleora.service.ContentService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -18,10 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class ContentController {
 
+    private final AnnouncementService announcementService;
     private final ContentService contentService;
 
-    public ContentController(ContentService contentService) {
+    public ContentController(AnnouncementService announcementService, ContentService contentService) {
+        this.announcementService = announcementService;
         this.contentService = contentService;
+    }
+
+    @GetMapping("/announcements")
+    public List<AnnouncementResponse> getAnnouncements() {
+        return announcementService.listPublicAnnouncements();
     }
 
     @GetMapping("/fixes")

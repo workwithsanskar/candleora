@@ -5,49 +5,48 @@ function SavedAddressCard({ address, onEdit, onRemove }) {
   const preview = formatAddressPreview(address);
 
   return (
-    <article className="checkout-panel p-5">
+    <article className="rounded-[20px] border border-black/10 bg-white p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-[2rem] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A]">
+            <h3 className="truncate text-[1.1rem] font-semibold text-[#1A1A1A]">
               {address.recipientName}
             </h3>
             {address.label ? (
-              <span className="inline-flex items-center rounded-full border border-[#F1B85A] bg-[#fff5df] px-3 py-1 text-xs font-semibold text-[#a56a00]">
-                {address.label}
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-black/56">
+                [{address.label}]
               </span>
             ) : null}
             {address.isDefault ? (
-              <span className="inline-flex items-center rounded-full bg-[#FFA20A] px-3 py-1 text-xs font-semibold text-[#1A1A1A]">
-                Default
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-black/56">
+                [Default]
               </span>
             ) : null}
           </div>
 
-          <div className="mt-4 space-y-1.5 text-base leading-8 text-black/78">
+          <div className="mt-3 space-y-1 text-sm leading-7 text-black/74">
             {preview.streetLine ? <p>{preview.streetLine}</p> : null}
             {preview.regionLine ? <p>{preview.regionLine}</p> : null}
           </div>
 
-          <p className="mt-4 text-lg font-semibold tracking-[0.01em] text-[#1A1A1A]">
+          <p className="mt-3 text-sm font-medium text-[#1A1A1A]">
             {address.phoneNumber}
           </p>
         </div>
+      </div>
 
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm font-semibold text-black/72">
         <button
           type="button"
           onClick={() => onEdit?.(address)}
-          className="text-sm font-semibold uppercase tracking-[0.22em] text-[#1A1A1A] transition hover:text-[#FFA20A]"
+          className="transition hover:underline hover:underline-offset-4"
         >
           Edit
         </button>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
           onClick={() => onRemove?.(address.id)}
-          className="checkout-action-secondary min-w-[140px]"
+          className="transition hover:underline hover:underline-offset-4"
         >
           Remove
         </button>

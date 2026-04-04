@@ -95,13 +95,13 @@ function CouponOfferCard({
   const isEligibleNow = !minimumOrder || Number(subtotalAmount ?? 0) >= minimumOrder;
 
   return (
-    <article className="rounded-[24px] border border-[#f3d59d] bg-[linear-gradient(135deg,#fff8eb_0%,#fffdf7_100%)] p-4">
+    <article className="rounded-[18px] border border-[#efd9ad] bg-white px-4 py-3.5 shadow-[0_10px_24px_rgba(196,154,82,0.08)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[1.05rem] font-semibold text-[#1A1A1A]">{offer.title}</p>
             {isRecommended && !isApplied ? (
-              <span className="rounded-full border border-[#f0c777] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a56a00]">
+              <span className="rounded-full border border-[#ead39f] bg-[#fff8ea] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9f6d12]">
                 Best offer
               </span>
             ) : null}
@@ -123,7 +123,7 @@ function CouponOfferCard({
           className={`text-sm font-semibold transition ${
             isApplied
               ? "cursor-default text-[#027808]"
-              : "text-[#FFA20A] hover:text-[#d78600] disabled:cursor-not-allowed disabled:opacity-60"
+              : "text-[#a56a00] hover:underline hover:underline-offset-4 disabled:cursor-not-allowed disabled:opacity-60"
           }`}
         >
           {isApplied ? "Applied" : isBusy ? "Applying..." : "Use"}
@@ -246,14 +246,21 @@ function CouponCodePanel({
 
   return (
     <>
-      <section className="checkout-panel p-5">
+      <section className="rounded-[20px] border border-[#edd7aa] bg-[#fffaf2] p-4 shadow-[0_16px_40px_rgba(196,154,82,0.07)] sm:p-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="checkout-kicker">Coupons and offers</p>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b27d1d]">
+              Coupons and offers
+            </p>
+            <p className="mt-1 text-[0.98rem] font-semibold text-[#1A1A1A]">
+              Apply coupon / gift card
+            </p>
+          </div>
           {sortedOffers.length > 1 ? (
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="text-sm font-semibold text-[#FFA20A] transition hover:text-[#d78600]"
+              className="text-sm font-semibold text-[#b27d1d] transition hover:underline hover:underline-offset-4"
             >
               View more
             </button>
@@ -265,14 +272,14 @@ function CouponCodePanel({
             value={couponCode}
             onChange={(event) => onCouponCodeChange?.(event.target.value)}
             placeholder="Apply coupon / gift card"
-            className="checkout-input min-w-0 flex-1"
+            className="min-w-0 flex-1 rounded-full border border-[#efd8ae] bg-white px-4 py-3 text-sm text-black outline-none transition placeholder:text-black/34 focus:border-[#e0b461] focus:ring-2 focus:ring-[#f7deb0]"
           />
 
           {hasAppliedCoupon ? (
             <button
               type="button"
               onClick={onRemoveCoupon}
-              className="checkout-action-secondary min-w-[112px]"
+              className="inline-flex min-w-[112px] items-center justify-center rounded-full border border-[#e6c98e] bg-white px-5 py-3 text-sm font-semibold text-[#7d5a1f] transition hover:bg-[#fff5df]"
             >
               Remove
             </button>
@@ -281,7 +288,7 @@ function CouponCodePanel({
               type="button"
               onClick={() => onApplyCoupon?.(couponCode)}
               disabled={isApplying}
-              className="checkout-action-primary min-w-[112px]"
+              className="inline-flex min-w-[112px] items-center justify-center rounded-full bg-[#f2b544] px-5 py-3 text-sm font-semibold text-[#22160a] transition hover:bg-[#e3a52f] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isApplying ? "Applying..." : "Apply"}
             </button>

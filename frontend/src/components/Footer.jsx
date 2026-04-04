@@ -1,17 +1,20 @@
 import { Link } from "react-router-dom";
 import BrandLogo from "./BrandLogo";
+import gmailFooterIcon from "../assets/gmail-footer.png";
+import instagramFooterIcon from "../assets/instagram-footer.png";
+import whatsappFooterIcon from "../assets/whatsapp-footer.png";
 
 const whatsappMessage = encodeURIComponent(
   "Hello CandleOra, I would like to know more about your candles and current availability.",
 );
 const whatsappHref = `https://wa.me/918999908639?text=${whatsappMessage}`;
 const instagramHref = "https://instagram.com";
-const facebookHref = "https://facebook.com";
+const emailHref = "mailto:candleora25@gmail.com";
 
 const footerStaticItemClassName =
-  "block text-[17px] font-normal leading-[22px] text-white lg:whitespace-nowrap";
+  "block text-[15px] font-normal leading-7 text-white/88 lg:whitespace-nowrap";
 const footerInteractiveItemClassName =
-  "group flex items-center text-[17px] font-normal leading-[22px] text-white transition-colors duration-200 hover:text-[#D6D6D6] lg:whitespace-nowrap";
+  "group flex items-center text-[15px] font-normal leading-7 text-white/88 transition-colors duration-200 hover:text-white lg:whitespace-nowrap";
 
 const quickLinks = [
   { to: "/", label: "Home" },
@@ -39,7 +42,7 @@ function FooterLink({ to, children, onClick }) {
   );
 }
 
-function FooterExternalLink({ href, children }) {
+function FooterExternalLink({ href, children, iconOnly = false }) {
   const isMailLink = href.startsWith("mailto:");
 
   return (
@@ -47,18 +50,20 @@ function FooterExternalLink({ href, children }) {
       href={href}
       target={isMailLink ? undefined : "_blank"}
       rel={isMailLink ? undefined : "noreferrer"}
-      className={footerInteractiveItemClassName}
+      className={
+        iconOnly
+          ? "inline-flex h-11 w-11 items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 hover:bg-white/[0.04]"
+          : footerInteractiveItemClassName
+      }
     >
-      <span className="transition-transform duration-200 group-hover:translate-x-[2px]">
-        {children}
-      </span>
+      {children}
     </a>
   );
 }
 
 function FooterHeading({ children }) {
   return (
-    <p className="text-[17px] font-normal uppercase leading-[21px] tracking-normal text-[#9A9A9A]">
+    <p className="text-[14px] font-normal uppercase leading-5 tracking-[0.03em] text-[#9A9A9A]">
       {children}
     </p>
   );
@@ -87,26 +92,22 @@ function Footer() {
       className="border-t border-[#161616] bg-black text-white"
       style={{ fontFamily: '"Oxygen", "Segoe UI", sans-serif' }}
     >
-      <div className="w-full bg-[linear-gradient(180deg,#070707_0%,#000000_18%,#000000_100%)]">
-        <div className="mx-auto w-full max-w-[1440px] px-6 py-10 sm:px-10 sm:py-12 lg:pl-[74px] lg:pr-[49px] lg:pt-[42px] lg:pb-[68px]">
-          <div className="grid gap-y-10 lg:grid-cols-[190px_942px] lg:gap-x-[170px]">
-            <div className="flex flex-col items-center lg:pt-[92px]">
-              <div className="flex w-fit flex-col items-center">
-                <BrandLogo
-                  tone="light"
-                  className="max-w-[190px]"
-                  imageClassName="opacity-95"
-                />
-                <p className="mt-4 text-center text-[15px] leading-[19px] text-[#676767] sm:text-[16px]">
-                  Copyright {"\u00A9"} 2026
+      <div className="w-full bg-[linear-gradient(180deg,#050505_0%,#000000_22%,#000000_100%)]">
+        <div className="mx-auto w-full max-w-[1440px] px-6 py-10 sm:px-10 sm:py-12 lg:px-[72px] lg:py-[64px]">
+          <div className="grid gap-y-10 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-x-20">
+            <div className="flex flex-col justify-end lg:min-h-[250px]">
+              <div className="flex w-fit flex-col items-start">
+                <BrandLogo tone="light" className="max-w-[190px]" imageClassName="opacity-100" />
+                <p className="mt-10 text-[14px] leading-6 text-[#6A6A6A] sm:text-[15px]">
+                  Copyright {"\u00A9"} 2026 candleora.in
                 </p>
               </div>
             </div>
 
-            <div className="grid gap-y-8 sm:grid-cols-2 sm:gap-x-10 lg:flex lg:w-[942px] lg:gap-0 lg:items-start">
-              <div className="lg:w-[108px]">
+            <div className="grid gap-y-8 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-[minmax(130px,1fr)_minmax(220px,1.18fr)_minmax(160px,1fr)_minmax(220px,0.9fr)] lg:gap-x-16">
+              <div>
                 <FooterHeading>Quick Links</FooterHeading>
-                <div className="mt-[18px] space-y-[18px]">
+                <div className="mt-8 space-y-3.5">
                   {quickLinks.map((item) => (
                     <FooterLink key={item.to} to={item.to} onClick={handleFooterNavigation}>
                       {item.label}
@@ -115,9 +116,9 @@ function Footer() {
                 </div>
               </div>
 
-              <div className="lg:ml-[102px] lg:w-[214px]">
+              <div>
                 <FooterHeading>Customer Care</FooterHeading>
-                <div className="mt-[18px] space-y-[18px]">
+                <div className="mt-8 space-y-3.5">
                   <p className={footerStaticItemClassName}>Returns & Cancellation</p>
                   <FooterLink to="/privacy-policy" onClick={handleFooterNavigation}>
                     Privacy Policy
@@ -132,35 +133,47 @@ function Footer() {
                 </div>
               </div>
 
-              <div className="lg:ml-[75px] lg:w-[130px]">
+              <div>
                 <FooterHeading>Categories</FooterHeading>
-                <div className="mt-[18px] space-y-[18px]">
+                <div className="mt-8 space-y-3.5">
                   {footerCategories.map((category) => (
-                    <FooterLink
-                      key={category.to}
-                      to={category.to}
-                      onClick={handleFooterNavigation}
-                    >
+                    <FooterLink key={category.to} to={category.to} onClick={handleFooterNavigation}>
                       {category.label}
                     </FooterLink>
                   ))}
                 </div>
               </div>
 
-              <div className="lg:ml-[123px] lg:w-[190px]">
-                <FooterHeading>
-                  For Inquiry &<br />
-                  Bulk Order
-                </FooterHeading>
-                <div className="mt-[18px] space-y-[18px]">
-                  <FooterExternalLink href={facebookHref}>Facebook</FooterExternalLink>
-                  <FooterExternalLink href={instagramHref}>Instagram</FooterExternalLink>
-                  <FooterExternalLink href={whatsappHref}>Whatsapp</FooterExternalLink>
-                  <div className="pt-0.5">
-                    <FooterExternalLink href="mailto:candleora25@gmail.com">
-                      candleora25@gmail.com
-                    </FooterExternalLink>
-                  </div>
+              <div>
+                <FooterHeading>For Inquiry & Bulk Order</FooterHeading>
+                <div className="mt-8 flex items-center gap-6">
+                  <FooterExternalLink href={instagramHref} iconOnly>
+                    <span className="sr-only">Instagram</span>
+                    <img
+                      src={instagramFooterIcon}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-7.5 w-7.5 object-contain"
+                    />
+                  </FooterExternalLink>
+                  <FooterExternalLink href={whatsappHref} iconOnly>
+                    <span className="sr-only">WhatsApp</span>
+                    <img
+                      src={whatsappFooterIcon}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-7.5 w-7.5 object-contain"
+                    />
+                  </FooterExternalLink>
+                  <FooterExternalLink href={emailHref} iconOnly>
+                    <span className="sr-only">Email</span>
+                    <img
+                      src={gmailFooterIcon}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-7.5 w-7.5 object-contain"
+                    />
+                  </FooterExternalLink>
                 </div>
               </div>
             </div>

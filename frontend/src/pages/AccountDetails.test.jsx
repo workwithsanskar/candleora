@@ -88,10 +88,11 @@ describe("AccountDetails", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText(/First name/i), { target: { value: "Aura" } });
-    fireEvent.change(screen.getByLabelText(/Last name/i), { target: { value: "Stone" } });
-    fireEvent.change(screen.getByLabelText(/Mobile number/i), { target: { value: "9999999999" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(screen.getByText("Basic Details")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Aura" } });
+    fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Stone" } });
+    fireEvent.change(screen.getByLabelText(/Mobile No\./i), { target: { value: "9999999999" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(
@@ -110,9 +111,10 @@ describe("AccountDetails", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Add new address" })[0]);
+    expect(screen.getAllByText("Delivery Addresses").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole("button", { name: "Add New Address" })[0]);
 
-    expect(await screen.findByRole("heading", { name: "Add new saved address" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Add New Address" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("61A GANJHAKHET CHOWK")).toBeInTheDocument();
     expect(screen.getByDisplayValue("behind durgesh saoji bhojnalaya")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Nagpur")).toBeInTheDocument();

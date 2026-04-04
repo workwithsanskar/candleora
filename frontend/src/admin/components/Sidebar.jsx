@@ -13,6 +13,7 @@ const navigation = [
   { label: "Replacements", to: "/admin/replacements", icon: "refresh" },
   { label: "Products", to: "/admin/products", icon: "box" },
   { label: "Coupons", to: "/admin/coupons", icon: "ticket" },
+  { label: "Banners", to: "/admin/banners", icon: "sparkles" },
   { label: "Customers", to: "/admin/customers", icon: "users" },
   { label: "Analytics", to: "/admin/analytics", icon: "chart" },
   { label: "Settings", to: "/admin/settings", icon: "settings" },
@@ -95,6 +96,14 @@ function SidebarIcon({ name, active }) {
         <svg viewBox="0 0 24 24" className={`h-4 w-4 ${className}`} fill="none" stroke="currentColor" strokeWidth="1.9">
           <path d="M5 8.5A2.5 2.5 0 0 1 7.5 6H18V10A2 2 0 0 0 18 14V18H7.5A2.5 2.5 0 0 1 5 15.5V8.5Z" strokeLinejoin="round" />
           <path d="M12 6V18" strokeDasharray="2.5 2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case "sparkles":
+      return (
+        <svg viewBox="0 0 24 24" className={`h-4 w-4 ${className}`} fill="none" stroke="currentColor" strokeWidth="1.9">
+          <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" strokeLinejoin="round" />
+          <path d="M18.5 3.5L19.2 5.3L21 6L19.2 6.7L18.5 8.5L17.8 6.7L16 6L17.8 5.3L18.5 3.5Z" strokeLinejoin="round" />
+          <path d="M5.5 15.5L6.2 17.3L8 18L6.2 18.7L5.5 20.5L4.8 18.7L3 18L4.8 17.3L5.5 15.5Z" strokeLinejoin="round" />
         </svg>
       );
     case "users":

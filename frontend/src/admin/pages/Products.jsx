@@ -2,42 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useOutletContext } from "react-router-dom";
-import AdminSelect from "../components/AdminSelect";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
+import AdminSelect from "../components/AdminSelect";
 import adminApi from "../services/adminApi";
 import {
   FILTER_FIELD_CLASS,
   FILTER_LABEL_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
-  formatAdminStatus,
   statusClassName,
 } from "../helpers";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { formatApiError, formatCurrency, formatDateTime } from "../../utils/format";
-
-const blankFormValues = {
-  name: "",
-  slug: "",
-  sku: "",
-  categoryId: "",
-  price: "",
-  originalPrice: "",
-  costPrice: "",
-  stock: "",
-  lowStockThreshold: 5,
-  description: "",
-  occasionTag: "",
-  burnTime: "",
-  scentNotes: "",
-  imageUrls: "",
-  similarProductIds: [],
-  visible: true,
-};
 
 const blankAdjustmentValues = {
   adjustment: "",
@@ -45,48 +25,22 @@ const blankAdjustmentValues = {
 };
 
 const INVENTORY_FILTER_OPTIONS = [
-  { value: "", label: "All products" },
-  { value: "in-stock", label: "Healthy stock" },
+  { value: "", label: "All" },
   { value: "low-stock", label: "Low stock" },
   { value: "out-of-stock", label: "Out of stock" },
-  { value: "reserved", label: "Reserved stock" },
   { value: "hidden", label: "Hidden" },
 ];
 
-const PRODUCT_FORM_ID = "admin-product-form";
-const ADMIN_FORM_SECTION_CLASS =
-  "rounded-[26px] border border-black/8 bg-[#fffaf3] p-3.5 shadow-[0_12px_28px_rgba(23,18,15,0.04)] sm:p-4";
-const ADMIN_FORM_SECTION_TITLE_CLASS =
-  "text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted";
-const ADMIN_FORM_SECTION_COPY_CLASS = "mt-1 text-[13px] leading-5 text-brand-muted";
-const ADMIN_FORM_TEXTAREA_CLASS =
-  `${FILTER_FIELD_CLASS} stealth-scrollbar h-auto min-h-[72px] resize-none py-2.5 leading-6`;
-const ADMIN_FORM_TOGGLE_CARD_CLASS =
-  "inline-flex items-center gap-3 rounded-[20px] border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark";
-
 function Products() {
+  const navigate = useNavigate();
   const { search } = useOutletContext();
   const debouncedSearch = useDebouncedValue(search, 300);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [category, setCategory] = useState("");
   const [stock, setStock] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
   const [inventoryProduct, setInventoryProduct] = useState(null);
   const [confirmingProduct, setConfirmingProduct] = useState(null);
-  const [similarProductSearch, setSimilarProductSearch] = useState("");
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { isSubmitting },
-  } = useForm({
-    defaultValues: blankFormValues,
-  });
 
   const {
     register: registerAdjustment,
@@ -102,29 +56,14 @@ function Products() {
   }, [debouncedSearch, category, stock]);
 
   useEffect(() => {
-    if (modalOpen) {
-      reset(editingProduct ? toFormValues(editingProduct) : blankFormValues);
-      setSimilarProductSearch("");
-    }
-  }, [editingProduct, modalOpen, reset]);
-
-  useEffect(() => {
     if (inventoryProduct) {
       resetAdjustment(blankAdjustmentValues);
     }
   }, [inventoryProduct, resetAdjustment]);
 
-  const selectedCategoryId = watch("categoryId");
-  const selectedSimilarProductIds = watch("similarProductIds") ?? [];
-
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: () => adminApi.getCategories(),
-  });
-
-  const productOptionsQuery = useQuery({
-    queryKey: ["admin", "product-options"],
-    queryFn: () => adminApi.getProductOptions(),
   });
 
   const productsQuery = useQuery({
@@ -143,23 +82,6 @@ function Products() {
     queryKey: ["admin", "product-inventory-history", inventoryProduct?.id],
     queryFn: () => adminApi.getProductInventoryHistory(inventoryProduct.id),
     enabled: Boolean(inventoryProduct?.id),
-  });
-
-  const saveProductMutation = useMutation({
-    mutationFn: (payload) =>
-      editingProduct
-        ? adminApi.updateProduct(editingProduct.id, payload)
-        : adminApi.createProduct(payload),
-    onSuccess: async () => {
-      toast.success(editingProduct ? "Product updated." : "Product created.");
-      setModalOpen(false);
-      setEditingProduct(null);
-      reset(blankFormValues);
-      await queryClient.invalidateQueries({ queryKey: ["admin"] });
-    },
-    onError: (error) => {
-      toast.error(formatApiError(error));
-    },
   });
 
   const adjustInventoryMutation = useMutation({
@@ -213,38 +135,6 @@ function Products() {
     },
   });
 
-  const onSubmit = handleSubmit(async (values) => {
-    const payload = {
-      name: values.name,
-      slug: values.slug || undefined,
-      sku: values.sku || undefined,
-      categoryId: values.categoryId ? Number(values.categoryId) : undefined,
-      price: values.price ? Number(values.price) : undefined,
-      originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
-      costPrice: values.costPrice ? Number(values.costPrice) : undefined,
-      stock: editingProduct ? undefined : values.stock ? Number(values.stock) : 0,
-      lowStockThreshold: values.lowStockThreshold ? Number(values.lowStockThreshold) : 0,
-      description: values.description || undefined,
-      occasionTag: values.occasionTag || undefined,
-      burnTime: values.burnTime || undefined,
-      scentNotes: values.scentNotes || undefined,
-      visible: Boolean(values.visible),
-      imageUrls: parseImageUrls(values.imageUrls),
-      similarProductIds: selectedSimilarProductIds.map((value) => Number(value)).filter(Boolean),
-    };
-
-    await saveProductMutation.mutateAsync(payload);
-  });
-
-  const toggleSimilarProduct = (productId) => {
-    const numericId = Number(productId);
-    const nextIds = selectedSimilarProductIdSet.has(numericId)
-      ? selectedSimilarProductIds.filter((value) => Number(value) !== numericId)
-      : [...selectedSimilarProductIds, numericId];
-
-    setValue("similarProductIds", nextIds, { shouldDirty: true });
-  };
-
   const onAdjustInventory = handleAdjustmentSubmit(async (values) => {
     if (!inventoryProduct) {
       return;
@@ -294,45 +184,6 @@ function Products() {
       }))),
     ],
     [categoriesQuery.data],
-  );
-
-  const selectedSimilarProductIdSet = useMemo(
-    () => new Set(selectedSimilarProductIds.map((value) => Number(value))),
-    [selectedSimilarProductIds],
-  );
-
-  const filteredSimilarProductOptions = useMemo(() => {
-    const normalizedSearch = similarProductSearch.trim().toLowerCase();
-
-    return (productOptionsQuery.data ?? [])
-      .filter((option) => Number(option.id) !== Number(editingProduct?.id ?? 0))
-      .filter((option) => {
-        if (!normalizedSearch) {
-          return true;
-        }
-
-        return [option.name, option.sku, option.slug, option.categoryName]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
-      })
-      .sort((left, right) => {
-        const leftSelected = selectedSimilarProductIdSet.has(Number(left.id)) ? 0 : 1;
-        const rightSelected = selectedSimilarProductIdSet.has(Number(right.id)) ? 0 : 1;
-
-        if (leftSelected !== rightSelected) {
-          return leftSelected - rightSelected;
-        }
-
-        return String(left.name ?? "").localeCompare(String(right.name ?? ""));
-      });
-  }, [editingProduct?.id, productOptionsQuery.data, selectedSimilarProductIdSet, similarProductSearch]);
-
-  const selectedSimilarProducts = useMemo(
-    () =>
-      (productOptionsQuery.data ?? []).filter((option) =>
-        selectedSimilarProductIdSet.has(Number(option.id)),
-      ),
-    [productOptionsQuery.data, selectedSimilarProductIdSet],
   );
 
   const columns = useMemo(
@@ -401,10 +252,7 @@ function Products() {
             <button
               type="button"
               className="rounded-2xl border border-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-dark transition hover:border-black/20 hover:bg-black/5"
-              onClick={() => {
-                setEditingProduct(product);
-                setModalOpen(true);
-              }}
+              onClick={() => navigate(`/admin/products/${product.id}/edit`)}
             >
               Edit
             </button>
@@ -438,13 +286,13 @@ function Products() {
         ),
       },
     ],
-    [toggleVisibilityMutation],
+    [navigate, toggleVisibilityMutation],
   );
 
   if (productsQuery.isError) {
     return (
       <div className="rounded-[28px] border border-danger/20 bg-white p-6 shadow-sm">
-        <h2 className="font-display text-2xl font-semibold text-brand-dark">Products unavailable</h2>
+        <h2 className="text-2xl font-semibold text-brand-dark">Products unavailable</h2>
         <p className="mt-2 text-sm leading-6 text-brand-muted">
           The admin product feed failed to load. Verify the backend and try again.
         </p>
@@ -461,10 +309,7 @@ function Products() {
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setEditingProduct(null);
-              setModalOpen(true);
-            }}
+            onClick={() => navigate("/admin/products/new")}
           >
             Add product
           </button>
@@ -506,7 +351,7 @@ function Products() {
               <div className="mt-4 h-10 animate-pulse rounded-full bg-black/8" />
             ) : (
               <>
-                <p className="mt-4 font-display text-4xl font-semibold text-brand-dark">{card.value}</p>
+                <p className="mt-4 text-4xl font-semibold text-brand-dark">{card.value}</p>
                 <p className="mt-2 text-sm text-brand-muted">{card.hint}</p>
               </>
             )}
@@ -527,336 +372,6 @@ function Products() {
         totalPages={productsQuery.data?.totalPages ?? 0}
         onPageChange={setPage}
       />
-
-      <Modal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditingProduct(null);
-        }}
-        title={editingProduct ? `Edit ${editingProduct.name}` : "Add product"}
-        size="xl"
-        align="top"
-        footer={
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              className={`${SECONDARY_BUTTON_CLASS} min-w-[116px]`}
-              onClick={() => {
-                setModalOpen(false);
-                setEditingProduct(null);
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form={PRODUCT_FORM_ID}
-              className={`${PRIMARY_BUTTON_CLASS} min-w-[148px]`}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : editingProduct ? "Save product" : "Create product"}
-            </button>
-          </div>
-        }
-      >
-        <form id={PRODUCT_FORM_ID} className="space-y-3" onSubmit={onSubmit}>
-          <section className={ADMIN_FORM_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Catalog identity</p>
-                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                  Name the listing, place it in the right collection, and keep the customer-facing identifiers clean.
-                </p>
-              </div>
-              <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
-                {editingProduct ? "Editing live listing" : "New listing"}
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 lg:grid-cols-12">
-              <div className="flex flex-col gap-2 lg:col-span-12">
-                <label className={FILTER_LABEL_CLASS}>Product name</label>
-                <input className={FILTER_FIELD_CLASS} {...register("name")} />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-4">
-                <label className={FILTER_LABEL_CLASS}>Category</label>
-                <AdminSelect
-                  value={selectedCategoryId || ""}
-                  onChange={(value) => setValue("categoryId", value, { shouldDirty: true })}
-                  options={[
-                    { value: "", label: "Select a category" },
-                    ...((categoriesQuery.data ?? []).map((item) => ({
-                      value: String(item.id),
-                      label: item.name,
-                    }))),
-                  ]}
-                  placeholder="Select a category"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-4">
-                <label className={FILTER_LABEL_CLASS}>Slug</label>
-                <input className={FILTER_FIELD_CLASS} {...register("slug")} placeholder="auto-generated-if-left-empty" />
-              </div>
-
-              <div className="flex flex-col gap-2 lg:col-span-4">
-                <label className={FILTER_LABEL_CLASS}>SKU</label>
-                <input className={FILTER_FIELD_CLASS} {...register("sku")} placeholder="auto-generated-if-left-empty" />
-              </div>
-            </div>
-          </section>
-
-          <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-            <section className={ADMIN_FORM_SECTION_CLASS}>
-              <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Commerce setup</p>
-              <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                Align pricing, thresholds, and stock before this product appears in the live catalog.
-              </p>
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Price</label>
-                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("price")} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Original price</label>
-                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("originalPrice")} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Cost price</label>
-                  <input type="number" step="0.01" className={FILTER_FIELD_CLASS} {...register("costPrice")} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Low-stock threshold</label>
-                  <input type="number" className={FILTER_FIELD_CLASS} {...register("lowStockThreshold")} />
-                </div>
-
-                {!editingProduct ? (
-                  <div className="flex flex-col gap-2 sm:col-span-2">
-                    <label className={FILTER_LABEL_CLASS}>Opening stock</label>
-                    <input type="number" className={FILTER_FIELD_CLASS} {...register("stock")} />
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] border border-black/8 bg-white p-4 sm:col-span-2">
-                    <p className={FILTER_LABEL_CLASS}>Inventory snapshot</p>
-                    <div className="mt-2.5 grid gap-3 sm:grid-cols-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">On hand</p>
-                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.stock}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">Reserved</p>
-                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.reservedStock}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-brand-muted">Available</p>
-                        <p className="mt-1 text-lg font-semibold text-brand-dark">{editingProduct.availableStock}</p>
-                      </div>
-                    </div>
-                    <p className="mt-2.5 text-xs leading-5 text-brand-muted">
-                      Logged stock changes should be made from the inventory workspace, not from this edit form.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className={ADMIN_FORM_SECTION_CLASS}>
-              <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Presentation details</p>
-              <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                Shape the way the listing reads on the storefront with concise merchandising details.
-              </p>
-
-              <div className="mt-3 grid gap-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>Occasion tag</label>
-                    <input className={FILTER_FIELD_CLASS} {...register("occasionTag")} placeholder="Signature" />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>Burn time</label>
-                    <input className={FILTER_FIELD_CLASS} {...register("burnTime")} placeholder="35-40 hours" />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Scent notes</label>
-                  <input className={FILTER_FIELD_CLASS} {...register("scentNotes")} placeholder="Vanilla, amber, sandalwood" />
-                </div>
-
-                <label className={ADMIN_FORM_TOGGLE_CARD_CLASS}>
-                  <input type="checkbox" className="h-4 w-4 rounded border-black/20" {...register("visible")} />
-                  Product is visible on the storefront
-                </label>
-              </div>
-            </section>
-          </div>
-
-          <section className={ADMIN_FORM_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Story and media</p>
-                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                  Keep the description crisp and the media URLs ready for the catalog feed and merchandising blocks.
-                </p>
-              </div>
-              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                Copy + assets
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 xl:grid-cols-[0.96fr_1.04fr]">
-              <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Description</label>
-                <textarea rows="2" className={ADMIN_FORM_TEXTAREA_CLASS} {...register("description")} />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Image URLs</label>
-                <textarea
-                  rows="2"
-                  className={ADMIN_FORM_TEXTAREA_CLASS}
-                  {...register("imageUrls")}
-                  placeholder="One image URL per line"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className={ADMIN_FORM_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Similar products</p>
-                <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                  Choose the exact products that should appear in the Similar Products section for this listing. Leave this empty to hide that section on the storefront.
-                </p>
-              </div>
-              <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                {selectedSimilarProductIds.length} linked
-              </span>
-            </div>
-
-            <div className="mt-3 grid gap-3 xl:grid-cols-[0.72fr_1.28fr]">
-              <div className="space-y-3">
-                <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Find products</label>
-                  <input
-                    className={FILTER_FIELD_CLASS}
-                    value={similarProductSearch}
-                    onChange={(event) => setSimilarProductSearch(event.target.value)}
-                    placeholder="Search by product name, SKU, slug, or category"
-                  />
-                </div>
-
-                {selectedSimilarProducts.length ? (
-                  <div className="rounded-[24px] border border-black/8 bg-white p-3.5">
-                    <p className={FILTER_LABEL_CLASS}>Selected links</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedSimilarProducts.map((option) => (
-                        <button
-                          key={`selected-similar-${option.id}`}
-                          type="button"
-                          className="inline-flex items-center gap-2 rounded-full border border-[#f3b33d]/35 bg-[#fffaf3] px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:border-[#f3b33d]/60"
-                          onClick={() => toggleSimilarProduct(option.id)}
-                        >
-                          <span className="max-w-[180px] truncate">{option.name}</span>
-                          <span className="text-brand-muted">x</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] border border-dashed border-black/12 bg-white p-4 text-sm leading-6 text-brand-muted">
-                    No similar products selected yet. When this stays empty, the storefront hides the Similar Products block completely.
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-[24px] border border-black/8 bg-white">
-                <div className="border-b border-black/8 px-4 py-2.5">
-                  <p className="font-display text-[1.55rem] font-semibold leading-none text-brand-dark">
-                    Product links
-                  </p>
-                  <p className="mt-1 text-sm text-brand-muted">
-                    Click products to add or remove them from this listing&apos;s recommendation set.
-                  </p>
-                </div>
-
-                <div
-                  className="mini-cart-scroll-view stealth-scrollbar max-h-[272px] touch-pan-y overflow-y-auto overscroll-contain px-4 py-3 scroll-smooth"
-                  data-lenis-prevent="true"
-                  data-lenis-prevent-wheel="true"
-                  data-lenis-prevent-touch="true"
-                >
-                  {productOptionsQuery.isLoading ? (
-                    <div className="space-y-3">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <div key={`similar-loading-${index}`} className="h-20 animate-pulse rounded-[22px] bg-black/8" />
-                      ))}
-                    </div>
-                  ) : filteredSimilarProductOptions.length ? (
-                    <div className="space-y-3">
-                      {filteredSimilarProductOptions.map((option) => {
-                        const checked = selectedSimilarProductIdSet.has(Number(option.id));
-
-                        return (
-                          <label
-                            key={option.id}
-                            className={`flex cursor-pointer items-start gap-3 rounded-[22px] border px-3.5 py-3 transition ${
-                              checked
-                                ? "border-[#f3b33d]/45 bg-[#fff8ea]"
-                                : "border-black/8 bg-[#fcfaf6] hover:border-black/14"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-1 h-4 w-4 rounded border-black/20"
-                              checked={checked}
-                              onChange={() => toggleSimilarProduct(option.id)}
-                            />
-
-                            <img
-                              src={option.imageUrl || "https://placehold.co/88x88?text=CandleOra"}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-14 w-14 rounded-[16px] object-cover"
-                            />
-
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate font-medium text-brand-dark">{option.name}</p>
-                              <p className="mt-1 text-xs text-brand-muted">
-                                {[option.categoryName, option.sku || "SKU pending", option.visible ? "Visible" : "Hidden"]
-                                  .filter(Boolean)
-                                  .join(" · ")}
-                              </p>
-                              <p className="mt-1 truncate text-[11px] uppercase tracking-[0.14em] text-brand-muted">
-                                {option.slug}
-                              </p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-[22px] border border-dashed border-black/12 bg-[#fcfaf6] p-5 text-center">
-                      <p className="font-medium text-brand-dark">No products match this search.</p>
-                      <p className="mt-2 text-sm leading-6 text-brand-muted">
-                        Try a different product name, SKU, slug, or category to find items to link here.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        </form>
-      </Modal>
 
       <Modal
         open={Boolean(inventoryProduct)}
@@ -885,7 +400,7 @@ function Products() {
 
             <div className="grid gap-3 xl:grid-cols-[0.76fr_1.24fr]">
               <div className="rounded-[24px] border border-black/8 bg-[#fbf7f0] p-3.5">
-                <h3 className="font-display text-[1.75rem] font-semibold leading-none text-brand-dark">Manual adjustment</h3>
+                <h3 className="text-[1.75rem] font-semibold leading-none text-brand-dark">Manual adjustment</h3>
                 <p className="mt-1.5 text-sm leading-6 text-brand-muted">
                   Use positive numbers to add stock and negative numbers to remove damaged, missing, or counted units.
                 </p>
@@ -915,16 +430,11 @@ function Products() {
 
               <div className="rounded-[24px] border border-black/8 bg-white">
                 <div className="border-b border-black/8 px-4 py-2.5">
-                  <h3 className="font-display text-[1.75rem] font-semibold leading-none text-brand-dark">Movement history</h3>
+                  <h3 className="text-[1.75rem] font-semibold leading-none text-brand-dark">Movement history</h3>
                   <p className="mt-1 text-sm text-brand-muted">Latest 25 inventory events for this product.</p>
                 </div>
 
-                <div
-                  className="mini-cart-scroll-view stealth-scrollbar max-h-[272px] overflow-y-auto overscroll-contain scroll-smooth px-4 py-3"
-                  data-lenis-prevent="true"
-                  data-lenis-prevent-wheel="true"
-                  data-lenis-prevent-touch="true"
-                >
+                <div className="mini-cart-scroll-view stealth-scrollbar max-h-[272px] overflow-y-auto overscroll-contain scroll-smooth px-4 py-3">
                   {inventoryHistoryQuery.isLoading ? (
                     <div className="space-y-3">
                       {Array.from({ length: 5 }).map((_, index) => (
@@ -968,7 +478,7 @@ function Products() {
                     </div>
                   ) : (
                     <div className="rounded-[22px] border border-dashed border-black/12 bg-[#fcfaf6] p-6 text-center">
-                      <h4 className="font-display text-2xl font-semibold text-brand-dark">No movement history yet</h4>
+                      <h4 className="text-2xl font-semibold text-brand-dark">No movement history yet</h4>
                       <p className="mt-2 text-sm leading-6 text-brand-muted">
                         Inventory events will appear here once this product is adjusted, reserved, sold, or restocked.
                       </p>
@@ -1017,38 +527,10 @@ function InventoryCard({ label, value, hint }) {
   return (
     <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">{label}</p>
-      <p className="mt-2 font-display text-[1.8rem] font-semibold leading-none text-brand-dark">{value}</p>
+      <p className="mt-2 text-[1.8rem] font-semibold leading-none text-brand-dark">{value}</p>
       <p className="mt-1.5 text-xs leading-5 text-brand-muted">{hint}</p>
     </div>
   );
-}
-
-function parseImageUrls(value) {
-  return String(value ?? "")
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function toFormValues(product) {
-  return {
-    name: product.name ?? "",
-    slug: product.slug ?? "",
-    sku: product.sku ?? "",
-    categoryId: product.category?.id ? String(product.category.id) : "",
-    price: product.price ?? "",
-    originalPrice: product.originalPrice ?? "",
-    costPrice: product.costPrice ?? "",
-    stock: product.stock ?? "",
-    lowStockThreshold: product.lowStockThreshold ?? 5,
-    description: product.description ?? "",
-    occasionTag: product.occasionTag ?? "",
-    burnTime: product.burnTime ?? "",
-    scentNotes: product.scentNotes ?? "",
-    imageUrls: Array.isArray(product.imageUrls) ? product.imageUrls.join("\n") : "",
-    similarProductIds: Array.isArray(product.similarProductIds) ? product.similarProductIds : [],
-    visible: Boolean(product.visible),
-  };
 }
 
 function formatMovementType(type) {
@@ -1060,22 +542,18 @@ function formatMovementType(type) {
     case "RESERVATION_RELEASED":
       return "Reservation released";
     case "ORDER_COMMITTED":
-      return "Reserved stock committed";
-    case "DIRECT_SALE_COMMITTED":
-      return "Direct sale committed";
-    case "ORDER_RESTOCKED":
-      return "Restocked from cancelled order";
+      return "Order committed";
     default:
-      return formatAdminStatus(type);
+      return type ?? "Inventory event";
   }
 }
 
 function formatDelta(value) {
   const amount = Number(value ?? 0);
-  if (amount > 0) {
-    return `+${amount}`;
+  if (!Number.isFinite(amount)) {
+    return "0";
   }
-  return String(amount);
+  return amount > 0 ? `+${amount}` : String(amount);
 }
 
 function deltaClassName(value) {
@@ -1086,8 +564,7 @@ function deltaClassName(value) {
   if (amount < 0) {
     return "bg-[#fdeaea] text-danger";
   }
-  return "bg-[#fbf7f0] text-brand-muted";
+  return "bg-black/8 text-brand-muted";
 }
 
 export default Products;
-

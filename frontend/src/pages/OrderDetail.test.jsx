@@ -1,10 +1,14 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OrderDetail from "./OrderDetail";
 
-const { mockOrderApi } = vi.hoisted(() => ({
+const { mockCatalogApi, mockOrderApi, mockUseAuth } = vi.hoisted(() => ({
+  mockCatalogApi: {
+    getProductReviews: vi.fn(),
+    createProductReview: vi.fn(),
+  },
   mockOrderApi: {
     getOrder: vi.fn(),
     getTrackedOrder: vi.fn(),
@@ -12,10 +16,16 @@ const { mockOrderApi } = vi.hoisted(() => ({
     downloadTrackedInvoice: vi.fn(),
     cancelOrder: vi.fn(),
   },
+  mockUseAuth: vi.fn(),
 }));
 
 vi.mock("../services/api", () => ({
+  catalogApi: mockCatalogApi,
   orderApi: mockOrderApi,
+}));
+
+vi.mock("../context/AuthContext", () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 function createOrder(overrides = {}) {
@@ -75,31 +85,58 @@ function createOrder(overrides = {}) {
 
 describe("OrderDetail", () => {
   beforeEach(() => {
+    mockCatalogApi.getProductReviews.mockReset();
+    mockCatalogApi.createProductReview.mockReset();
     mockOrderApi.getOrder.mockReset();
     mockOrderApi.getTrackedOrder.mockReset();
     mockOrderApi.downloadInvoice.mockReset();
     mockOrderApi.downloadTrackedInvoice.mockReset();
     mockOrderApi.cancelOrder.mockReset();
+    mockUseAuth.mockReset();
+
+    mockCatalogApi.getProductReviews.mockResolvedValue({
+      averageRating: 4.8,
+      reviewCount: 0,
+      reviews: [],
+      currentUserReview: null,
+    });
+    mockCatalogApi.createProductReview.mockResolvedValue({
+      averageRating: 4.9,
+      reviewCount: 1,
+      reviews: [
+        {
+          id: 4,
+          reviewerName: "Riya Sharma",
+          rating: 5,
+          message: "Beautiful candle and packaging.",
+          createdAt: "2026-04-04T00:00:00.000Z",
+        },
+      ],
+      currentUserReview: {
+        id: 4,
+        reviewerName: "Riya Sharma",
+        rating: 5,
+        message: "Beautiful candle and packaging.",
+        createdAt: "2026-04-04T00:00:00.000Z",
+      },
+    });
+    mockUseAuth.mockReturnValue({
+      user: {
+        name: "Riya Sharma",
+        email: "riya@example.com",
+      },
+    });
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  function renderOrderDetail() {
+  function renderOrderDetail(initialEntries = ["/orders/101"]) {
     return render(
-      <MemoryRouter initialEntries={["/orders/101"]}>
+      <MemoryRouter initialEntries={initialEntries}>
         <Routes>
           <Route path="/orders/:id" element={<OrderDetail />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-  }
-
-  function renderTrackedOrderDetail() {
-    return render(
-      <MemoryRouter initialEntries={["/track/101?email=riya@example.com"]}>
-        <Routes>
           <Route path="/track/:id" element={<OrderDetail readOnly />} />
         </Routes>
       </MemoryRouter>,
@@ -120,12 +157,12 @@ describe("OrderDetail", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Shipping address")).toBeInTheDocument();
-    expect(screen.getByText("Price summary")).toBeInTheDocument();
+    expect(screen.getByText("Order Summary")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Invoice" })).toBeInTheDocument();
     expect(screen.getByText("Cancellation Policy")).toBeInTheDocument();
     expect(screen.getByText("Replacement Policy")).toBeInTheDocument();
     expect(screen.getByText("Contact Support")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel order/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel Order/i })).toBeInTheDocument();
   });
 
   it("opens the cancellation confirmation modal and updates the order after confirmation", async () => {
@@ -153,6 +190,44 @@ describe("OrderDetail", () => {
     expect(mockOrderApi.cancelOrder).toHaveBeenCalledWith(101, {
       reason: "Customer requested cancellation",
     });
+  });
+
+  it("opens the review popup from the order action path and submits feedback", async () => {
+    mockOrderApi.getOrder.mockResolvedValue(
+      createOrder({
+        status: "DELIVERED",
+        canCancel: false,
+        deliveredAt: "2026-04-02T10:00:00.000Z",
+      }),
+    );
+
+    renderOrderDetail(["/orders/101?rate=true"]);
+
+    expect(await screen.findByRole("heading", { name: "Rate your order" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Riya Sharma")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("riya@example.com")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "5" }));
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Share your experience with the fragrance, finish, packaging, and burn quality...",
+      ),
+      {
+        target: { value: "Beautiful candle and packaging." },
+      },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Submit Review" }));
+
+    await waitFor(() => {
+      expect(mockCatalogApi.createProductReview).toHaveBeenCalledWith("11", {
+        reviewerName: "Riya Sharma",
+        reviewerEmail: "riya@example.com",
+        rating: 5,
+        message: "Beautiful candle and packaging.",
+      });
+    });
+
+    expect(await screen.findByText("Thanks for sharing your review.")).toBeInTheDocument();
   });
 
   it("shows only the active shipment step details inline", async () => {
@@ -209,11 +284,11 @@ describe("OrderDetail", () => {
       }),
     );
 
-    renderTrackedOrderDetail();
+    renderOrderDetail(["/track/101?email=riya@example.com"]);
 
     expect((await screen.findAllByText("Read-only tracking view")).length).toBeGreaterThan(0);
     expect(screen.getByText("Track another order")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Cancel order" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Replace item" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel Order" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rate Order" })).not.toBeInTheDocument();
   });
 });

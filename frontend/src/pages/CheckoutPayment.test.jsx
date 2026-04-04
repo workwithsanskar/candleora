@@ -204,9 +204,11 @@ describe("CheckoutPayment", () => {
 
     renderPayment({ paymentMethod: "COD" });
 
-    expect(screen.getByRole("heading", { name: /choose your payment method/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Payment" })).toBeInTheDocument();
+    expect(screen.getByText("Choose your payment method.")).toBeInTheDocument();
     expect(screen.getByTestId("checkout-payment-frame")).toBeInTheDocument();
-    expect(screen.getByText("Delivering order to Riya Sharma")).toBeInTheDocument();
+    expect(screen.getByText("Delivering to")).toBeInTheDocument();
+    expect(screen.getByText("Get order updates on WhatsApp")).toBeInTheDocument();
     expect(screen.getAllByText(formatCurrency(baseSession.priceSummary.total)).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole("button", { name: "Place order" })[0]);
@@ -237,6 +239,7 @@ describe("CheckoutPayment", () => {
 
     expect(screen.getAllByTestId("checkout-payment-sidebar").length).toBeGreaterThan(0);
     expect(screen.getAllByText(new RegExp(`saving ${formatCurrency(baseSession.priceSummary.savings)}`, "i")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Order Summary")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Pay now" })[0]);
 

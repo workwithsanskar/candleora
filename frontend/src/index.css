@@ -202,6 +202,42 @@
     display: none;
   }
 
+  .smooth-scroll-hidden {
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .smooth-scroll-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modal-body-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .modal-body-scroll-storefront {
+    max-height: calc(100svh - 170px);
+  }
+
+  .modal-body-scroll-admin {
+    max-height: calc(100svh - 220px);
+  }
+
+  @media (min-width: 640px) {
+    .modal-body-scroll-storefront {
+      max-height: calc(100svh - 196px);
+    }
+
+    .modal-body-scroll-admin {
+      max-height: calc(100svh - 244px);
+    }
+  }
+
   .mini-cart-scroll-track,
   .mini-cart-scroll-thumb {
     display: none;

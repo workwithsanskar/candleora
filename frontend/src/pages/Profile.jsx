@@ -55,13 +55,12 @@ function Profile() {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const introCopy = isAdmin
-    ? "Welcome back, CandleOra Admin! Review orders, manage account settings, and jump into the admin panel from one clear overview."
-    : `Welcome back${user?.name ? `, ${user.name}!` : "!"} Manage your orders, saved addresses, and account details from one clear overview.`;
+    ? "Manage your profile, orders, and preferences in one place."
+    : "Manage your profile, orders, and preferences in one place.";
 
   return (
     <section className="container-shell py-12 sm:py-14">
       <div className="space-y-4">
-        <p className="checkout-kicker">My account</p>
         <h1 className="page-title">My Account</h1>
         <p className="page-subtitle max-w-[980px]">{introCopy}</p>
       </div>
@@ -69,8 +68,7 @@ function Profile() {
       <div className="checkout-panel mt-8 p-5 sm:p-6">
         <div className="mb-5 border-b border-black/8 pb-5">
           <div>
-            <p className="checkout-kicker">Overview</p>
-            <h2 className="panel-title mt-2">Quick actions</h2>
+            <h2 className="text-[1.05rem] font-semibold text-black">Quick Links</h2>
           </div>
         </div>
 

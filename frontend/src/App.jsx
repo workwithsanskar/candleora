@@ -3,6 +3,7 @@ import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminRoute from "./admin/components/AdminRoute";
 import Footer from "./components/Footer";
+import FestiveBannerPopup from "./components/FestiveBannerPopup";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteLoader from "./components/RouteLoader";
@@ -24,7 +25,11 @@ const AdminOrders = lazy(() => import("./admin/pages/Orders"));
 const AdminReplacements = lazy(() => import("./admin/pages/Replacements"));
 const AdminReplacementDetail = lazy(() => import("./admin/pages/ReplacementDetail"));
 const AdminProducts = lazy(() => import("./admin/pages/Products"));
+const AdminProductEditor = lazy(() => import("./admin/pages/ProductEditor"));
 const AdminCoupons = lazy(() => import("./admin/pages/Coupons"));
+const AdminCouponEditor = lazy(() => import("./admin/pages/CouponEditor"));
+const AdminBanners = lazy(() => import("./admin/pages/Banners"));
+const AdminBannerEditor = lazy(() => import("./admin/pages/BannerEditor"));
 const AdminSettings = lazy(() => import("./admin/pages/Settings"));
 const CandleFixes = lazy(() => import("./pages/CandleFixes"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -87,6 +92,7 @@ function AppShell() {
       <ScrollToTop />
       <div className={isAdminRoute ? "min-h-screen bg-white text-brand-dark" : "flex min-h-screen flex-col bg-white text-brand-dark"}>
         {!isAdminRoute ? <Navbar /> : null}
+        {!isAdminRoute ? <FestiveBannerPopup /> : null}
 
         <AnimatePresence mode="wait" initial={false}>
           <m.main key={location.pathname} className={isAdminRoute ? "min-h-screen" : "flex-1"} {...pageMotion}>
@@ -106,7 +112,14 @@ function AppShell() {
                   <Route path="replacements" element={<AdminReplacements />} />
                   <Route path="replacements/:replacementId" element={<AdminReplacementDetail />} />
                   <Route path="products" element={<AdminProducts />} />
+                  <Route path="products/new" element={<AdminProductEditor />} />
+                  <Route path="products/:productId/edit" element={<AdminProductEditor />} />
                   <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="coupons/new" element={<AdminCouponEditor />} />
+                  <Route path="coupons/:couponId/edit" element={<AdminCouponEditor />} />
+                  <Route path="banners" element={<AdminBanners />} />
+                  <Route path="banners/new" element={<AdminBannerEditor />} />
+                  <Route path="banners/:bannerId/edit" element={<AdminBannerEditor />} />
                   <Route path="customers" element={<AdminCustomers />} />
                   <Route path="customers/:customerId" element={<AdminCustomerDetail />} />
                   <Route path="analytics" element={<AdminAnalytics />} />

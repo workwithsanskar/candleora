@@ -1,4 +1,4 @@
-export async function uploadProofToCloudinary(file) {
+export async function uploadAssetToCloudinary(file, uploadPurpose = "File") {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "candleora";
 
@@ -21,7 +21,7 @@ export async function uploadProofToCloudinary(file) {
       body: formData,
     });
   } catch (error) {
-    throw new Error("Proof upload failed. Please check your internet or Cloudinary setup and try again.");
+    throw new Error(`${uploadPurpose} upload failed. Please check your internet or Cloudinary setup and try again.`);
   }
 
   let payload = null;
@@ -40,9 +40,13 @@ export async function uploadProofToCloudinary(file) {
 
     throw new Error(
       payload?.error?.message ||
-        "Proof upload failed. Please confirm the Cloudinary cloud name and upload preset are correct.",
+        `${uploadPurpose} upload failed. Please confirm the Cloudinary cloud name and upload preset are correct.`,
     );
   }
 
   return payload;
+}
+
+export async function uploadProofToCloudinary(file) {
+  return uploadAssetToCloudinary(file, "Proof");
 }

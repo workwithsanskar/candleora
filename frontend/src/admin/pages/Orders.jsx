@@ -49,8 +49,9 @@ const TRACKING_STEPS = [
   },
 ];
 
-const ORDER_STATUS_SELECT_OPTIONS = [
+const ORDER_STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "All statuses" },
+  { value: "REPLACEMENT", label: "Replacement" },
   ...ORDER_STATUS_OPTIONS.map((option) => ({
     value: option,
     label: formatAdminStatus(option),
@@ -270,9 +271,16 @@ function Orders() {
         key: "status",
         header: "Status",
         cell: (order) => (
-          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(order.status)}`}>
-            {formatAdminStatus(order.status)}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(order.status)}`}>
+              {formatAdminStatus(order.status)}
+            </span>
+            {order.hasReplacement ? (
+              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(order.replacementStatus || "REPLACEMENT")}`}>
+                Replacement{order.replacementStatus ? ` - ${formatAdminStatus(order.replacementStatus)}` : ""}
+              </span>
+            ) : null}
+          </div>
         ),
       },
       {
@@ -337,7 +345,7 @@ function Orders() {
   if (ordersQuery.isError) {
     return (
       <div className="rounded-[28px] border border-danger/20 bg-white p-6 shadow-sm">
-        <h2 className="font-display text-2xl font-semibold text-brand-dark">Orders unavailable</h2>
+        <h2 className="text-2xl font-semibold text-brand-dark">Orders unavailable</h2>
         <p className="mt-2 text-sm leading-6 text-brand-muted">
           The admin order feed could not be loaded. Check the backend and try again.
         </p>
@@ -365,7 +373,7 @@ function Orders() {
           <AdminSelect
             value={status}
             onChange={setStatus}
-            options={ORDER_STATUS_SELECT_OPTIONS}
+            options={ORDER_STATUS_FILTER_OPTIONS}
             placeholder="All statuses"
           />
         </div>
@@ -460,6 +468,11 @@ function Orders() {
                 <p className="mt-2 text-base font-medium text-brand-dark">{formatCurrency(detail.totalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Subtotal {formatCurrency(detail.subtotalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Discount {formatCurrency(detail.discountAmount)}</p>
+                {detail.hasReplacement ? (
+                  <p className="mt-1 text-sm text-brand-muted">
+                    Replacement {formatAdminStatus(detail.replacementStatus || "REQUESTED")}
+                  </p>
+                ) : null}
                 {detail.deliveredAt ? (
                   <p className="mt-2 text-xs font-medium text-success">Delivered {formatDateTime(detail.deliveredAt)}</p>
                 ) : null}
