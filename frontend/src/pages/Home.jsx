@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
+import candleFixesCard from "../assets/designer/candle-fixes-recommendation.jpeg";
 import heroImage from "../assets/designer/image-optimized.jpg";
+import occasionPicksCard from "../assets/designer/occasion-picks-recommendation.jpeg";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
+import Recommendations from "../components/Recommendations";
 import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
@@ -28,6 +32,21 @@ const customerStories = [
     date: "06 Jan 2026",
     quote:
       "I ordered for a housewarming and the whole set looked much more expensive than the price suggested.",
+  },
+];
+
+const recommendationCards = [
+  {
+    title: "Occasion Picks",
+    description: "Not sure which candle suits your celebration?",
+    image: occasionPicksCard,
+    to: "/occasion-picks",
+  },
+  {
+    title: "Candle Fixes",
+    description: "Quick solutions to fix every candle problem.",
+    image: candleFixesCard,
+    to: "/candle-fixes",
   },
 ];
 
@@ -71,6 +90,7 @@ function TestimonialCard({ story }) {
 function Home() {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const testimonialCarouselRef = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
   const featuredProductsQuery = useQuery({
     queryKey: ["catalog", "products", { size: 8, sort: "popular" }],
     queryFn: () => catalogApi.getProducts({ size: 8, sort: "popular" }),
@@ -204,6 +224,15 @@ function Home() {
         </Reveal>
       </section>
 
+      <section className="container-shell py-8 sm:py-10">
+        <Reveal delay={0.08}>
+          <div className="mb-8 text-center">
+            <h2 className="section-title">The Recommendations</h2>
+          </div>
+          <Recommendations cards={recommendationCards} />
+        </Reveal>
+      </section>
+
       <section className="container-shell pt-12 pb-8 sm:pt-14 sm:pb-10">
         <Reveal delay={0.1}>
           <div className="flex items-center justify-between gap-4">
@@ -280,11 +309,36 @@ function Home() {
                         className="flex w-full items-start justify-between gap-4 text-left"
                       >
                         <span className="text-base font-medium text-black">{faq.question}</span>
-                        <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
+                        <m.span
+                          animate={prefersReducedMotion ? undefined : { rotate: isOpen ? 45 : 0 }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className="pt-0.5 text-black/45"
+                        >
+                          +
+                        </m.span>
                       </button>
-                      {isOpen && (
-                        <p className="mt-3 text-sm leading-7 text-black/68">{faq.answer}</p>
-                      )}
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <m.div
+                            key="faq-answer"
+                            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <m.p
+                              initial={prefersReducedMotion ? false : { y: -4, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              exit={prefersReducedMotion ? { opacity: 0 } : { y: -4, opacity: 0 }}
+                              transition={{ duration: 0.2, delay: prefersReducedMotion ? 0 : 0.04 }}
+                              className="mt-3 text-sm leading-7 text-black/68"
+                            >
+                              {faq.answer}
+                            </m.p>
+                          </m.div>
+                        )}
+                      </AnimatePresence>
                     </article>
                   );
                 })}
@@ -292,9 +346,11 @@ function Home() {
                 <div className="flex justify-end pt-2">
                   <Link
                     to="/faq"
-                    className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-black transition hover:text-brand-primary"
+                    className="group inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-black transition"
                   >
-                    View More
+                    <span className="transition group-hover:underline group-hover:underline-offset-4">
+                      View More
+                    </span>
                     <span className="text-base leading-none">+</span>
                   </Link>
                 </div>

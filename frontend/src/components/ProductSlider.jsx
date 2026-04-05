@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, m, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { m, useReducedMotion } from "framer-motion";
 import LazyProductCard from "./LazyProductCard";
 import ProductCard from "./ProductCard";
 
@@ -8,12 +8,14 @@ function ArrowButton({ direction, onClick, disabled }) {
   const rotateClass = direction === "right" ? "" : "rotate-180";
 
   return (
-    <button
+    <m.button
       type="button"
       aria-label={direction === "right" ? "Next products" : "Previous products"}
       onClick={onClick}
       disabled={disabled}
-      className="hidden h-[54px] w-[54px] items-center justify-center rounded-full border border-black/8 bg-white text-[#b1b1b1] shadow-[0_8px_18px_rgba(0,0,0,0.08)] transition duration-200 hover:-translate-y-0.5 hover:border-black/15 hover:text-[#7a7a7a] hover:shadow-[0_10px_20px_rgba(0,0,0,0.12)] disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
+      className="hidden h-[54px] w-[54px] items-center justify-center bg-transparent text-[#b1b1b1] transition duration-200 hover:text-[#7a7a7a] disabled:cursor-not-allowed disabled:opacity-60 md:inline-flex"
+      whileTap={{ scale: 0.9 }}
+      transition={{ duration: 0.16, ease: "easeOut" }}
     >
       <svg
         viewBox="0 0 24 24"
@@ -24,7 +26,7 @@ function ArrowButton({ direction, onClick, disabled }) {
       >
         <path d="M8 5L16 12L8 19" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-    </button>
+    </m.button>
   );
 }
 
@@ -36,8 +38,10 @@ function ProductSlider({
   maxDesktopCards = 4,
 }) {
   const [cardsPerPage, setCardsPerPage] = useState(4);
-  const [page, setPage] = useState(0);
+  const [startIndex, setStartIndex] = useState(0);
+  const [desktopMetrics, setDesktopMetrics] = useState({ cardWidth: 250, gap: 20 });
   const prefersReducedMotion = useReducedMotion();
+  const desktopTrackRef = useRef(null);
 
   useEffect(() => {
     const updateCardsPerPage = () => {
@@ -65,16 +69,70 @@ function ProductSlider({
     return () => window.removeEventListener("resize", updateCardsPerPage);
   }, [maxDesktopCards]);
 
-  const pageCount = Math.max(1, Math.ceil(products.length / cardsPerPage));
+  const maxStartIndex = Math.max(0, products.length - cardsPerPage);
+  const pageCount = Math.max(1, maxStartIndex + 1);
 
   useEffect(() => {
-    setPage((currentPage) => Math.min(currentPage, pageCount - 1));
-  }, [pageCount]);
+    setStartIndex((currentIndex) => Math.min(currentIndex, maxStartIndex));
+  }, [maxStartIndex]);
 
-  const visibleProducts = useMemo(() => {
-    const startIndex = page * cardsPerPage;
-    return products.slice(startIndex, startIndex + cardsPerPage);
-  }, [cardsPerPage, page, products]);
+  useEffect(() => {
+    const trackElement = desktopTrackRef.current;
+    if (!trackElement) {
+      return undefined;
+    }
+
+    let animationFrameId = 0;
+    let resizeObserver = null;
+
+    const measureTrack = () => {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = window.requestAnimationFrame(() => {
+        const firstCard = trackElement.firstElementChild;
+        if (!firstCard) {
+          return;
+        }
+
+        const cardWidth = firstCard.getBoundingClientRect().width || 250;
+        const computedTrackStyle = window.getComputedStyle(trackElement);
+        const gap =
+          Number.parseFloat(computedTrackStyle.columnGap || computedTrackStyle.gap || "20") || 20;
+
+        setDesktopMetrics((currentMetrics) => {
+          if (
+            Math.abs(currentMetrics.cardWidth - cardWidth) < 0.5 &&
+            Math.abs(currentMetrics.gap - gap) < 0.5
+          ) {
+            return currentMetrics;
+          }
+
+          return { cardWidth, gap };
+        });
+      });
+    };
+
+    measureTrack();
+    window.addEventListener("resize", measureTrack);
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(measureTrack);
+      resizeObserver.observe(trackElement);
+      const firstCard = trackElement.firstElementChild;
+      if (firstCard) {
+        resizeObserver.observe(firstCard);
+      }
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", measureTrack);
+      resizeObserver?.disconnect();
+    };
+  }, [cardsPerPage, products.length]);
+
+  const viewportWidth =
+    cardsPerPage * desktopMetrics.cardWidth + Math.max(0, cardsPerPage - 1) * desktopMetrics.gap;
+  const trackOffset = startIndex * (desktopMetrics.cardWidth + desktopMetrics.gap);
 
   if (!products.length) {
     return null;
@@ -92,46 +150,55 @@ function ProductSlider({
 
       <div className="hidden justify-center md:flex">
         <div className="relative mx-auto w-fit">
-        {pageCount > 1 && (
-          <div className={`absolute ${arrowLeftClass} ${arrowTopClass} -translate-y-1/2`}>
-            <ArrowButton
-              direction="left"
-              onClick={() => setPage((currentPage) => currentPage - 1)}
-              disabled={page === 0}
-            />
-          </div>
-        )}
-
-        <AnimatePresence mode="wait" initial={false}>
-          <m.div
-            key={`${page}-${cardsPerPage}`}
-            className="flex items-start justify-center gap-4 lg:gap-5"
-            initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
-            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {visibleProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                priority={page === 0 && index < cardsPerPage}
-                variant="compact"
-                compactIndex={page * cardsPerPage + index}
+          {pageCount > 1 && (
+            <div className={`absolute ${arrowLeftClass} ${arrowTopClass} -translate-y-1/2`}>
+              <ArrowButton
+                direction="left"
+                onClick={() => setStartIndex((currentIndex) => Math.max(0, currentIndex - 1))}
+                disabled={startIndex === 0}
               />
-            ))}
-          </m.div>
-        </AnimatePresence>
+            </div>
+          )}
 
-        {pageCount > 1 && (
-          <div className={`absolute ${arrowRightClass} ${arrowTopClass} -translate-y-1/2`}>
-            <ArrowButton
-              direction="right"
-              onClick={() => setPage((currentPage) => currentPage + 1)}
-              disabled={page >= pageCount - 1}
-            />
+          <div className="overflow-hidden" style={{ width: `${viewportWidth}px` }}>
+            <m.div
+              ref={desktopTrackRef}
+              className="flex transform-gpu items-start gap-4 will-change-transform lg:gap-5"
+              animate={{ x: -trackOffset }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : {
+                      type: "spring",
+                      stiffness: 180,
+                      damping: 26,
+                      mass: 1.05,
+                      restDelta: 0.4,
+                    }
+              }
+            >
+              {products.map((product, index) => (
+                <div key={product.id} className="w-[250px] shrink-0">
+                  <ProductCard
+                    product={product}
+                    priority={index < cardsPerPage}
+                    variant="compact"
+                    compactIndex={index}
+                  />
+                </div>
+              ))}
+            </m.div>
           </div>
-        )}
+
+          {pageCount > 1 && (
+            <div className={`absolute ${arrowRightClass} ${arrowTopClass} -translate-y-1/2`}>
+              <ArrowButton
+                direction="right"
+                onClick={() => setStartIndex((currentIndex) => Math.min(maxStartIndex, currentIndex + 1))}
+                disabled={startIndex >= maxStartIndex}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

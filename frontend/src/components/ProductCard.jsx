@@ -177,7 +177,7 @@ function ProductCard({ product, badgeLabel = null, priority = false }) {
 
         <m.button
           type="button"
-          className={`mt-1 inline-flex h-[36px] w-full items-center justify-center overflow-hidden rounded-[8px] px-4 text-[13px] font-semibold shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition-[background-color,color,box-shadow] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] ${cartButtonClasses}`}
+          className={`mt-1 inline-flex h-[36px] w-full items-center justify-center overflow-hidden rounded-[8px] px-4 text-[13px] font-semibold transition-[background-color,color] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)] ${cartButtonClasses}`}
           disabled={item.stock <= 0}
           whileTap={prefersReducedMotion || item.stock <= 0 ? undefined : { scale: 0.98 }}
           onClick={() => {

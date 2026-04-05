@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import LazyProductCard from "../components/LazyProductCard";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
@@ -43,6 +44,7 @@ function Shop() {
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [selectedPriceRange, setSelectedPriceRange] = useState(searchParams.get("price") ?? "");
+  const prefersReducedMotion = useReducedMotion();
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
@@ -104,6 +106,8 @@ function Shop() {
   const initialSkeletonCount = 6;
   const isInitialLoading = productsQuery.isPending;
   const isLoadingMore = productsQuery.isFetchingNextPage;
+  const filterMotionDisabled = Boolean(prefersReducedMotion);
+  const gridAnimationKey = `${category}|${selectedPriceRange}|${trimmedSearch}`;
 
   return (
     <section className="container-shell py-8 sm:py-10">
@@ -118,8 +122,8 @@ function Shop() {
                   onClick={() => setCategory(item.slug)}
                   className={`flex w-full items-center justify-between rounded-full px-4 py-2 text-left text-[0.96rem] leading-[1.05] transition ${
                     category === item.slug
-                      ? "font-semibold text-black"
-                      : "text-black/82 hover:text-black"
+                      ? "bg-brand-primary font-semibold text-black"
+                      : "text-black/82 hover:bg-black/[0.03] hover:text-black"
                   }`}
                 >
                   <span className="whitespace-nowrap">{item.name}</span>
@@ -200,19 +204,54 @@ function Shop() {
             />
           ) : (
             <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {products.map((product, index) => (
-                  <LazyProductCard
-                    key={product.id}
-                    product={product}
-                    priority={index < initialSkeletonCount}
-                  />
-                ))}
+              <m.div
+                layout={!filterMotionDisabled}
+                transition={
+                  filterMotionDisabled
+                    ? undefined
+                    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                }
+                className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+              >
+                <AnimatePresence initial={false} mode="popLayout">
+                  {products.map((product, index) => (
+                    <m.div
+                      key={`${gridAnimationKey}-${product.id}`}
+                      layout={!filterMotionDisabled}
+                      initial={
+                        filterMotionDisabled ? false : { opacity: 0, y: 18, scale: 0.985 }
+                      }
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={
+                        filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.985 }
+                      }
+                      transition={{
+                        duration: filterMotionDisabled ? 0 : 0.26,
+                        delay: filterMotionDisabled ? 0 : Math.min(index, 5) * 0.035,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      <LazyProductCard
+                        product={product}
+                        priority={index < initialSkeletonCount}
+                      />
+                    </m.div>
+                  ))}
+                </AnimatePresence>
+
                 {isLoadingMore &&
                   Array.from({ length: 3 }).map((_, index) => (
-                    <ProductCardSkeleton key={`loading-${index}`} />
+                    <m.div
+                      key={`loading-${index}`}
+                      initial={filterMotionDisabled ? false : { opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -10 }}
+                      transition={{ duration: filterMotionDisabled ? 0 : 0.22 }}
+                    >
+                      <ProductCardSkeleton />
+                    </m.div>
                   ))}
-              </div>
+              </m.div>
 
               {hasMorePages && (
                 <div className="pt-8 text-center">

@@ -16,7 +16,7 @@ function Recommendations({ cards }) {
       {cards.map((card) => (
         <article
           key={card.title}
-          className="group relative isolate flex h-[208px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.18)] sm:h-[220px] lg:h-[236px]"
+          className="group relative isolate flex h-[208px] w-full items-center justify-center overflow-hidden rounded-[10px] bg-black shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.18)] sm:h-[220px] lg:h-[262px]"
         >
           <img
             src={card.image}
@@ -26,10 +26,10 @@ function Recommendations({ cards }) {
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.04]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.16)_0%,rgba(8,8,8,0.42)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.08)_0%,rgba(8,8,8,0.1)_36%,rgba(8,8,8,0.38)_100%)]" />
 
-          <div className="relative z-10 flex h-full w-full translate-y-4 flex-col items-center justify-center px-6 py-6 text-center text-white sm:px-8 sm:translate-y-5 lg:translate-y-6">
-            <p className="max-w-[16rem] text-[0.92rem] leading-[1.55] text-white/92 sm:max-w-[19rem] sm:text-[0.98rem]">
+          <div className="relative z-10 flex h-full w-full flex-col items-center justify-end px-6 py-6 text-center text-white sm:px-8">
+            <p className="max-w-[18rem] text-[0.98rem] leading-[1.55] text-white/95 sm:max-w-[21rem] sm:text-[1rem]">
               {card.description}
             </p>
 

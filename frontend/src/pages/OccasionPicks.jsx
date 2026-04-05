@@ -1,5 +1,6 @@
 import { useDeferredValue, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import CandleCheckbox from "../components/CandleCheckbox";
 import LazyProductCard from "../components/LazyProductCard";
@@ -45,6 +46,7 @@ function OccasionPicks() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
   const [selectedOccasion, setSelectedOccasion] = useState(occasionBuckets[0]);
+  const prefersReducedMotion = useReducedMotion();
   const deferredSearch = useDeferredValue(search);
 
   const activeRange = priceRanges.find((range) => range.id === selectedPriceRange) ?? null;
@@ -80,6 +82,8 @@ function OccasionPicks() {
   const error = productsQuery.error ? formatApiError(productsQuery.error) : "";
   const isInitialLoading = productsQuery.isPending;
   const isLoadingMore = productsQuery.isFetchingNextPage;
+  const filterMotionDisabled = Boolean(prefersReducedMotion);
+  const gridAnimationKey = `${selectedOccasion}|${selectedCategory}|${selectedPriceRange}|${trimmedSearch}`;
 
   return (
     <section className="container-shell py-10 sm:py-12">
@@ -94,8 +98,8 @@ function OccasionPicks() {
                   onClick={() => setSelectedCategory(item.slug)}
                   className={`flex w-full items-center justify-between rounded-full px-4 py-2 text-left text-[0.96rem] leading-[1.05] transition ${
                     selectedCategory === item.slug
-                      ? "font-semibold text-black"
-                      : "text-black/82 hover:text-black"
+                      ? "bg-brand-primary font-semibold text-black"
+                      : "text-black/82 hover:bg-black/[0.03] hover:text-black"
                   }`}
                 >
                   <span className="whitespace-nowrap">{item.name}</span>
@@ -138,8 +142,8 @@ function OccasionPicks() {
                   onClick={() => setSelectedOccasion(occasion)}
                   className={`rounded-full px-3 py-1.5 text-sm transition ${
                     selectedOccasion === occasion
-                      ? "font-semibold text-black"
-                      : "text-black/58 hover:text-black"
+                      ? "bg-brand-primary font-semibold text-black"
+                      : "text-black/58 hover:bg-black/[0.03] hover:text-black"
                   }`}
                 >
                   {occasion}
@@ -187,11 +191,38 @@ function OccasionPicks() {
             />
           ) : (
             <>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {visibleProducts.map((product, index) => (
-                  <LazyProductCard key={product.id} product={product} priority={index < 6} />
-                ))}
-              </div>
+              <m.div
+                layout={!filterMotionDisabled}
+                transition={
+                  filterMotionDisabled
+                    ? undefined
+                    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                }
+                className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+              >
+                <AnimatePresence initial={false} mode="popLayout">
+                  {visibleProducts.map((product, index) => (
+                    <m.div
+                      key={`${gridAnimationKey}-${product.id}`}
+                      layout={!filterMotionDisabled}
+                      initial={
+                        filterMotionDisabled ? false : { opacity: 0, y: 18, scale: 0.985 }
+                      }
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={
+                        filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.985 }
+                      }
+                      transition={{
+                        duration: filterMotionDisabled ? 0 : 0.26,
+                        delay: filterMotionDisabled ? 0 : Math.min(index, 5) * 0.035,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      <LazyProductCard product={product} priority={index < 6} />
+                    </m.div>
+                  ))}
+                </AnimatePresence>
+              </m.div>
 
               <div className="pt-8 text-center">
                 <p className="text-sm text-black/76">Showing {showingFrom}-{showingTo} of {totalElements} item(s)</p>

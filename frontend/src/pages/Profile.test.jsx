@@ -43,7 +43,7 @@ describe("Profile overview", () => {
     expect(screen.getByRole("link", { name: /Orders/i })).toHaveAttribute("href", "/orders");
     expect(screen.getByRole("link", { name: /Addresses/i })).toHaveAttribute(
       "href",
-      "/profile/details#addresses",
+      "/profile/details",
     );
     expect(screen.getByRole("link", { name: /Account Details/i })).toHaveAttribute(
       "href",

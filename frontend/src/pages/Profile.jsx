@@ -82,7 +82,7 @@ function Profile() {
             title="Orders"
           />
           <OverviewCard
-            to="/profile/details#addresses"
+            to="/profile/details"
             icon={<ProfileIcon src={addressesIcon} alt="" />}
             title="Addresses"
           />

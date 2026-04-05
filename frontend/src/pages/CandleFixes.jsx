@@ -153,10 +153,10 @@ function CandleFixes() {
       <div className="w-full">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-black transition hover:underline hover:underline-offset-4"
+          className="group inline-flex items-center gap-2 text-sm font-semibold text-black transition"
         >
           <span aria-hidden="true">&lt;</span>
-          <span>Back</span>
+          <span className="transition group-hover:underline group-hover:underline-offset-4">Back</span>
         </Link>
 
         <header className="max-w-[760px]">

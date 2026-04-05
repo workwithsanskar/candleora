@@ -83,13 +83,15 @@ describe("Home", () => {
     return activeView;
   }
 
-  it("matches the screenshot-style homepage sections without the extra recommendations block", async () => {
+  it("renders the homepage sections with the wide recommendation banners restored", async () => {
     renderHome();
 
     expect(await screen.findByRole("heading", { name: "Our Best Selling Products" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "View Our Range Of Categories" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "The Recommendations" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View Occasion Picks" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View Candle Fixes" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Our Happy Customers" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Frequently Asked Questions" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "The Recommendations" })).not.toBeInTheDocument();
   });
 });

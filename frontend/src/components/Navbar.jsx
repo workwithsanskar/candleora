@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import fallbackProductImage from "../assets/designer/image-optimized.jpg";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { contentApi } from "../services/api";
+import { scrollToTopInstant } from "../utils/smoothScroll";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";
 import { applyImageFallback, getResponsiveImageProps } from "../utils/images";
@@ -186,6 +187,7 @@ function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const panelRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, logout, user } = useAuth();
   const { items: cartItems, cartCount, grandTotal, updateQuantity } = useCart();
   const { items: wishlistItems, wishlistCount, removeFromWishlist } = useWishlist();
@@ -286,6 +288,15 @@ function Navbar() {
 
   const previewWishlistItems = useMemo(() => wishlistItems.slice(0, 3), [wishlistItems]);
 
+  const handleBrandNavigation = (event) => {
+    closeMenus();
+
+    if (location.pathname === "/" && !location.search && !location.hash) {
+      event.preventDefault();
+      scrollToTopInstant();
+    }
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 border-b border-black/10 bg-white transition-shadow duration-300 ${
@@ -326,7 +337,7 @@ function Navbar() {
 
       <div className="container-shell">
         <div className="flex min-h-[80px] items-center justify-between gap-4">
-          <Link to="/" className="shrink-0" onClick={closeMenus}>
+          <Link to="/" className="shrink-0" onClick={handleBrandNavigation}>
             <BrandLogo compact showTagline className="max-w-[108px] sm:max-w-[148px]" tone="dark" />
           </Link>
 
@@ -476,7 +487,7 @@ function Navbar() {
                             <button
                               type="button"
                               onClick={() => removeFromWishlist(item.id)}
-                              className="pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger transition hover:text-danger/80"
+                              className="pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-danger transition hover:text-danger/80 hover:underline hover:underline-offset-4"
                             >
                               Remove
                             </button>

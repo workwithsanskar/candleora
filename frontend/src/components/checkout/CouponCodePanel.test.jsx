@@ -31,7 +31,7 @@ describe("CouponCodePanel", () => {
     cleanup();
   });
 
-  it("surfaces the best eligible coupon first and reveals the rest through view more", async () => {
+  it("surfaces the best eligible coupon first and reveals the rest through the themed offers panel", async () => {
     mockCouponApi.getOffers.mockResolvedValue([
       {
         code: "SAVE12",
@@ -70,13 +70,13 @@ describe("CouponCodePanel", () => {
     );
 
     expect(await screen.findByText("BIG20")).toBeInTheDocument();
-    expect(screen.getByText("Best offer")).toBeInTheDocument();
+    expect(screen.getByText("Best offer unlocked!")).toBeInTheDocument();
     expect(screen.queryByText("WELCOME10")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /view more/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /apply more coupons\/gift cards/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /view more/i }));
+    fireEvent.click(screen.getByRole("button", { name: /apply more coupons\/gift cards/i }));
 
-    expect(screen.getByText("More coupons and offers")).toBeInTheDocument();
+    expect(screen.getByText("Coupons & Offers")).toBeInTheDocument();
     expect(screen.getByText("WELCOME10")).toBeInTheDocument();
     expect(screen.getByText("SAVE12")).toBeInTheDocument();
   });
@@ -117,7 +117,7 @@ describe("CouponCodePanel", () => {
 
     expect(await screen.findByText("FESTIVE15")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /view more/i }));
+    fireEvent.click(screen.getByRole("button", { name: /apply more coupons\/gift cards/i }));
 
     const targetCard = screen.getByText("WELCOME10").closest("article");
     expect(targetCard).not.toBeNull();
@@ -130,11 +130,11 @@ describe("CouponCodePanel", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("More coupons and offers")).not.toBeInTheDocument();
+      expect(screen.queryByText("Coupons & Offers")).not.toBeInTheDocument();
     });
   });
 
-  it("shows the inline applied-success message when a coupon is active", async () => {
+  it("keeps the inline remove action visible when a coupon is active", async () => {
     mockCouponApi.getOffers.mockResolvedValue([]);
 
     render(
@@ -150,7 +150,8 @@ describe("CouponCodePanel", () => {
       />,
     );
 
-    expect(await screen.findByText("Coupon applied successfully.")).toBeInTheDocument();
+    const successMessages = await screen.findAllByText("Coupon applied successfully.");
+    expect(successMessages.length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
 });

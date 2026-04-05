@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import StatusView from "../components/StatusView";
 import { contentApi } from "../services/api";
 import { formatApiError } from "../utils/format";
@@ -8,6 +9,7 @@ function FAQ() {
   const [expandedId, setExpandedId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     let isMounted = true;
@@ -65,11 +67,36 @@ function FAQ() {
                     className="flex w-full items-start justify-between gap-4 text-left"
                   >
                     <span className="text-base font-medium text-black">{faq.question}</span>
-                    <span className="pt-0.5 text-black/45">{isOpen ? "-" : "+"}</span>
+                    <m.span
+                      animate={prefersReducedMotion ? undefined : { rotate: isOpen ? 45 : 0 }}
+                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                      className="pt-0.5 text-black/45"
+                    >
+                      +
+                    </m.span>
                   </button>
-                  {isOpen && (
-                    <p className="mt-3 text-sm leading-7 text-black/72">{faq.answer}</p>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <m.div
+                        key="faq-answer"
+                        initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <m.p
+                          initial={prefersReducedMotion ? false : { y: -4, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={prefersReducedMotion ? { opacity: 0 } : { y: -4, opacity: 0 }}
+                          transition={{ duration: 0.2, delay: prefersReducedMotion ? 0 : 0.04 }}
+                          className="mt-3 text-sm leading-7 text-black/72"
+                        >
+                          {faq.answer}
+                        </m.p>
+                      </m.div>
+                    )}
+                  </AnimatePresence>
                 </article>
               );
             })}

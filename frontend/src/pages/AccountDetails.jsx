@@ -5,6 +5,7 @@ import CandleDatePicker from "../components/CandleDatePicker";
 import Modal from "../components/Modal";
 import AddressEditorForm from "../components/checkout/AddressEditorForm";
 import PrimaryButton from "../components/checkout/PrimaryButton";
+import SavedAddressCarousel from "../components/checkout/SavedAddressCarousel";
 import SavedAddressCard from "../components/checkout/SavedAddressCard";
 import SecondaryButton from "../components/checkout/SecondaryButton";
 import InputField from "../components/checkout/InputField";
@@ -200,6 +201,15 @@ function AccountDetails() {
     <section className="container-shell py-10 sm:py-12">
       <div className="mx-auto max-w-[1160px] space-y-8">
         <div className="space-y-3">
+          <Link
+            to="/profile"
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-black transition"
+          >
+            <span aria-hidden="true">&lt;</span>
+            <span className="transition group-hover:underline group-hover:underline-offset-4">
+              Back to profile
+            </span>
+          </Link>
           <h1 className="page-title">Account Details</h1>
           <p className="page-subtitle max-w-[820px]">
             Update your personal details and address for a smoother checkout.
@@ -261,6 +271,7 @@ function AccountDetails() {
                 <CandleDatePicker
                   value={form.dateOfBirth || ""}
                   onChange={(nextValue) => handleChange("dateOfBirth", nextValue)}
+                  placeholder="Select date of birth"
                   buttonClassName="!h-[50px] !rounded-full"
                 />
               </InputField>
@@ -313,16 +324,21 @@ function AccountDetails() {
           {isAddressesLoading ? (
             <StatusView title="Loading addresses" message="Fetching your saved CandleOra addresses." />
           ) : addresses.length ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {addresses.map((address) => (
+            addresses.length > 1 ? (
+              <SavedAddressCarousel
+                addresses={addresses}
+                onEdit={openEditModal}
+                onRemove={handleDeleteAddress}
+              />
+            ) : (
+              <div className="max-w-[680px]">
                 <SavedAddressCard
-                  key={address.id}
-                  address={address}
+                  address={addresses[0]}
                   onEdit={openEditModal}
                   onRemove={handleDeleteAddress}
                 />
-              ))}
-            </div>
+              </div>
+            )
           ) : (
             <div className="checkout-panel p-6 text-center">
               <p className="text-lg font-semibold text-[#1A1A1A]">No address saved yet.</p>

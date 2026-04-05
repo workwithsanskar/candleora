@@ -300,10 +300,10 @@ function ProductDetail() {
     <section className="container-shell py-6 pb-28 sm:py-7 sm:pb-32 lg:py-5 lg:pb-8">
       <Link
         to="/shop"
-        className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-black transition hover:underline hover:underline-offset-4"
+        className="group mb-5 inline-flex items-center gap-2 text-sm font-semibold text-black transition"
       >
         <span aria-hidden="true">&lt;</span>
-        <span>Back to shop</span>
+        <span className="transition group-hover:underline group-hover:underline-offset-4">Back to shop</span>
       </Link>
 
       <div className="balanced-split-layout grid gap-4 lg:grid-cols-[92px_minmax(0,472px)_minmax(0,420px)] lg:gap-7 xl:grid-cols-[96px_minmax(0,500px)_minmax(0,432px)] xl:gap-9">

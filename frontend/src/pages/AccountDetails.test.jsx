@@ -88,6 +88,7 @@ describe("AccountDetails", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole("link", { name: /Back to profile/i })).toHaveAttribute("href", "/profile");
     expect(screen.getByText("Basic Details")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: "Aura" } });
     fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: "Stone" } });

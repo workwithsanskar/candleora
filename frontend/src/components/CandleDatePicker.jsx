@@ -72,15 +72,15 @@ function getDateKey(date) {
 }
 
 function CandleDatePicker({
-  value,
+  value = "",
   onChange,
-  placeholder,
-  disabled,
-  placement,
-  className,
-  buttonClassName,
-  minDate,
-  maxDate,
+  placeholder = "Select date",
+  disabled = false,
+  placement = "bottom",
+  className = "",
+  buttonClassName = "",
+  minDate = "",
+  maxDate = "",
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
@@ -277,17 +277,6 @@ CandleDatePicker.propTypes = {
   buttonClassName: PropTypes.string,
   minDate: PropTypes.string,
   maxDate: PropTypes.string,
-};
-
-CandleDatePicker.defaultProps = {
-  value: "",
-  placeholder: "Select date",
-  disabled: false,
-  placement: "bottom",
-  className: "",
-  buttonClassName: "",
-  minDate: "",
-  maxDate: "",
 };
 
 export default CandleDatePicker;

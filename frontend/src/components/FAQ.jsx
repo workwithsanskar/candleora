@@ -69,9 +69,11 @@ function HomeFaqSection({ faqs }) {
         <div className="flex justify-end pt-2">
           <Link
             to="/faq"
-            className="inline-flex items-center gap-2 text-[14px] font-semibold uppercase tracking-[0.01em] text-black transition duration-300 hover:text-black/65"
+            className="group inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-black transition duration-300"
           >
-            View More
+            <span className="transition group-hover:underline group-hover:underline-offset-4">
+              View More
+            </span>
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M8 10L12 14L16 10" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
