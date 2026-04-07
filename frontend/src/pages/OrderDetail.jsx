@@ -276,6 +276,7 @@ function OrderProgress({ activeIndex, order }) {
   const prefersReducedMotion = useReducedMotion();
   const steps = useMemo(() => buildProgressSteps(order), [order]);
   const resolvedActiveIndex = activeIndex >= 0 ? activeIndex : 0;
+  const activeStep = steps[Math.min(resolvedActiveIndex, steps.length - 1)] ?? steps[0] ?? null;
   const desktopTimelineRef = useRef(null);
   const stepRefs = useRef([]);
   const [desktopMetrics, setDesktopMetrics] = useState({
@@ -349,18 +350,32 @@ function OrderProgress({ activeIndex, order }) {
     prefersReducedMotion ? 0 : Math.max(1.7, 1.25 + resolvedActiveIndex * 0.35);
 
   return (
-    <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section className="relative rounded-[28px] border border-black/10 bg-white p-5 shadow-sm sm:p-6">
       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
         Progress
       </p>
-      <h2 className="mt-3 text-[clamp(1.5rem,2.6vw,2.05rem)] font-semibold tracking-[-0.03em] text-brand-dark">
-        Delivery and fulfillment timeline
-      </h2>
-      <p className="mt-3 max-w-[56ch] text-base leading-7 text-black/62">
-        The active step is highlighted so you can quickly see where the order sits right now.
-      </p>
+      <div className="mt-2 lg:pr-[332px]">
+        <h2 className="text-[clamp(1.4rem,2.4vw,1.9rem)] font-semibold tracking-[-0.03em] text-brand-dark">
+          Delivery Timeline
+        </h2>
+        <p className="mt-1.5 max-w-[42ch] text-base leading-7 text-black/62">
+          Track where your order is right now.
+        </p>
+      </div>
 
-      <div className="mt-6 rounded-[32px] border border-black/10 bg-[#fffdfa] px-4 py-6 sm:px-6 sm:py-8">
+      {activeStep ? (
+        <div className="mt-3 rounded-[20px] border border-black/8 bg-[#fbf7f0] px-4 py-3 lg:absolute lg:right-5 lg:top-5 lg:mt-0 lg:w-[312px]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+            Current update
+          </p>
+          <p className="mt-1.5 text-sm font-semibold text-brand-dark">{activeStep.title}</p>
+          <p className="mt-1 text-sm leading-6 text-black/60">
+            {activeStep.description || activeStep.mobileSummary}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 rounded-[32px] border border-black/10 bg-[#fffdfa] px-4 py-4 sm:px-5 sm:py-5">
         <div className="hidden lg:block">
           <div ref={desktopTimelineRef} className="relative px-4">
             <div
@@ -384,7 +399,7 @@ function OrderProgress({ activeIndex, order }) {
               />
             </div>
 
-            <div className="relative grid grid-cols-5 gap-6">
+            <div className="relative grid grid-cols-5 gap-5">
               {steps.map((step, index) => {
                 const complete = resolvedActiveIndex > index;
                 const current = resolvedActiveIndex === index;
@@ -429,20 +444,20 @@ function OrderProgress({ activeIndex, order }) {
                         index + 1
                       )}
                     </m.button>
-                    <div className="mt-5 flex flex-col items-center text-center">
+                    <div className="mt-3.5 flex flex-col items-center text-center">
                       <p
-                        className={`max-w-[176px] text-[1.05rem] font-semibold ${
+                        className={`max-w-[160px] text-[0.98rem] font-semibold ${
                           emphasized ? "text-brand-dark" : "text-black/46"
                         }`}
                       >
                         {step.title}
                       </p>
                       <p
-                        className={`mt-3 max-w-[200px] text-[0.95rem] leading-8 ${
+                        className={`mt-1.5 max-w-[170px] text-xs font-medium ${
                           emphasized ? "text-black/70" : "text-black/42"
                         }`}
                       >
-                        {step.description || step.mobileSummary}
+                        {step.mobileMeta}
                       </p>
                     </div>
                   </div>
@@ -463,7 +478,7 @@ function OrderProgress({ activeIndex, order }) {
               return (
                 <div
                   key={step.step}
-                  className="relative block w-full pb-8 text-left last:pb-0"
+                  className="relative block w-full pb-6 text-left last:pb-0"
                 >
                   <m.button
                     type="button"
@@ -477,11 +492,15 @@ function OrderProgress({ activeIndex, order }) {
                     aria-label={`${step.title} step`}
                   />
                   <div className={emphasized ? "opacity-100" : "opacity-65"}>
-                    <p className="text-[15px] font-semibold text-brand-dark">{step.title}</p>
-                    <p className="mt-1 text-xs font-medium text-black/46">{step.mobileMeta}</p>
-                    <p className="mt-2 max-w-[28ch] text-sm leading-6 text-black/60">
-                      {step.description || step.mobileSummary}
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[15px] font-semibold text-brand-dark">{step.title}</p>
+                      <p className="text-xs font-medium text-black/46">{step.mobileMeta}</p>
+                    </div>
+                    {current ? (
+                      <p className="mt-2 max-w-[30ch] text-sm leading-6 text-black/60">
+                        {step.description || step.mobileSummary}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -556,95 +575,122 @@ function ReplacementPanel({ replacement }) {
   );
 }
 
-function InfoButton({ label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-black/12 bg-white p-0 text-brand-dark transition hover:border-black/20 hover:bg-[#fbf7f0]"
-      aria-label={label}
-    >
-      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9">
-        <circle cx="12" cy="12" r="8.25" />
-        <path d="M12 10.4V15.2" strokeLinecap="round" />
-        <circle cx="12" cy="7.8" r="0.7" fill="currentColor" stroke="none" />
-      </svg>
-    </button>
-  );
-}
-
-function PolicyCard({
-  title,
-  actionLabel,
-  onAction,
-  onInfo,
-  disabled = false,
-  helperText = "",
+function OrderPoliciesPanel({
+  readOnly,
+  orderStatus,
+  liveCanCancel,
+  canOpenReplacementModal,
+  isCancelling,
+  cancellationHelperText,
+  replacementHelperText,
+  cancelError,
+  onOpenCancellationInfo,
+  onOpenReplacementInfo,
+  onOpenSupportInfo,
+  onOpenCancelConfirm,
+  onOpenReplacement,
 }) {
+  const cancellationActionLabel = readOnly
+    ? ""
+    : orderStatus === "CANCELLED"
+      ? "Order Cancelled"
+      : "Cancel Order";
+
   return (
-    <div className="flex h-full min-h-[248px] flex-col rounded-[24px] border border-black/10 bg-white p-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[1.05rem] font-semibold text-brand-dark">{title}</p>
-        <InfoButton label={`Open ${title}`} onClick={onInfo} />
-      </div>
+    <section className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm sm:p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
+        Order Policies
+      </p>
 
-      {helperText ? (
-        <p className="mt-3 max-w-[28ch] text-sm leading-6 text-black/56">{helperText}</p>
-      ) : null}
+      <div className="mt-3 space-y-2.5">
+        <div className="rounded-[20px] border border-black/8 bg-[#fbf7f0] p-3.5 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 sm:flex-1 sm:pr-4">
+              <button
+                type="button"
+                onClick={onOpenCancellationInfo}
+                className="text-left text-base font-semibold text-brand-dark transition hover:underline hover:underline-offset-4"
+              >
+                Cancellation Policy
+              </button>
+              <p className="mt-1 text-sm leading-6 text-black/58">
+                Cancel within 24 hours of placing the order.
+              </p>
+              <p className="mt-1 text-xs font-medium text-black/44">{cancellationHelperText}</p>
+            </div>
 
-      {actionLabel ? (
-        <div className="mt-auto pt-4">
-          <button
-            type="button"
-            onClick={onAction}
-            disabled={disabled}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-black/12 bg-[#fbf7f0] px-4 py-2 text-sm font-semibold text-brand-dark transition hover:bg-[#f6efe3] disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            {actionLabel}
-          </button>
+            {cancellationActionLabel ? (
+              <button
+                type="button"
+                onClick={onOpenCancelConfirm}
+                disabled={!liveCanCancel || isCancelling || orderStatus === "CANCELLED"}
+                className="inline-flex shrink-0 whitespace-nowrap text-left text-sm font-semibold text-brand-dark transition hover:underline hover:underline-offset-4 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {cancellationActionLabel}
+              </button>
+            ) : null}
+          </div>
         </div>
-      ) : null}
-    </div>
-  );
-}
 
-function ContactSupportCard({
-  title,
-  primaryHref,
-  primaryLabel,
-  secondaryHref,
-  secondaryLabel,
-  onInfo,
-  helperText = "",
-}) {
-  return (
-    <div className="flex h-full min-h-[220px] flex-col rounded-[24px] border border-black/10 bg-white p-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[1.05rem] font-semibold text-brand-dark">{title}</p>
-        <InfoButton label={`Open ${title}`} onClick={onInfo} />
+        <div className="rounded-[20px] border border-black/8 bg-[#fbf7f0] p-3.5 sm:p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <button
+                type="button"
+                onClick={onOpenReplacementInfo}
+                className="text-left text-base font-semibold text-brand-dark transition hover:underline hover:underline-offset-4"
+              >
+                Replacement Policy
+              </button>
+              <p className="mt-1 text-sm leading-6 text-black/58 sm:whitespace-nowrap">
+                Request a replacement within 3 days of delivery for damaged items.
+              </p>
+              <p className="mt-1 text-xs font-medium text-black/44">{replacementHelperText}</p>
+            </div>
+
+            {!readOnly ? (
+              <button
+                type="button"
+                onClick={onOpenReplacement}
+                disabled={!canOpenReplacementModal}
+                className="inline-flex shrink-0 whitespace-nowrap text-left text-sm font-semibold text-brand-dark transition hover:underline hover:underline-offset-4 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Replace Order
+              </button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      {helperText ? (
-        <p className="mt-2 max-w-[30ch] text-sm leading-6 text-black/56">{helperText}</p>
-      ) : null}
-
-      <div className="mt-auto grid grid-cols-2 gap-2 pt-2">
-        <a
-          href={primaryHref}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex w-full min-h-[38px] items-center justify-center rounded-full border border-black/12 bg-[#fbf7f0] px-2.5 py-1.5 text-center text-[12px] font-semibold text-brand-dark transition hover:bg-[#f6efe3] sm:text-[13px]"
+      <div className="mt-3.5 border-t border-black/8 pt-3.5">
+        <button
+          type="button"
+          onClick={onOpenSupportInfo}
+          className="text-left text-base font-semibold text-brand-dark transition hover:underline hover:underline-offset-4"
         >
-          {primaryLabel}
-        </a>
-        <a
-          href={secondaryHref}
-          className="inline-flex w-full min-h-[38px] items-center justify-center rounded-full border border-black/12 bg-white px-2.5 py-1.5 text-center text-[12px] font-semibold text-brand-dark transition hover:bg-black/[0.03] sm:text-[13px]"
-        >
-          {secondaryLabel}
-        </a>
+          Need help?
+        </button>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold">
+          <a
+            href={SUPPORT_WHATSAPP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-brand-dark transition hover:underline hover:underline-offset-4"
+          >
+            WhatsApp
+          </a>
+          <span className="text-black/28">|</span>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="text-brand-dark transition hover:underline hover:underline-offset-4"
+          >
+            Email
+          </a>
+        </div>
       </div>
-    </div>
+
+      {cancelError ? <p className="mt-4 text-sm text-danger">{cancelError}</p> : null}
+    </section>
   );
 }
 
@@ -1051,12 +1097,12 @@ function OrderDetail({ readOnly = false }) {
   }
 
   return (
-    <section className="bg-[#fbf7f0] py-6 sm:py-8">
+    <section className="bg-white py-6 sm:py-8">
       <div className="container-shell">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             to={readOnly ? "/track" : "/orders"}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-black/58 transition hover:text-black"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-black/58 transition hover:text-black hover:underline hover:underline-offset-4"
           >
             <svg
               viewBox="0 0 24 24"
@@ -1078,10 +1124,10 @@ function OrderDetail({ readOnly = false }) {
           ) : null}
         </div>
 
-        <m.div {...motion} className="mt-4 space-y-6">
-          <section className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-4">
+        <m.div {...motion} className="mt-4 space-y-3">
+          <section className="rounded-[32px] border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <span
                     className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.pill}`.trim()}
@@ -1092,17 +1138,17 @@ function OrderDetail({ readOnly = false }) {
                   <span className="text-sm font-medium text-black/40">Order #{order.id}</span>
                 </div>
 
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
-                    Tracking ID
-                  </p>
-                  <h1 className="mt-2 font-display text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-none text-brand-dark">
-                    #{trackingId}
-                  </h1>
-                  <p className="mt-3 text-base font-medium text-black/58">
-                    Order no. #{order.id}
-                  </p>
-                </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
+                      Tracking ID
+                    </p>
+                    <h1 className="mt-2 font-display text-[clamp(1.75rem,3.4vw,2.7rem)] font-semibold leading-none text-brand-dark">
+                      {trackingId}
+                    </h1>
+                    <p className="mt-2 text-sm font-medium text-black/58">
+                      Order #{order.id}
+                    </p>
+                  </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -1147,15 +1193,28 @@ function OrderDetail({ readOnly = false }) {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 border-t border-black/8 pt-5 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <span className="text-black/58">
-                Order date: <span className="font-semibold text-brand-dark">{formatDate(order.createdAt)}</span>
-              </span>
-              <span
-                className={`inline-flex w-fit items-center rounded-full border border-success/14 bg-success/5 px-4 py-2 font-semibold sm:ml-auto sm:text-right ${meta.accent}`.trim()}
-              >
-                Estimated delivery: {deliveryRange}
-              </span>
+            <div className="mt-4 grid gap-2.5 border-t border-black/8 pt-3.5 sm:grid-cols-3">
+              <div className="rounded-[20px] border border-black/8 bg-[#fbf7f0] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                  Order date
+                </p>
+                <p className="mt-1 text-sm font-semibold text-brand-dark">{formatDate(order.createdAt)}</p>
+              </div>
+              <div className="rounded-[20px] border border-black/8 bg-[#fbf7f0] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                  Estimated delivery
+                </p>
+                <p className={`mt-1 text-sm font-semibold ${meta.accent}`.trim()}>{deliveryRange}</p>
+              </div>
+              <div className="rounded-[20px] border border-black/8 bg-[#fbf7f0] px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
+                  Payment
+                </p>
+                <p className="mt-1 text-sm font-semibold text-brand-dark">{paymentProviderLabel}</p>
+                {showPaymentStatusSummary ? (
+                  <p className="mt-0.5 text-xs text-black/48">{paymentStatusLabel}</p>
+                ) : null}
+              </div>
             </div>
 
             {downloadError ? <p className="mt-4 text-sm text-danger">{downloadError}</p> : null}
@@ -1163,13 +1222,11 @@ function OrderDetail({ readOnly = false }) {
 
           <OrderProgress activeIndex={activeIndex} order={order} />
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="grid gap-x-3 gap-y-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.9fr)] xl:items-start">
             <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">
-                      Items ordered
-                    </p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/42">Order items</p>
                     <p className="mt-2 text-lg font-semibold text-brand-dark">
                       Items in this order
                     </p>
@@ -1238,73 +1295,8 @@ function OrderDetail({ readOnly = false }) {
                     );
                   })}
                 </div>
-
-                <div className="mt-5 grid items-stretch gap-2.5 border-t border-black/8 pt-5 sm:grid-cols-3">
-                  <div className="flex min-h-[80px] h-full flex-col rounded-[20px] bg-[#fbf7f0] px-4 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                      Order placed
-                    </p>
-                    <p className="mt-auto pt-1 text-sm font-semibold text-brand-dark">
-                      {formatDate(order.createdAt)}
-                    </p>
-                  </div>
-                  <div className="flex min-h-[80px] h-full flex-col rounded-[20px] bg-[#fbf7f0] px-4 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                      Estimated delivery
-                    </p>
-                    <p className="mt-auto pt-1 text-sm font-semibold text-brand-dark">{deliveryRange}</p>
-                  </div>
-                  <div className="flex min-h-[80px] h-full flex-col rounded-[20px] bg-[#fbf7f0] px-4 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/42">
-                      Payment
-                    </p>
-                    <div className="mt-auto pt-1">
-                      <p className="text-sm font-semibold text-brand-dark">
-                        {paymentProviderLabel}
-                      </p>
-                      {showPaymentStatusSummary ? (
-                        <p className="mt-0.5 text-xs text-black/48">{paymentStatusLabel}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid items-stretch gap-2.5 lg:grid-cols-3">
-                  <PolicyCard
-                    title="Cancellation Policy"
-                    actionLabel={
-                      readOnly ? "" : order.status === "CANCELLED" ? "Order Cancelled" : "Cancel Order"
-                    }
-                    onAction={handleOpenCancelConfirm}
-                    onInfo={() => setIsCancellationInfoOpen(true)}
-                    disabled={!liveCanCancel || readOnly || isCancelling}
-                    helperText={cancellationHelperText}
-                  />
-
-                  <PolicyCard
-                    title="Replacement Policy"
-                    actionLabel={readOnly ? "" : "Replace Order"}
-                    onAction={handleOpenReplacement}
-                    onInfo={() => setIsReplacementInfoOpen(true)}
-                    disabled={!canOpenReplacementModal}
-                    helperText={replacementHelperText}
-                  />
-
-                  <ContactSupportCard
-                    title="Contact Support"
-                    primaryHref={SUPPORT_WHATSAPP_URL}
-                    primaryLabel="WhatsApp support"
-                    secondaryHref={`mailto:${SUPPORT_EMAIL}`}
-                    secondaryLabel="Email support"
-                    helperText="Need help with delivery, payment, or a damaged order? Reach CandleOra directly."
-                    onInfo={() => setIsSupportInfoOpen(true)}
-                  />
-                </div>
-
-                {cancelError ? <p className="mt-4 text-sm text-danger">{cancelError}</p> : null}
               </section>
 
-            <div className="space-y-6">
               <SidePanel title="Shipping address">
                 <p className="text-lg font-semibold text-brand-dark">{order.shippingName}</p>
                 <div className="mt-3 space-y-2 text-sm leading-7 text-black/62">
@@ -1325,6 +1317,22 @@ function OrderDetail({ readOnly = false }) {
                 </div>
               </SidePanel>
 
+              <OrderPoliciesPanel
+                readOnly={readOnly}
+                orderStatus={order.status}
+                liveCanCancel={liveCanCancel}
+                canOpenReplacementModal={canOpenReplacementModal}
+                isCancelling={isCancelling}
+                cancellationHelperText={cancellationHelperText}
+                replacementHelperText={replacementHelperText}
+                cancelError={cancelError}
+                onOpenCancellationInfo={() => setIsCancellationInfoOpen(true)}
+                onOpenReplacementInfo={() => setIsReplacementInfoOpen(true)}
+                onOpenSupportInfo={() => setIsSupportInfoOpen(true)}
+                onOpenCancelConfirm={handleOpenCancelConfirm}
+                onOpenReplacement={handleOpenReplacement}
+              />
+
               <SidePanel title="Order Summary">
                 <div className="space-y-3">
                   <SummaryRow label="Item Total" value={formatCurrency(order.subtotalAmount)} />
@@ -1334,7 +1342,7 @@ function OrderDetail({ readOnly = false }) {
                     valueClassName="text-success"
                   />
                   <SummaryRow label="Shipping" value="Free" />
-                  <SummaryRow label="Tracking ID" value={trackingId} />
+                  <SummaryRow label="Payment" value={paymentProviderLabel} />
                   <div className="border-t border-black/8 pt-3">
                     <SummaryRow
                       label="Total"
@@ -1344,7 +1352,6 @@ function OrderDetail({ readOnly = false }) {
                   </div>
                 </div>
               </SidePanel>
-            </div>
           </div>
         </m.div>
       </div>
@@ -1522,20 +1529,20 @@ function OrderDetail({ readOnly = false }) {
         onSuccess={refreshOrder}
       />
 
-      <Modal
-        isOpen={isCancellationInfoOpen}
-        onClose={() => setIsCancellationInfoOpen(false)}
-        kicker="Order policy"
-        title="Cancellation Policy"
+        <Modal
+          isOpen={isCancellationInfoOpen}
+          onClose={() => setIsCancellationInfoOpen(false)}
+          kicker="Order policy"
+          title="Cancellation Policy"
         description=""
         maxWidthClass="max-w-[620px]"
       >
-        <div className="space-y-4">
-          <div className="rounded-[24px] border border-black/8 bg-[#fff8ec] px-5 py-4">
-            <p className="text-sm leading-7 text-black/62">
-              You can cancel your order within 24 hours of placing it.
-            </p>
-          </div>
+          <div className="space-y-4">
+            <div className="rounded-[24px] border border-black/8 bg-[#fff8ec] px-5 py-4">
+              <p className="text-sm leading-7 text-black/62">
+                {CANCELLATION_POLICY_COPY}
+              </p>
+            </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button
@@ -1561,20 +1568,19 @@ function OrderDetail({ readOnly = false }) {
         </div>
       </Modal>
 
-      <Modal
-        isOpen={isReplacementInfoOpen}
-        onClose={() => setIsReplacementInfoOpen(false)}
-        kicker="Order policy"
-        title="Replacement Policy"
+        <Modal
+          isOpen={isReplacementInfoOpen}
+          onClose={() => setIsReplacementInfoOpen(false)}
+          kicker="Order policy"
+          title="Replacement Policy"
         description=""
         maxWidthClass="max-w-[700px]"
       >
-        <div className="space-y-4">
-          <div className="rounded-[24px] border border-black/8 bg-[#fff8ec] px-5 py-4">
-            <p className="text-sm leading-7 text-black/62">
-              You can request a replacement within 3 days of delivery only if the item is damaged
-              or broken.
-            </p>
+          <div className="space-y-4">
+            <div className="rounded-[24px] border border-black/8 bg-[#fff8ec] px-5 py-4">
+              <p className="text-sm leading-7 text-black/62">
+                {REPLACEMENT_POLICY_COPY}
+              </p>
             <p className="mt-3 text-sm leading-7 text-black/62">
               Share proof (image or video) on our WhatsApp number or email while raising the
               request. Only one-time replacement is allowed.
@@ -1666,7 +1672,7 @@ function OrderDetail({ readOnly = false }) {
         isOpen={isCancelConfirmOpen}
         onClose={() => setIsCancelConfirmOpen(false)}
         kicker="Confirm cancellation"
-        title="Do you really want to cancel this order?"
+        title="Are you sure you want to cancel this order?"
         description=""
         maxWidthClass="max-w-[560px]"
         bodyScrollable={false}

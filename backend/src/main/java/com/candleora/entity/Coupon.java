@@ -66,6 +66,15 @@ public class Coupon {
     @Column(length = 2000)
     private String targetProductIds;
 
+    @Column(length = 600)
+    private String description;
+
+    @Column(length = 600)
+    private String detailSummary;
+
+    @Column(length = 4000)
+    private String detailTerms;
+
     public Long getId() {
         return id;
     }
@@ -188,6 +197,30 @@ public class Coupon {
 
     public void setTargetProductIds(String targetProductIds) {
         this.targetProductIds = targetProductIds;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDetailSummary() {
+        return detailSummary;
+    }
+
+    public void setDetailSummary(String detailSummary) {
+        this.detailSummary = detailSummary;
+    }
+
+    public String getDetailTerms() {
+        return detailTerms;
+    }
+
+    public void setDetailTerms(String detailTerms) {
+        this.detailTerms = detailTerms;
     }
 
     public void incrementUsage() {

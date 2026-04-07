@@ -17,6 +17,7 @@ const addressTagOptions = ["Home", "Office", "Other"];
 
 function AddressEditorForm({
   initialValue,
+  contactEmail,
   isSubmitting,
   submitLabel,
   onSubmit,
@@ -116,10 +117,10 @@ function AddressEditorForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <input type="hidden" value={draft.country} readOnly name="country" />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-3">
         <InputField label="Full Name" required error={fieldErrors.recipientName}>
           <input
             autoFocus
@@ -129,7 +130,16 @@ function AddressEditorForm({
           />
         </InputField>
 
-        <InputField label="Phone Number" required error={fieldErrors.phoneNumber}>
+        <InputField label="Email Id">
+          <input
+            value={contactEmail}
+            readOnly
+            disabled
+            className="checkout-input h-[48px] bg-[#FAF7F2] text-black/55"
+          />
+        </InputField>
+
+        <InputField label="Phone No." required error={fieldErrors.phoneNumber}>
           <input
             value={draft.phoneNumber}
             onChange={(event) => handleChange("phoneNumber", event.target.value)}
@@ -139,7 +149,24 @@ function AddressEditorForm({
         </InputField>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+      <InputField label="Address Line 1" required error={fieldErrors.addressLine1}>
+        <input
+          value={draft.addressLine1}
+          onChange={(event) => handleChange("addressLine1", event.target.value)}
+          className="checkout-input h-[48px]"
+        />
+      </InputField>
+
+      <InputField label="Address Line 2">
+        <input
+          value={draft.addressLine2}
+          onChange={(event) => handleChange("addressLine2", event.target.value)}
+          className="checkout-input h-[48px]"
+          placeholder="Apartment, suite, landmark (optional)"
+        />
+      </InputField>
+
+      <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)_220px]">
         <InputField label="Pincode" required error={fieldErrors.postalCode}>
           <input
             value={draft.postalCode}
@@ -150,22 +177,12 @@ function AddressEditorForm({
           />
         </InputField>
 
-        <InputField label="Address Line 1" required error={fieldErrors.addressLine1}>
+        <InputField label="State" required error={fieldErrors.state}>
           <input
-            value={draft.addressLine1}
-            onChange={(event) => handleChange("addressLine1", event.target.value)}
+            value={draft.state}
+            onChange={(event) => handleChange("state", event.target.value)}
             className="checkout-input h-[48px]"
-          />
-        </InputField>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <InputField label="Address Line 2">
-          <input
-            value={draft.addressLine2}
-            onChange={(event) => handleChange("addressLine2", event.target.value)}
-            className="checkout-input h-[48px]"
-            placeholder="Landmark (opt.)"
+            placeholder="Maharashtra"
           />
         </InputField>
 
@@ -178,48 +195,51 @@ function AddressEditorForm({
         </InputField>
       </div>
 
-      <InputField label="State" required error={fieldErrors.state}>
-        <input
-          value={draft.state}
-          onChange={(event) => handleChange("state", event.target.value)}
-          className="checkout-input h-[48px]"
-          placeholder="Maharashtra"
-        />
-      </InputField>
+      <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+        <InputField label="Country" required error={fieldErrors.country}>
+          <input
+            value={draft.country || SUPPORTED_COUNTRY_NAME}
+            readOnly
+            disabled
+            className="checkout-input h-[48px] bg-[#FAF7F2] text-black/55"
+          />
+        </InputField>
 
-      <section className="rounded-[18px] border border-[#e7dfd2] bg-white px-4 py-4">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-black">Tags</p>
-          <div className="flex flex-wrap gap-2">
-            {addressTagOptions.map((option) => {
-              const selected = draft.label === option;
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleChange("label", option)}
-                  className={`inline-flex min-h-[34px] items-center justify-center rounded-full border px-3 text-sm font-semibold transition ${
-                    selected
-                      ? "border-black bg-black text-white"
-                      : "border-black/12 bg-white text-black/68 hover:border-black"
-                  }`}
-                >
-                  {option === "Other" ? "Others" : option}
-                </button>
-              );
-            })}
+        <section className="rounded-[18px] border border-[#e7dfd2] bg-white px-4 py-4">
+          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+            <p className="text-sm font-semibold text-black">Tags</p>
+
+            <div className="flex flex-wrap gap-2">
+              {addressTagOptions.map((option) => {
+                const selected = draft.label === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleChange("label", option)}
+                    className={`inline-flex min-h-[34px] items-center justify-center rounded-full border px-3 text-sm font-semibold transition ${
+                      selected
+                        ? "border-black bg-black text-white"
+                        : "border-black/12 bg-white text-black/68 hover:border-black"
+                    }`}
+                  >
+                    {option === "Other" ? "Others" : option}
+                  </button>
+                );
+              })}
+            </div>
+
+            <label className="inline-flex items-center gap-2.5 text-sm font-medium text-black/72 md:ml-auto">
+              <CandleCheckbox
+                checked={Boolean(draft.isDefault)}
+                onChange={(event) => handleChange("isDefault", event.target.checked)}
+                className="h-4 w-4"
+              />
+              Set as default address
+            </label>
           </div>
-
-          <label className="inline-flex items-center gap-2.5 text-sm font-medium text-black/72">
-            <CandleCheckbox
-              checked={Boolean(draft.isDefault)}
-              onChange={(event) => handleChange("isDefault", event.target.checked)}
-              className="h-4 w-4"
-            />
-            Set as default address
-          </label>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {error ? <p className="text-sm font-medium text-[#c93232]">{error}</p> : null}
 
@@ -241,6 +261,7 @@ function AddressEditorForm({
 
 AddressEditorForm.propTypes = {
   initialValue: PropTypes.object,
+  contactEmail: PropTypes.string,
   isSubmitting: PropTypes.bool,
   submitLabel: PropTypes.string,
   onSubmit: PropTypes.func,
@@ -249,6 +270,7 @@ AddressEditorForm.propTypes = {
 
 AddressEditorForm.defaultProps = {
   initialValue: null,
+  contactEmail: "",
   isSubmitting: false,
   submitLabel: "Save address",
   onSubmit: undefined,

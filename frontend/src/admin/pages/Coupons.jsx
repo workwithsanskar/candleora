@@ -124,18 +124,18 @@ function Coupons() {
     const totalRedemptions = coupons.reduce((sum, coupon) => sum + Number(coupon.usageCount ?? 0), 0);
 
     return [
-      { label: "Total coupons", value: coupons.length, tone: "text-brand-dark" },
+      { label: "Total", value: coupons.length, tone: "text-brand-dark" },
       {
-        label: "Live campaigns",
+        label: "Live",
         value: coupons.filter((coupon) => getCouponLifecycleStatus(coupon) === "LIVE").length,
         tone: "text-success",
       },
       {
-        label: "Targeted offers",
+        label: "Targeted",
         value: coupons.filter((coupon) => coupon.scope !== "ALL_PRODUCTS").length,
         tone: "text-[#2659b7]",
       },
-      { label: "Redemptions", value: totalRedemptions, tone: "text-brand-dark" },
+      { label: "Used", value: totalRedemptions, tone: "text-brand-dark" },
     ];
   }, [couponsQuery.data]);
 
@@ -189,7 +189,7 @@ function Coupons() {
       },
       {
         key: "rules",
-        header: "Rules",
+        header: "Scope",
         cell: (coupon) => (
           <div>
             <p className="font-medium text-brand-dark">{formatCouponScopeLabel(coupon.scope)}</p>
@@ -201,7 +201,7 @@ function Coupons() {
       },
       {
         key: "duration",
-        header: "Duration",
+        header: "Schedule",
         cell: (coupon) => (
           <div>
             <p className="font-medium text-brand-dark">{formatCouponWindow(coupon)}</p>
@@ -284,22 +284,22 @@ function Coupons() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Coupon management"
-        description="Run discount campaigns with targeting, customer restrictions, redemption caps, and scheduled launch windows."
+        title="Coupons"
+        description="Create and manage coupon codes."
         actions={
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             onClick={() => navigate("/admin/coupons/new")}
           >
-            Create coupon
+            Create Coupon
           </button>
         }
       >
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Search</label>
           <div className={`${FILTER_FIELD_CLASS} flex items-center bg-[#fbf7f0] text-brand-muted`}>
-            {debouncedSearch ? debouncedSearch : "Use the topbar search to filter coupons"}
+            {debouncedSearch ? debouncedSearch : "Search coupons"}
           </div>
         </div>
 
@@ -341,8 +341,8 @@ function Coupons() {
         columns={columns}
         rows={paginatedCoupons}
         isLoading={couponsQuery.isLoading}
-        emptyTitle="No coupons match the current filters"
-        emptyDescription="Create a coupon or widen the status filters to see more campaigns."
+        emptyTitle="No coupons found"
+        emptyDescription="Try a different filter or create a new coupon."
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
@@ -350,7 +350,7 @@ function Coupons() {
       <Modal
         open={Boolean(confirmingCoupon)}
         onClose={() => setConfirmingCoupon(null)}
-        title="Delete coupon"
+        title="Delete Coupon"
         footer={
           <div className="flex items-center justify-between">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setConfirmingCoupon(null)}>
@@ -372,8 +372,7 @@ function Coupons() {
         }
       >
         <p className="text-sm leading-6 text-brand-muted">
-          This will remove <span className="font-medium text-brand-dark">{confirmingCoupon?.code}</span> from the admin system.
-          Use pause if you want to stop redemptions but keep the campaign history.
+          This will remove <span className="font-medium text-brand-dark">{confirmingCoupon?.code}</span> from the coupon list.
         </p>
       </Modal>
     </div>

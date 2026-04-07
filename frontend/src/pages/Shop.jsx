@@ -168,7 +168,7 @@ function Shop() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search An Item"
+                placeholder="Search products"
                 className="w-full bg-transparent text-sm text-black outline-none placeholder:text-black/35"
               />
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
@@ -177,7 +177,7 @@ function Shop() {
             </label>
 
             <p className="text-sm text-black/76">
-              Showing {showingFrom}-{showingTo} of {totalElements} item(s)
+              Showing {showingFrom}-{showingTo} of {totalElements} products
             </p>
           </div>
 
@@ -256,7 +256,7 @@ function Shop() {
               {hasMorePages && (
                 <div className="pt-8 text-center">
                   <p className="text-sm text-black/76">
-                    Showing {showingFrom}-{showingTo} of {totalElements} item(s)
+                    Showing {showingFrom}-{showingTo} of {totalElements} products
                   </p>
                   <div className="mx-auto mt-4 h-px w-full max-w-[420px] bg-black/12" />
                   <button

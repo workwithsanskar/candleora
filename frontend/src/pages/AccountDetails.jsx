@@ -284,18 +284,21 @@ function AccountDetails() {
               <PrimaryButton type="submit" disabled={isSaving} className="min-w-[200px]">
                 {isSaving ? "Saving..." : "Save Changes"}
               </PrimaryButton>
-              <Link to="/profile" className="checkout-action-secondary min-w-[160px] text-center">
-                Back to Overview
-              </Link>
             </div>
           </div>
 
           <aside className="checkout-soft-panel h-fit p-5">
             <p className="text-[1.05rem] font-semibold text-black">Notes</p>
-            <div className="mt-3 space-y-3 text-sm leading-7 text-black/62">
-              <p>- Email is linked to your login method.</p>
-              <p>- Addresses saved here are used at checkout.</p>
-            </div>
+            <ul className="mt-3 space-y-2.5 text-sm leading-7 text-black/62">
+              <li className="flex items-start gap-3">
+                <span className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFA20A]" />
+                <span>Email is linked to your login method.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-[10px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFA20A]" />
+                <span>Addresses saved here are used at checkout.</span>
+              </li>
+            </ul>
           </aside>
         </form>
 
@@ -309,7 +312,7 @@ function AccountDetails() {
             </div>
 
             <SecondaryButton onClick={openAddModal}>
-              Add New Address
+              + Add New Address
             </SecondaryButton>
           </div>
 
@@ -353,14 +356,17 @@ function AccountDetails() {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingAddress?.id ? "Edit Address" : "Add New Address"}
+        title={editingAddress?.id ? "Edit Saved Address" : "Add New Address"}
         kicker=""
-        description="Enter your delivery details to receive your order."
+        description={editingAddress?.id
+          ? "Saved addresses are used for delivery across account pages and checkout."
+          : "Enter your delivery details to receive your order."}
         maxWidthClass="max-w-[940px]"
       >
         {addressSaveError ? <p className="mb-4 text-sm font-medium text-[#c93232]">{addressSaveError}</p> : null}
         <AddressEditorForm
           initialValue={editingAddress}
+          contactEmail={profile?.email ?? user?.email ?? ""}
           isSubmitting={isMutating}
           submitLabel={editingAddress?.id ? "Save Address" : "Save Address"}
           onSubmit={handleSaveAddress}

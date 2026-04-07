@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { animate, useReducedMotion } from "framer-motion";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import adminApi from "../services/adminApi";
@@ -15,8 +16,16 @@ import {
   titleCase,
 } from "../../utils/format";
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function CustomerDetail() {
   const { customerId } = useParams();
+  const prefersReducedMotion = useReducedMotion();
+  const addressesScrollRef = useRef(null);
+  const addressesScrollAnimationRef = useRef(null);
+  const addressesScrollTargetRef = useRef(0);
 
   const customerQuery = useQuery({
     queryKey: ["admin", "customer", customerId],
@@ -36,6 +45,12 @@ function CustomerDetail() {
       { label: "Average order", value: formatCurrency(customerQuery.data.averageOrderValue) },
     ];
   }, [customerQuery.data]);
+
+  useEffect(() => {
+    return () => {
+      addressesScrollAnimationRef.current?.stop();
+    };
+  }, []);
 
   if (customerQuery.isError) {
     return (
@@ -76,6 +91,75 @@ function CustomerDetail() {
 
   const customer = customerQuery.data;
   const fallbackProfileAddress = buildFallbackProfileAddress(customer);
+  const explicitAddresses = customer.addresses.length > 0
+    ? customer.addresses
+    : fallbackProfileAddress
+      ? [fallbackProfileAddress]
+      : [];
+  const primaryAddress = explicitAddresses.find((address) => address.isDefault) ?? explicitAddresses[0] ?? null;
+  const remainingAddresses = primaryAddress
+    ? explicitAddresses.filter((address) => address.id !== primaryAddress.id)
+    : [];
+  const shouldEnableAddressScroller = remainingAddresses.length > 0;
+
+  const syncAddressScrollTarget = () => {
+    if (!addressesScrollRef.current) {
+      return;
+    }
+
+    addressesScrollTargetRef.current = addressesScrollRef.current.scrollTop;
+  };
+
+  const handleAddressesWheel = (event) => {
+    const scrollRegion = addressesScrollRef.current;
+    if (!scrollRegion || !shouldEnableAddressScroller) {
+      return;
+    }
+
+    const maxScrollTop = Math.max(0, scrollRegion.scrollHeight - scrollRegion.clientHeight);
+    if (maxScrollTop <= 0) {
+      return;
+    }
+
+    const normalizedDelta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+    if (!normalizedDelta) {
+      return;
+    }
+
+    const currentScrollTop = scrollRegion.scrollTop;
+    const atTop = currentScrollTop <= 0;
+    const atBottom = currentScrollTop >= maxScrollTop - 1;
+
+    if ((normalizedDelta < 0 && atTop) || (normalizedDelta > 0 && atBottom)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const baseScrollTop = Number.isFinite(addressesScrollTargetRef.current)
+      ? addressesScrollTargetRef.current
+      : currentScrollTop;
+    const nextScrollTop = clamp(baseScrollTop + normalizedDelta, 0, maxScrollTop);
+    addressesScrollTargetRef.current = nextScrollTop;
+
+    addressesScrollAnimationRef.current?.stop();
+
+    if (prefersReducedMotion) {
+      scrollRegion.scrollTop = nextScrollTop;
+      return;
+    }
+
+    addressesScrollAnimationRef.current = animate(currentScrollTop, nextScrollTop, {
+      duration: 0.28,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => {
+        if (addressesScrollRef.current) {
+          addressesScrollRef.current.scrollTop = latest;
+        }
+      },
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -127,8 +211,8 @@ function CustomerDetail() {
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-6">
+      <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-stretch">
+        <div className="flex h-full flex-col gap-6">
           <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
             <SectionHeader
               eyebrow="Identity"
@@ -147,20 +231,41 @@ function CustomerDetail() {
             </dl>
           </div>
 
-          <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
+          <div className="flex min-h-0 flex-1 flex-col rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
             <SectionHeader
               eyebrow="Addresses"
               title="Saved delivery addresses"
               description="Profile address fields and explicit saved addresses are both surfaced for support and fulfilment review."
             />
 
-            <div className="mt-5 space-y-4">
-              {customer.addresses.length > 0 ? (
-                customer.addresses.map((address) => (
-                  <AddressCard key={address.id} address={address} />
-                ))
-              ) : fallbackProfileAddress ? (
-                <AddressCard address={fallbackProfileAddress} isFallback />
+            <div
+              ref={addressesScrollRef}
+              className={`mt-5 flex min-h-0 flex-col ${
+                shouldEnableAddressScroller
+                  ? "mini-cart-scroll-view stealth-scrollbar max-h-[19.5rem] overflow-y-auto overscroll-contain pr-3 scroll-smooth touch-pan-y"
+                  : ""
+              }`.trim()}
+              data-lenis-prevent={shouldEnableAddressScroller ? "true" : undefined}
+              data-lenis-prevent-wheel={shouldEnableAddressScroller ? "true" : undefined}
+              data-lenis-prevent-touch={shouldEnableAddressScroller ? "true" : undefined}
+              onScroll={shouldEnableAddressScroller ? syncAddressScrollTarget : undefined}
+              onWheelCapture={shouldEnableAddressScroller ? handleAddressesWheel : undefined}
+            >
+              {primaryAddress ? (
+                <>
+                  <AddressCard
+                    address={primaryAddress}
+                    isFallback={fallbackProfileAddress?.id === primaryAddress.id}
+                  />
+
+                  {remainingAddresses.length > 0 ? (
+                    <div className="mt-4 space-y-4">
+                      {remainingAddresses.map((address) => (
+                        <AddressCard key={address.id} address={address} />
+                      ))}
+                    </div>
+                  ) : null}
+                </>
               ) : (
                 <EmptyState
                   title="No saved addresses yet"
@@ -171,7 +276,7 @@ function CustomerDetail() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="flex h-full flex-col gap-6">
           <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
             <SectionHeader
               eyebrow="Account health"

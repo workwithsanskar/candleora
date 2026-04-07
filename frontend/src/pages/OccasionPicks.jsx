@@ -156,7 +156,7 @@ function OccasionPicks() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search An Item"
+                placeholder="Search products"
                 className="w-full bg-transparent text-sm text-black outline-none placeholder:text-black/35"
               />
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
@@ -165,7 +165,7 @@ function OccasionPicks() {
             </label>
 
             <p className="text-sm text-black/76">
-              Showing {showingFrom}-{showingTo} of {totalElements} item(s) for {selectedOccasion}
+              Showing {showingFrom}-{showingTo} of {totalElements} products for {selectedOccasion}
             </p>
           </div>
 

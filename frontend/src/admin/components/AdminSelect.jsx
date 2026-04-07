@@ -179,6 +179,7 @@ function AdminSelect({
             >
               {options.map((option) => {
                 const isSelected = String(option.value) === String(value);
+                const isDisabled = Boolean(option.disabled);
 
                 return (
                   <button
@@ -186,12 +187,18 @@ function AdminSelect({
                     type="button"
                     role="option"
                     aria-selected={isSelected}
+                    disabled={isDisabled}
                     className={`flex w-full items-center justify-between gap-3 rounded-[18px] px-3 py-2.5 text-left text-sm transition ${
                       isSelected
                         ? "bg-[#17120f] text-white"
-                        : "text-brand-dark hover:bg-[#fff1d8]"
-                    }`}
+                        : isDisabled
+                          ? "cursor-not-allowed text-brand-muted opacity-55"
+                          : "text-brand-dark hover:bg-[#fff1d8]"
+                    }`.trim()}
                     onClick={() => {
+                      if (isDisabled) {
+                        return;
+                      }
                       onChange(option.value);
                       setOpen(false);
                     }}
@@ -228,6 +235,7 @@ AdminSelect.propTypes = {
     PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       label: PropTypes.string.isRequired,
+      disabled: PropTypes.bool,
     }),
   ).isRequired,
   placeholder: PropTypes.string,

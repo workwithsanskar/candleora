@@ -152,6 +152,9 @@ public class CouponService {
         coupon.setEndsAt(request.endsAt());
         coupon.setUsageLimit(request.usageLimit());
         coupon.setUsageCount(0);
+        coupon.setDescription(sanitizeOfferCopy(request.description()));
+        coupon.setDetailSummary(sanitizeOfferCopy(request.detailSummary()));
+        coupon.setDetailTerms(serializeDetailTerms(normalizeDetailTerms(request.detailTerms())));
         coupon.setTargetCategorySlugs(serializeCategorySlugs(categorySlugs));
         coupon.setTargetProductIds(serializeProductIds(productIds));
         return toAdminResponse(couponRepository.save(coupon));
@@ -179,6 +182,15 @@ public class CouponService {
         Instant nextStartsAt = request.startsAt();
         Instant nextEndsAt = request.endsAt();
         Integer nextUsageLimit = request.usageLimit();
+        String nextDescription = request.description() != null
+            ? sanitizeOfferCopy(request.description())
+            : coupon.getDescription();
+        String nextDetailSummary = request.detailSummary() != null
+            ? sanitizeOfferCopy(request.detailSummary())
+            : coupon.getDetailSummary();
+        List<String> nextDetailTerms = request.detailTerms() != null
+            ? normalizeDetailTerms(request.detailTerms())
+            : parseDetailTermsAsList(coupon.getDetailTerms());
         boolean nextFirstOrderOnly = request.firstOrderOnly() != null
             ? request.firstOrderOnly()
             : coupon.isFirstOrderOnly();
@@ -216,6 +228,9 @@ public class CouponService {
         coupon.setStartsAt(nextStartsAt);
         coupon.setEndsAt(nextEndsAt);
         coupon.setUsageLimit(nextUsageLimit);
+        coupon.setDescription(nextDescription);
+        coupon.setDetailSummary(nextDetailSummary);
+        coupon.setDetailTerms(serializeDetailTerms(nextDetailTerms));
         coupon.setTargetCategorySlugs(serializeCategorySlugs(nextCategorySlugs));
         coupon.setTargetProductIds(serializeProductIds(nextProductIds));
 
@@ -555,6 +570,9 @@ public class CouponService {
             coupon.getEndsAt(),
             coupon.getUsageLimit(),
             coupon.getUsageCount(),
+            coupon.getDescription(),
+            coupon.getDetailSummary(),
+            parseDetailTermsAsList(coupon.getDetailTerms()),
             parseCategorySlugsAsList(coupon.getTargetCategorySlugs()),
             parseProductIdsAsList(coupon.getTargetProductIds())
         );
@@ -565,6 +583,8 @@ public class CouponService {
             coupon.getCode(),
             buildOfferTitle(coupon),
             buildOfferDescription(coupon),
+            coupon.getDetailSummary(),
+            parseDetailTermsAsList(coupon.getDetailTerms()),
             buildOfferEligibilityHint(coupon),
             coupon.getEndsAt(),
             buildOfferExpiryText(coupon)
@@ -632,6 +652,10 @@ public class CouponService {
     }
 
     private String buildOfferDescription(Coupon coupon) {
+        if (StringUtils.hasText(coupon.getDescription())) {
+            return coupon.getDescription().trim();
+        }
+
         return switch (coupon.getScope()) {
             case ALL_PRODUCTS -> "Valid across the CandleOra collection.";
             case CATEGORIES -> "Valid on selected CandleOra categories.";
@@ -768,6 +792,23 @@ public class CouponService {
             .toList();
     }
 
+    private List<String> normalizeDetailTerms(List<String> detailTerms) {
+        if (detailTerms == null) {
+            return List.of();
+        }
+
+        return detailTerms.stream()
+            .filter(StringUtils::hasText)
+            .map(value -> value.replaceFirst("^[\\-•\\s]+", "").trim())
+            .filter(StringUtils::hasText)
+            .distinct()
+            .toList();
+    }
+
+    private String sanitizeOfferCopy(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
     private String serializeCategorySlugs(List<String> categorySlugs) {
         if (categorySlugs == null || categorySlugs.isEmpty()) {
             return null;
@@ -786,6 +827,14 @@ public class CouponService {
             .collect(Collectors.joining(","));
     }
 
+    private String serializeDetailTerms(List<String> detailTerms) {
+        if (detailTerms == null || detailTerms.isEmpty()) {
+            return null;
+        }
+
+        return String.join("\n", detailTerms);
+    }
+
     private Set<String> parseCategorySlugs(String raw) {
         if (!StringUtils.hasText(raw)) {
             return Set.of();
@@ -801,6 +850,17 @@ public class CouponService {
 
     private List<String> parseCategorySlugsAsList(String raw) {
         return parseCategorySlugs(raw).stream().toList();
+    }
+
+    private List<String> parseDetailTermsAsList(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return List.of();
+        }
+
+        return raw.lines()
+            .map(String::trim)
+            .filter(StringUtils::hasText)
+            .toList();
     }
 
     private Set<Long> parseProductIds(String raw) {

@@ -44,24 +44,27 @@ function AdminDateTimePicker({ value, onChange, minDate, maxDate }) {
   const parsed = parseDateTimeValue(value);
 
   return (
-    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px_88px]">
+    <div className="grid items-stretch gap-2 sm:grid-cols-[minmax(0,1.35fr)_104px_104px]">
       <AdminDatePicker
         value={parsed.date}
         onChange={(nextDate) => onChange(buildDateTimeValue(nextDate, parsed.hour, parsed.minute))}
         minDate={minDate}
         maxDate={maxDate}
+        buttonClassName="h-11 rounded-[22px]"
       />
       <AdminSelect
         value={parsed.hour}
         onChange={(nextHour) => onChange(buildDateTimeValue(parsed.date, nextHour, parsed.minute))}
         options={HOUR_OPTIONS}
         placeholder="HH"
+        buttonClassName="h-11 rounded-[22px]"
       />
       <AdminSelect
         value={parsed.minute}
         onChange={(nextMinute) => onChange(buildDateTimeValue(parsed.date, parsed.hour, nextMinute))}
         options={MINUTE_OPTIONS}
         placeholder="MM"
+        buttonClassName="h-11 rounded-[22px]"
       />
     </div>
   );

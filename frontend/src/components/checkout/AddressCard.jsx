@@ -1,46 +1,49 @@
 import PropTypes from "prop-types";
 import RadioCard from "./RadioCard";
 import { formatAddressPreview } from "../../utils/addressBook";
+import { titleCase } from "../../utils/format";
 
 function AddressCard({ address, selected = false, onSelect, onEdit, onRemove }) {
   const preview = formatAddressPreview(address);
+  const tags = [
+    address.label ? titleCase(address.label) : null,
+    address.isDefault ? "Default" : null,
+  ].filter(Boolean);
 
   return (
     <RadioCard
       selected={selected}
       onClick={() => onSelect?.(address)}
-      className={`p-4 sm:p-5 ${selected ? "shadow-[0_0_0_1px_rgba(241,184,90,0.18)]" : ""}`}
+      className={`p-4 sm:p-[18px] ${selected ? "shadow-[0_0_0_1px_rgba(241,184,90,0.18)]" : ""}`}
     >
-      <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-2.5">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[1.05rem] font-semibold leading-tight text-[#1A1A1A] sm:text-[1.1rem]">
                 {address.recipientName}
               </p>
-              {address.label ? (
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/56">
-                  [{address.label}]
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full border border-black/10 px-2.5 py-1 text-[11px] font-semibold text-black/58"
+                >
+                  {tag}
                 </span>
-              ) : null}
-              {address.isDefault ? (
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/56">
-                  [Default]
-                </span>
-              ) : null}
+              ))}
             </div>
 
-            <p className="mt-1.5 text-sm text-black/55">{address.phoneNumber}</p>
+            <p className="mt-1 text-sm text-black/55">{address.phoneNumber}</p>
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold text-black/72 sm:pt-0.5">
+          <div className="flex items-center gap-4 text-sm font-semibold sm:pt-0.5">
             <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
                 onEdit?.(address);
               }}
-              className="transition hover:underline hover:underline-offset-4"
+              className="text-black/72 transition hover:underline hover:underline-offset-4"
             >
               Edit
             </button>
@@ -51,7 +54,7 @@ function AddressCard({ address, selected = false, onSelect, onEdit, onRemove }) 
                   event.stopPropagation();
                   onRemove(address.id);
                 }}
-                className="transition hover:underline hover:underline-offset-4"
+                className="text-danger transition hover:underline hover:underline-offset-4"
               >
                 Remove
               </button>
@@ -59,7 +62,7 @@ function AddressCard({ address, selected = false, onSelect, onEdit, onRemove }) 
           </div>
         </div>
 
-        <div className="max-w-[640px] space-y-1 text-sm leading-7 text-black/68">
+        <div className="max-w-[640px] space-y-1 text-sm leading-6 text-black/68">
           {preview.streetLine ? <p>{preview.streetLine}</p> : null}
           {preview.regionLine ? <p>{preview.regionLine}</p> : null}
         </div>

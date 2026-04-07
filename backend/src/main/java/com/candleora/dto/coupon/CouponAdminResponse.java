@@ -21,6 +21,9 @@ public record CouponAdminResponse(
     Instant endsAt,
     Integer usageLimit,
     Integer usageCount,
+    String description,
+    String detailSummary,
+    List<String> detailTerms,
     List<String> categorySlugs,
     List<Long> productIds
 ) {

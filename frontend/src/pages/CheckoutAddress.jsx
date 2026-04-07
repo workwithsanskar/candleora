@@ -150,6 +150,7 @@ function CheckoutAddress() {
     setAddressError("");
 
     try {
+      const isEditing = Boolean(editingAddress?.id);
       const savedAddress = editingAddress?.id
         ? await updateAddress(editingAddress.id, payload)
         : await createAddress(payload);
@@ -157,7 +158,12 @@ function CheckoutAddress() {
       setSelectedAddress(savedAddress.id);
       markAddressCompleted(false);
       closeModal();
-      toast.success(editingAddress?.id ? "Address updated." : "Address saved.");
+      toast.success(isEditing ? "Address updated." : "Address saved.");
+
+      if (!isEditing) {
+        markAddressCompleted(true);
+        navigate("/checkout/payment");
+      }
     } catch (error) {
       setAddressError(formatApiError(error));
     }
@@ -250,7 +256,7 @@ function CheckoutAddress() {
               onClick={openAddModal}
               className="checkout-action-secondary h-[52px] whitespace-nowrap lg:min-w-[210px]"
             >
-              + Add new address
+              + Add New Address
             </button>
           </div>
 
@@ -269,7 +275,7 @@ function CheckoutAddress() {
                 Add a new address to get started.
               </p>
               <PrimaryButton className="mt-4 min-w-[220px]" onClick={openAddModal}>
-                Add New Address
+                + Add New Address
               </PrimaryButton>
             </div>
           ) : visibleAddresses.length ? (
@@ -339,7 +345,7 @@ function CheckoutAddress() {
             sticky
             cta={(
               <PrimaryButton className="w-full" onClick={handleContinue} disabled={!selectedAddress}>
-                Continue to payment
+                Continue to Payment
               </PrimaryButton>
             )}
             note=""
@@ -380,16 +386,19 @@ function CheckoutAddress() {
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingAddress?.id ? "Edit saved address" : "Add new saved address"}
+        title={editingAddress?.id ? "Edit Saved Address" : "Add New Address"}
         kicker="CandleOra"
-        description="Saved addresses become the source of truth for delivery across account pages and checkout."
+        description={editingAddress?.id
+          ? "Saved addresses are used for delivery across account pages and checkout."
+          : "Enter your delivery details to receive your order."}
         maxWidthClass="max-w-[940px]"
       >
         {addressError ? <p className="mb-4 text-sm font-medium text-[#c93232]">{addressError}</p> : null}
         <AddressEditorForm
           initialValue={editingAddress}
+          contactEmail={user?.email ?? ""}
           isSubmitting={isMutating}
-          submitLabel={editingAddress?.id ? "Update address" : "Save address"}
+          submitLabel={editingAddress?.id ? "Save Address" : "Continue to Payment"}
           onSubmit={handleSaveAddress}
           onCancel={closeModal}
         />

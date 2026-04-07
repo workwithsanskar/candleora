@@ -190,7 +190,7 @@ function ProductEditor() {
       <div className="rounded-[28px] border border-danger/20 bg-white p-8 shadow-sm">
         <h2 className="font-display text-2xl font-semibold text-brand-dark">Product unavailable</h2>
         <p className="mt-3 text-sm leading-6 text-brand-muted">
-          The product editor could not load this catalog item. Verify the backend and try again.
+          The product could not be loaded. Verify the backend and try again.
         </p>
         <button type="button" className={`${SECONDARY_BUTTON_CLASS} mt-5`} onClick={() => navigate("/admin/products")}>
           Back to products
@@ -204,13 +204,12 @@ function ProductEditor() {
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Catalog editor</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Product editor</p>
             <h1 className="mt-2 font-display text-4xl font-semibold text-brand-dark">
               {isEdit ? "Edit product" : "Add product"}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
-              Use a full workspace page for product setup so pricing, content, media, and recommendation links are
-              easier to manage than inside a popup.
+              Manage pricing, stock, content, and related products for this listing.
             </p>
           </div>
 
@@ -231,11 +230,11 @@ function ProductEditor() {
             <div>
               <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Catalog identity</p>
               <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                Name the listing, place it in the right collection, and keep the customer-facing identifiers clean.
+                Set the product name, category, slug, and SKU.
               </p>
             </div>
             <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
-              {isEdit ? "Editing live listing" : "New listing"}
+              {isEdit ? "Editing product" : "New product"}
             </span>
           </div>
 
@@ -263,12 +262,12 @@ function ProductEditor() {
 
             <div className="flex flex-col gap-2 lg:col-span-4">
               <label className={FILTER_LABEL_CLASS}>Slug</label>
-              <input className={FILTER_FIELD_CLASS} {...register("slug")} placeholder="auto-generated-if-left-empty" />
+              <input className={FILTER_FIELD_CLASS} {...register("slug")} placeholder="Auto generated if left empty" />
             </div>
 
             <div className="flex flex-col gap-2 lg:col-span-4">
               <label className={FILTER_LABEL_CLASS}>SKU</label>
-              <input className={FILTER_FIELD_CLASS} {...register("sku")} placeholder="auto-generated-if-left-empty" />
+              <input className={FILTER_FIELD_CLASS} {...register("sku")} placeholder="Auto generated if left empty" />
             </div>
           </div>
         </section>
@@ -277,7 +276,7 @@ function ProductEditor() {
           <section className={ADMIN_FORM_SECTION_CLASS}>
             <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Commerce setup</p>
             <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-              Align pricing, thresholds, and stock before this product appears in the live catalog.
+              Review pricing, stock, and low-stock settings.
             </p>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -324,7 +323,7 @@ function ProductEditor() {
                     </div>
                   </div>
                   <p className="mt-2.5 text-xs leading-5 text-brand-muted">
-                    Logged stock changes should be made from the inventory workspace, not from this edit form.
+                    Update stock from Products & Inventory.
                   </p>
                 </div>
               )}
@@ -334,7 +333,7 @@ function ProductEditor() {
           <section className={ADMIN_FORM_SECTION_CLASS}>
             <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Presentation details</p>
             <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-              Shape the way the listing reads on the storefront with concise merchandising details.
+              Add the short storefront details shown with this product.
             </p>
 
             <div className="mt-3 grid gap-3">
@@ -372,7 +371,7 @@ function ProductEditor() {
             <div>
               <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Story and media</p>
               <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                Keep the description crisp and the media URLs ready for the catalog feed and merchandising blocks.
+                Add a short description and image links for this listing.
               </p>
             </div>
             <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
@@ -403,8 +402,7 @@ function ProductEditor() {
             <div>
               <p className={ADMIN_FORM_SECTION_TITLE_CLASS}>Similar products</p>
               <p className={ADMIN_FORM_SECTION_COPY_CLASS}>
-                Choose the exact products that should appear in the Similar Products section for this listing. Leave
-                this empty to hide that section on the storefront.
+                Choose which products should appear in Similar Products. Leave this empty to hide that section.
               </p>
             </div>
             <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
@@ -443,8 +441,7 @@ function ProductEditor() {
                 </div>
               ) : (
                 <div className="rounded-[24px] border border-dashed border-black/12 bg-white p-4 text-sm leading-6 text-brand-muted">
-                  No similar products selected yet. When this stays empty, the storefront hides the Similar Products
-                  block completely.
+                  No similar products selected yet. The storefront will hide Similar Products until links are added.
                 </div>
               )}
             </div>
@@ -453,7 +450,7 @@ function ProductEditor() {
               <div className="border-b border-black/8 px-4 py-2.5">
                 <p className="text-[1.55rem] font-semibold leading-none text-brand-dark">Product links</p>
                 <p className="mt-1 text-sm text-brand-muted">
-                  Click products to add or remove them from this listing&apos;s recommendation set.
+                  Click products to add or remove them from this list.
                 </p>
               </div>
 
@@ -496,7 +493,7 @@ function ProductEditor() {
                             <p className="mt-1 text-xs text-brand-muted">
                               {[option.categoryName, option.sku || "SKU pending", option.visible ? "Visible" : "Hidden"]
                                 .filter(Boolean)
-                                .join(" · ")}
+                                .join(" | ")}
                             </p>
                             <p className="mt-1 truncate text-[11px] uppercase tracking-[0.14em] text-brand-muted">
                               {option.slug}

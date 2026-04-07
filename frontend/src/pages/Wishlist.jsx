@@ -68,7 +68,7 @@ function Wishlist() {
 
   return (
     <section className="container-shell py-12 sm:py-14">
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="space-y-3">
           <div className="space-y-3">
             <h1 className="page-title">Wishlist</h1>
@@ -79,15 +79,16 @@ function Wishlist() {
         </div>
 
         <div
-          className={`space-y-5 ${items.length > 3 ? "stealth-scrollbar max-h-[1100px] overflow-y-auto pr-2" : ""}`.trim()}
+          className={`${items.length > 4 ? "stealth-scrollbar max-h-[80vh] overflow-y-auto pr-2" : ""}`.trim()}
         >
+          <div className="grid gap-5 sm:grid-cols-2">
             {items.map((item, index) => {
               const savings = Math.max(Number(item.originalPrice ?? 0) - Number(item.price ?? 0), 0);
 
               return (
                 <m.article
                   key={item.id}
-                  className="overflow-hidden rounded-[28px] border border-black/10 bg-white p-4 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-5"
+                  className="h-full overflow-hidden rounded-[28px] border border-black/10 bg-white p-4 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-5"
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.28, delay: prefersReducedMotion ? 0 : index * 0.04 }}
@@ -131,7 +132,7 @@ function Wishlist() {
                                 : "bg-[#fff1f1] text-[#c62828]"
                             }`}
                           >
-                            {item.stock > 0 ? "In stock" : "Out of stock"}
+                            {item.stock > 0 ? "In Stock" : "Out of Stock"}
                           </span>
                         </div>
 
@@ -149,14 +150,14 @@ function Wishlist() {
                         </div>
 
                         <div className="flex flex-wrap items-end gap-3">
+                          <span className="text-[1.55rem] font-semibold leading-none text-black">
+                            {formatCurrency(item.price)}
+                          </span>
                           {Number(item.originalPrice) > Number(item.price) ? (
                             <span className="text-lg text-black/35 line-through">
                               {formatCurrency(item.originalPrice)}
                             </span>
                           ) : null}
-                          <span className="text-[1.55rem] font-semibold leading-none text-black">
-                            {formatCurrency(item.price)}
-                          </span>
                           {savings > 0 ? (
                             <span className="pb-1 text-sm font-semibold text-brand-primary">
                               Save {formatCurrency(savings)}
@@ -181,6 +182,7 @@ function Wishlist() {
                 </m.article>
               );
             })}
+          </div>
         </div>
       </div>
     </section>

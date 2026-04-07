@@ -1,24 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import CandleCheckbox from "../../components/CandleCheckbox";
 import FiltersBar from "../components/FiltersBar";
 import Pagination from "../components/Pagination";
 import adminApi from "../services/adminApi";
-import {
-  PRIMARY_BUTTON_CLASS,
-  formatAdminStatus,
-  statusClassName,
-} from "../helpers";
-import { formatApiError, formatDateTime } from "../../utils/format";
+import { FILTER_FIELD_CLASS, formatAdminStatus, statusClassName } from "../helpers";
+import { formatDateTime } from "../../utils/format";
 
 const FILTER_OPTIONS = [
-  { label: "ALL", status: undefined, fraud: undefined },
-  { label: "REQUESTED", status: "REQUESTED", fraud: undefined },
-  { label: "APPROVED", status: "APPROVED", fraud: undefined },
-  { label: "REJECTED", status: "REJECTED", fraud: undefined },
-  { label: "FRAUD", status: undefined, fraud: true },
+  { label: "All", status: undefined, fraud: undefined },
+  { label: "Requested", status: "REQUESTED", fraud: undefined },
+  { label: "Under Review", status: undefined, fraud: true },
+  { label: "Approved", status: "APPROVED", fraud: undefined },
+  { label: "Rejected", status: "REJECTED", fraud: undefined },
 ];
 
 function getProofAssets(replacement) {
@@ -39,14 +33,12 @@ function isVideoProofAsset(url) {
 
 function Replacements() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [activeFilter, setActiveFilter] = useState("ALL");
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
     setPage(0);
-    setSelectedIds([]);
   }, [activeFilter]);
 
   const activeConfig = useMemo(
@@ -65,50 +57,34 @@ function Replacements() {
       }),
   });
 
-  const bulkApproveMutation = useMutation({
-    mutationFn: (ids) =>
-      adminApi.bulkApproveReplacements({
-        ids,
-        adminNote: "Approved from the replacements dashboard",
-      }),
-    onSuccess: async () => {
-      toast.success("Selected replacements approved.");
-      setSelectedIds([]);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["admin", "replacements"] }),
-        queryClient.invalidateQueries({ queryKey: ["admin", "sidebar-badge", "replacements"] }),
-        queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] }),
-      ]);
-    },
-    onError: (error) => {
-      toast.error(formatApiError(error));
-    },
-  });
-
   const rows = replacementsQuery.data?.content ?? [];
-  const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.id));
+  const filteredRows = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
 
-  const toggleRow = (replacementId) => {
-    setSelectedIds((current) =>
-      current.includes(replacementId)
-        ? current.filter((id) => id !== replacementId)
-        : [...current, replacementId],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (isAllSelected) {
-      setSelectedIds([]);
-      return;
+    if (!normalizedSearch) {
+      return rows;
     }
 
-    setSelectedIds(rows.map((row) => row.id));
-  };
+    return rows.filter((replacement) => {
+      const haystack = [
+        replacement.orderId,
+        replacement.customerName,
+        replacement.customerEmail,
+        replacement.productName,
+        replacement.reason,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch);
+    });
+  }, [rows, searchValue]);
 
   if (replacementsQuery.isError) {
     return (
       <div className="rounded-[28px] border border-danger/20 bg-white p-6 shadow-sm">
-        <h2 className="font-display text-2xl font-semibold text-brand-dark">Replacements unavailable</h2>
+        <h2 className="font-display text-2xl font-semibold text-brand-dark">Replacement requests unavailable</h2>
         <p className="mt-2 text-sm leading-6 text-brand-muted">
           The replacement queue could not be loaded. Check the backend and try again.
         </p>
@@ -119,19 +95,19 @@ function Replacements() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Replacement requests"
-        description="Keep the queue focused here, then open each request on its own page for full review, notes, approval, and proof inspection."
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            disabled={!selectedIds.length || bulkApproveMutation.isPending}
-            onClick={() => bulkApproveMutation.mutate(selectedIds)}
-          >
-            {bulkApproveMutation.isPending ? "Approving..." : "Approve selected"}
-          </button>
-        }
+        title="Replacement Requests"
+        description="Review and manage customer replacement requests."
       >
+        <label className="flex min-w-[280px] flex-1">
+          <span className="sr-only">Search replacement requests</span>
+          <input
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder="Search by Order ID, Customer name, or Product"
+            className={FILTER_FIELD_CLASS}
+          />
+        </label>
+
         <div className="flex flex-wrap gap-2">
           {FILTER_OPTIONS.map((option) => (
             <button
@@ -155,24 +131,32 @@ function Replacements() {
           <table className="min-w-full border-separate border-spacing-0">
             <thead className="bg-[#fbf7f0] text-left">
               <tr>
-                <th className="border-b border-black/8 px-4 py-4">
-                  <CandleCheckbox checked={isAllSelected} onChange={toggleSelectAll} className="h-4 w-4" />
-                </th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Image</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Order</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Product</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Reason</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Status</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Fraud</th>
-                <th className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted">Details</th>
+                {[
+                  "Image",
+                  "Order ID",
+                  "Customer",
+                  "Product",
+                  "Reason",
+                  "Type",
+                  "Status",
+                  "Requested On",
+                  "Actions",
+                ].map((label) => (
+                  <th
+                    key={label}
+                    className="border-b border-black/8 px-4 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-muted"
+                  >
+                    {label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {replacementsQuery.isLoading
-                ? Array.from({ length: 6 }).map((_, index) => (
-                    <tr key={`loading-${index}`}>
-                      {Array.from({ length: 8 }).map((__, cellIndex) => (
-                        <td key={`loading-${index}-${cellIndex}`} className="border-b border-black/6 px-4 py-4">
+                ? Array.from({ length: 6 }).map((_, rowIndex) => (
+                    <tr key={`replacement-loading-${rowIndex}`}>
+                      {Array.from({ length: 9 }).map((__, cellIndex) => (
+                        <td key={`replacement-loading-${rowIndex}-${cellIndex}`} className="border-b border-black/6 px-4 py-4">
                           <div className="h-4 animate-pulse rounded-full bg-black/8" />
                         </td>
                       ))}
@@ -180,120 +164,79 @@ function Replacements() {
                   ))
                 : null}
 
-              {!replacementsQuery.isLoading && !rows.length ? (
+              {!replacementsQuery.isLoading && !filteredRows.length ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-14 text-center">
-                    <h4 className="font-display text-2xl font-semibold text-brand-dark">No replacement requests</h4>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <h4 className="font-display text-2xl font-semibold text-brand-dark">No requests found</h4>
                     <p className="mt-2 text-sm leading-6 text-brand-muted">
-                      When customers submit replacement claims, they will appear here.
+                      Try a different filter or search term.
                     </p>
                   </td>
                 </tr>
               ) : null}
 
               {!replacementsQuery.isLoading
-                ? rows.map((replacement) => {
+                ? filteredRows.map((replacement) => {
                     const proofAssets = getProofAssets(replacement);
                     const primaryProof = proofAssets[0] ?? "";
-                    const primaryProofIsVideo = isVideoProofAsset(primaryProof);
 
                     return (
                       <tr key={replacement.id} className="align-top transition hover:bg-[#fbf7f0]">
                         <td className="border-b border-black/6 px-4 py-4">
-                          <CandleCheckbox
-                            checked={selectedIds.includes(replacement.id)}
-                            onChange={() => toggleRow(replacement.id)}
-                            className="h-4 w-4"
-                          />
-                        </td>
-                        <td className="border-b border-black/6 px-4 py-4">
                           {primaryProof ? (
-                            <div className="relative overflow-hidden rounded-[20px] border border-black/10">
-                              {primaryProofIsVideo ? (
-                                <video
-                                  src={primaryProof}
-                                  className="h-16 w-16 object-cover"
-                                  muted
-                                  playsInline
-                                  preload="metadata"
-                                />
-                              ) : (
-                                <img
-                                  src={primaryProof}
-                                  alt={`${replacement.productName} proof`}
-                                  className="h-16 w-16 object-cover"
-                                />
-                              )}
-                              {primaryProofIsVideo ? (
-                                <span className="absolute left-1.5 top-1.5 inline-flex rounded-full bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                                  Video
-                                </span>
-                              ) : null}
-                              {proofAssets.length > 1 ? (
-                                <span className="absolute bottom-1 right-1 inline-flex rounded-full bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                                  +{proofAssets.length - 1}
-                                </span>
-                              ) : null}
-                            </div>
+                            isVideoProofAsset(primaryProof) ? (
+                              <video
+                                src={primaryProof}
+                                className="h-16 w-16 rounded-[18px] object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : (
+                              <img
+                                src={primaryProof}
+                                alt={`${replacement.productName} proof`}
+                                className="h-16 w-16 rounded-[18px] object-cover"
+                              />
+                            )
                           ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-dashed border-black/12 bg-[#fbf7f0] text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-muted">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-dashed border-black/12 bg-[#fbf7f0] text-[11px] font-semibold text-brand-muted">
                               No image
                             </div>
                           )}
                         </td>
-                        <td className="border-b border-black/6 px-4 py-4 text-sm text-brand-dark">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold">#{replacement.orderId}</p>
-                            {!replacement.adminReviewedAt ? (
-                              <span className="inline-flex rounded-full bg-[#fff1d8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#986700]">
-                                New
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="mt-1 text-brand-muted">{formatDateTime(replacement.requestedAt)}</p>
+                        <td className="border-b border-black/6 px-4 py-4 text-sm font-semibold text-brand-dark">
+                          #{replacement.orderId}
                         </td>
                         <td className="border-b border-black/6 px-4 py-4">
-                          <p className="font-semibold text-brand-dark">{replacement.productName}</p>
-                          <p className="mt-1 text-sm text-brand-muted">{replacement.customerName}</p>
-                          <p className="mt-1 text-sm text-brand-muted">{replacement.customerEmail}</p>
+                          <p className="font-medium text-brand-dark">{replacement.customerName}</p>
+                          <p className="mt-1 text-xs text-brand-muted">{replacement.customerEmail}</p>
+                        </td>
+                        <td className="border-b border-black/6 px-4 py-4">
+                          <p className="font-medium text-brand-dark">{replacement.productName}</p>
                         </td>
                         <td className="border-b border-black/6 px-4 py-4">
                           <p className="font-medium text-brand-dark">{replacement.reason}</p>
-                          {replacement.customerNote ? (
-                            <p className="mt-2 max-w-[28ch] text-sm leading-6 text-brand-muted xl:max-w-[220px]">
-                              {replacement.customerNote}
-                            </p>
-                          ) : null}
+                        </td>
+                        <td className="border-b border-black/6 px-4 py-4 text-sm text-brand-muted">
+                          Replacement
                         </td>
                         <td className="border-b border-black/6 px-4 py-4">
                           <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(replacement.status)}`}>
-                            {formatAdminStatus(replacement.status)}
+                            {activeFilter === "Under Review" ? "Under Review" : formatAdminStatus(replacement.status)}
                           </span>
                         </td>
-                        <td className="border-b border-black/6 px-4 py-4">
-                          {replacement.isFraudSuspected ? (
-                            <span
-                              title="Marked for manual review based on repeated requests or missing proof."
-                              className="inline-flex items-center gap-2 rounded-full bg-[#fff1d8] px-3 py-1 text-xs font-semibold text-[#986700]"
-                            >
-                              <span className="h-2 w-2 rounded-full bg-current" />
-                              Review
-                            </span>
-                          ) : (
-                            <span className="text-sm text-brand-muted">Clear</span>
-                          )}
+                        <td className="border-b border-black/6 px-4 py-4 text-sm text-brand-muted">
+                          {formatDateTime(replacement.requestedAt)}
                         </td>
                         <td className="border-b border-black/6 px-4 py-4">
                           <button
                             type="button"
-                            className="inline-flex min-w-[132px] items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark transition hover:border-black/20 hover:bg-black/5"
+                            className="inline-flex min-w-[120px] items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-brand-dark transition hover:border-black/20 hover:bg-black/5"
                             onClick={() => navigate(`/admin/replacements/${replacement.id}`)}
                           >
-                            View details
+                            View Details
                           </button>
-                          <p className="mt-2 text-xs leading-5 text-brand-muted">
-                            Open the full request page to review the proof and decision controls.
-                          </p>
                         </td>
                       </tr>
                     );

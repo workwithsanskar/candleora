@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import CandleCheckbox from "../../components/CandleCheckbox";
-import useFestiveArtworkLayout from "../../hooks/useFestiveArtworkLayout";
 import { uploadAssetToCloudinary } from "../../utils/cloudinary";
 import {
   clearFestiveBannerDismissals,
@@ -24,7 +23,7 @@ import adminApi from "../services/adminApi";
 
 const DISCOUNT_TYPE_OPTIONS = [
   { value: "PERCENTAGE", label: "Percentage" },
-  { value: "FLAT", label: "Flat amount" },
+  { value: "FLAT", label: "Flat Amount" },
 ];
 
 const BANNER_FORM_ID = "admin-festive-banner-page-form";
@@ -33,15 +32,13 @@ const BANNER_SECTION_CLASS =
 const BANNER_SECTION_TITLE_CLASS =
   "text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted";
 const BANNER_SECTION_COPY_CLASS = "mt-1 text-[13px] leading-5 text-brand-muted";
-const TOGGLE_CARD_CLASS =
-  "inline-flex min-h-14 items-center gap-3 whitespace-nowrap rounded-[20px] border border-black/10 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark";
 
 const blankFormValues = {
   title: "",
   description: "",
   imageUrl: "",
   redirectUrl: "/shop",
-  ctaLabel: "Apply offer",
+  ctaLabel: "Apply Offer",
   autoGenerateCoupon: true,
   existingCouponCode: "",
   discountType: "PERCENTAGE",
@@ -65,6 +62,7 @@ function BannerEditor() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [dismissalVersion, setDismissalVersion] = useState(0);
   const isEdit = Boolean(bannerId);
 
   const {
@@ -107,27 +105,23 @@ function BannerEditor() {
 
   const autoGenerateCoupon = watch("autoGenerateCoupon");
   const imageUrl = watch("imageUrl");
-  const artworkLayout = useFestiveArtworkLayout(imageUrl);
   const title = watch("title");
-  const description = watch("description");
   const ctaLabel = watch("ctaLabel");
   const redirectUrl = watch("redirectUrl");
   const discountType = watch("discountType");
   const discountValue = watch("discountValue");
-  const minOrderAmount = watch("minOrderAmount");
   const active = watch("active");
   const priority = watch("priority");
   const startTime = watch("startTime");
   const endTime = watch("endTime");
   const showOnce = watch("showOnce");
   const existingCouponCode = watch("existingCouponCode");
-  const [dismissalVersion, setDismissalVersion] = useState(0);
 
   const couponOptions = useMemo(
     () =>
       (couponsQuery.data ?? []).map((coupon) => ({
         value: coupon.code,
-        label: `${coupon.code} · ${coupon.type === "PERCENTAGE" ? `${Number(coupon.value)}%` : formatCurrency(coupon.value)}`,
+        label: `${coupon.code} | ${coupon.type === "PERCENTAGE" ? `${Number(coupon.value)}%` : formatCurrency(coupon.value)}`,
       })),
     [couponsQuery.data],
   );
@@ -215,102 +209,51 @@ function BannerEditor() {
       winningBanner && String(winningBanner.id) !== String(draftBanner.id) ? winningBanner : null;
 
     let tone = "warning";
-    let badge = "Not ready";
-    let summary =
-      "Complete the required setup and save the banner once you want it to become eligible for the home-page popup.";
+    let badge = "Not Ready";
+    let summary = "Complete the required fields and save the banner.";
 
     if (requiredIssues.length) {
       tone = "warning";
-      badge = "Not ready";
+      badge = "Not Ready";
       summary = requiredIssues[0];
     } else if (!active) {
       tone = "danger";
-      badge = "Not eligible";
-      summary = "Campaign active is turned off, so the popup API will skip this banner.";
+      badge = "Not Eligible";
+      summary = "Banner is inactive, so it will not appear.";
     } else if (scheduleState === "invalid") {
       tone = "danger";
-      badge = "Not eligible";
-      summary = "End time must be later than the start time before this banner can appear on the home page.";
+      badge = "Not Eligible";
+      summary = "End time must be later than the start time.";
     } else if (scheduleState === "expired") {
       tone = "danger";
-      badge = "Not eligible";
-      summary = "This campaign window has already ended, so the popup will not be returned by the backend.";
+      badge = "Not Eligible";
+      summary = "This banner schedule has already ended.";
     } else if (scheduleState === "scheduled") {
       tone = "warning";
       badge = "Scheduled";
-      summary = `This banner is saved for later and will only become eligible after ${formatStatusDateTime(startDate)}.`;
+      summary = `This banner will become active after ${formatStatusDateTime(startDate)}.`;
     } else if (blockedByBanner) {
       tone = "warning";
-      badge = "Blocked by priority";
-      summary = `"${blockedByBanner.title}" is currently the top eligible banner, so this popup will not show first on the home page.`;
+      badge = "Blocked by Priority";
+      summary = `"${blockedByBanner.title}" is ahead by priority, so this banner will not show first.`;
     } else if (!isEdit) {
       tone = "warning";
-      badge = "Save required";
-      summary = "This draft looks eligible, but it will not appear on the home page until you click Create banner.";
+      badge = "Save Required";
+      summary = "This draft looks ready, but it will not appear until you create the banner.";
     } else if (isDirty) {
       tone = "warning";
-      badge = "Save changes";
-      summary = "These edits are only in the editor right now. Save banner before the homepage uses this updated version.";
+      badge = "Save Changes";
+      summary = "Save banner to publish these changes.";
     } else {
       tone = "success";
-      badge = "Live now";
-      summary = "This banner matches the current popup rules and should be the one returned on the home page.";
+      badge = "Live Now";
+      summary = "This banner meets the current popup rules and should be shown first.";
     }
-
-    const rows = [
-      {
-        label: "Publish state",
-        value: !isEdit
-          ? "Draft only - create banner to publish"
-          : isDirty
-            ? "Unsaved changes - save to publish"
-            : "Saved and synced with the popup API",
-      },
-      {
-        label: "Schedule",
-        value:
-          scheduleState === "live"
-            ? `Live until ${formatStatusDateTime(endDate)}`
-            : scheduleState === "scheduled"
-              ? `Starts ${formatStatusDateTime(startDate)}`
-              : scheduleState === "expired"
-                ? `Ended ${formatStatusDateTime(endDate)}`
-                : scheduleState === "invalid"
-                  ? "End time must be later than start time"
-                  : "Start and end time are required",
-      },
-      {
-        label: "Priority",
-        value: `${normalizedPriority} (higher number wins)`,
-      },
-      {
-        label: "Homepage slot",
-        value:
-          requiredIssues.length || !active || scheduleState === "invalid" || scheduleState === "expired"
-            ? "This banner is not eligible for the popup feed yet"
-            : scheduleState === "scheduled"
-              ? "Queued for later based on the current schedule"
-              : blockedByBanner
-                ? `${blockedByBanner.title} is ahead with priority ${Number(blockedByBanner.priority ?? 0)}`
-                : "This banner should be the popup shown on the home page",
-      },
-      {
-        label: "Browser test state",
-        value: dismissedInBrowser
-          ? showOnce
-            ? "Dismissed in this browser - reset dismissal to test the show-once popup again"
-            : "Dismissed in this browser session - reset dismissal to test again"
-          : showOnce
-            ? "Show once is enabled - shoppers will only see it once per browser"
-            : "Popup can reappear again during the same campaign",
-      },
-    ];
 
     return {
       tone,
       badge,
       summary,
-      rows,
       dismissedInBrowser,
       showResetAction: dismissedInBrowser,
     };
@@ -318,6 +261,7 @@ function BannerEditor() {
     active,
     bannerId,
     bannersQuery.data,
+    dismissalVersion,
     endTime,
     imageUrl,
     isDirty,
@@ -326,7 +270,6 @@ function BannerEditor() {
     showOnce,
     startTime,
     title,
-    dismissalVersion,
   ]);
 
   const saveBannerMutation = useMutation({
@@ -335,7 +278,7 @@ function BannerEditor() {
         ? adminApi.updateFestiveBanner(bannerId, payload)
         : adminApi.createFestiveBanner(payload),
     onSuccess: async () => {
-      toast.success(isEdit ? "Festive banner updated." : "Festive banner created.");
+      toast.success(isEdit ? "Banner updated." : "Banner created.");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin", "festive-banners"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "banner-coupon-options"] }),
@@ -374,7 +317,7 @@ function BannerEditor() {
       description: values.description || null,
       imageUrl: values.imageUrl,
       redirectUrl: values.redirectUrl || null,
-      ctaLabel: values.ctaLabel || "Apply offer",
+      ctaLabel: values.ctaLabel || "Apply Offer",
       autoGenerateCoupon: Boolean(values.autoGenerateCoupon),
       existingCouponCode: values.autoGenerateCoupon ? null : values.existingCouponCode || null,
       discountType: values.autoGenerateCoupon ? values.discountType : null,
@@ -439,10 +382,10 @@ function BannerEditor() {
       <div className="rounded-[28px] border border-danger/20 bg-white p-8 shadow-sm">
         <h2 className="font-display text-2xl font-semibold text-brand-dark">Banner unavailable</h2>
         <p className="mt-3 text-sm leading-6 text-brand-muted">
-          The festive banner editor could not load this campaign. Verify the backend and try again.
+          The banner could not be loaded. Verify the backend and try again.
         </p>
         <button type="button" className={`${SECONDARY_BUTTON_CLASS} mt-5`} onClick={() => navigate("/admin/banners")}>
-          Back to banners
+          Back to Banners
         </button>
       </div>
     );
@@ -453,19 +396,20 @@ function BannerEditor() {
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Campaign editor</p>
-            <h1 className="mt-2 font-display text-4xl font-semibold text-brand-dark">
-              {isEdit ? "Edit festive banner" : "Create festive banner"}
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Festive Banner</p>
+            <h1 className="mt-2 text-3xl font-semibold text-brand-dark">
+              {isEdit ? "Edit Offer Banner" : "Create Offer Banner"}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
-              Turn festive campaigns into full-page admin workflows so the creative team can manage long-form setup
-              without modal scrolling issues.
+              {isEdit
+                ? "Update banner content and settings in one place."
+                : "Add and manage banner content and settings in one place."}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => navigate("/admin/banners")}>
-              Back to banners
+              Back to Banners
             </button>
             <button
               type="submit"
@@ -473,47 +417,41 @@ function BannerEditor() {
               className={PRIMARY_BUTTON_CLASS}
               disabled={isSubmitting || isUploadingImage}
             >
-              {isSubmitting ? "Saving..." : isEdit ? "Save banner" : "Create banner"}
+              {isSubmitting ? "Saving..." : isEdit ? "Save Changes" : "Create Banner"}
             </button>
           </div>
         </div>
       </section>
 
-      <form
-        id={BANNER_FORM_ID}
-        className="grid gap-4 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]"
-        onSubmit={onSubmit}
-      >
-        <div className="space-y-4">
+      <form id={BANNER_FORM_ID} className="space-y-4" onSubmit={onSubmit}>
+        <div className="grid gap-4 xl:grid-cols-2">
           <section className={BANNER_SECTION_CLASS}>
             <p className={BANNER_SECTION_TITLE_CLASS}>Creative</p>
-            <p className={BANNER_SECTION_COPY_CLASS}>
-              Upload the festive artwork prepared by the design team and add the core campaign message.
-            </p>
+            <p className={BANNER_SECTION_COPY_CLASS}>Banner title, message, and artwork.</p>
 
             <div className="mt-4 grid gap-4">
               <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Banner title</label>
-                <input className={FILTER_FIELD_CLASS} {...register("title")} placeholder="Diwali Glow Festival" />
+                <label className={FILTER_LABEL_CLASS}>Banner Title</label>
+                <input className={FILTER_FIELD_CLASS} {...register("title")} placeholder="Enter banner title" />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className={FILTER_LABEL_CLASS}>Description</label>
                 <textarea
-                  className="min-h-[108px] rounded-[22px] border border-black/10 bg-white px-4 py-3 text-sm text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/20"
+                  className="min-h-[88px] rounded-[22px] border border-black/10 bg-white px-4 py-3 text-sm text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/20"
                   {...register("description")}
-                  placeholder="Light up your home with festive savings, curated gifting, and premium CandleOra favourites."
+                  placeholder="Enter description"
                 />
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px]">
                 <div className="flex flex-col gap-2">
                   <label className={FILTER_LABEL_CLASS}>Image URL</label>
                   <input className={FILTER_FIELD_CLASS} {...register("imageUrl")} placeholder="https://..." />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Upload artwork</label>
+                  <label className={FILTER_LABEL_CLASS}>Upload</label>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -527,7 +465,7 @@ function BannerEditor() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
                   >
-                    {isUploadingImage ? "Uploading..." : "Upload image"}
+                    {isUploadingImage ? "Uploading..." : "Upload Image"}
                   </button>
                 </div>
               </div>
@@ -535,22 +473,19 @@ function BannerEditor() {
           </section>
 
           <section className={BANNER_SECTION_CLASS}>
-            <p className={BANNER_SECTION_TITLE_CLASS}>Coupon engine</p>
-            <p className={BANNER_SECTION_COPY_CLASS}>
-              Create a festive coupon automatically from this campaign or link an existing coupon from the admin
-              library.
-            </p>
+            <p className={BANNER_SECTION_TITLE_CLASS}>Coupon Offer</p>
+            <p className={BANNER_SECTION_COPY_CLASS}>Linked coupon settings for the banner.</p>
 
             <div className="mt-4 space-y-4">
-              <label className={TOGGLE_CARD_CLASS}>
+              <label className="inline-flex items-center gap-3 text-sm text-brand-dark">
                 <CandleCheckbox className="h-4 w-4" {...register("autoGenerateCoupon")} />
-                Auto-generate and sync the linked coupon
+                Auto-generate coupon
               </label>
 
               {autoGenerateCoupon ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>Discount type</label>
+                    <label className={FILTER_LABEL_CLASS}>Discount Type</label>
                     <AdminSelect
                       value={discountType}
                       onChange={(value) => setValue("discountType", value, { shouldDirty: true })}
@@ -560,43 +495,41 @@ function BannerEditor() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>
-                      {discountType === "PERCENTAGE" ? "Discount %" : "Discount amount"}
-                    </label>
+                    <label className={FILTER_LABEL_CLASS}>Discount Amount</label>
                     <input
                       type="number"
                       step="0.01"
                       className={FILTER_FIELD_CLASS}
                       {...register("discountValue")}
-                      placeholder={discountType === "PERCENTAGE" ? "25" : "250"}
+                      placeholder="Enter amount"
                     />
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>Max discount (optional)</label>
+                    <label className={FILTER_LABEL_CLASS}>Max Discount (optional)</label>
                     <input
                       type="number"
                       step="0.01"
                       className={FILTER_FIELD_CLASS}
                       {...register("maxDiscount")}
-                      placeholder="500"
+                      placeholder="Enter max discount"
                     />
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className={FILTER_LABEL_CLASS}>Minimum order (optional)</label>
+                    <label className={FILTER_LABEL_CLASS}>Minimum Order (optional)</label>
                     <input
                       type="number"
                       step="0.01"
                       className={FILTER_FIELD_CLASS}
                       {...register("minOrderAmount")}
-                      placeholder="1499"
+                      placeholder="Enter minimum order"
                     />
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Link existing coupon</label>
+                  <label className={FILTER_LABEL_CLASS}>Existing Coupon</label>
                   <AdminSelect
                     value={existingCouponCode}
                     onChange={(value) => setValue("existingCouponCode", value, { shouldDirty: true })}
@@ -609,15 +542,13 @@ function BannerEditor() {
           </section>
 
           <section className={BANNER_SECTION_CLASS}>
-            <p className={BANNER_SECTION_TITLE_CLASS}>Timing and behavior</p>
-            <p className={BANNER_SECTION_COPY_CLASS}>
-              Control when the popup appears and how often shoppers should see it.
-            </p>
+            <p className={BANNER_SECTION_TITLE_CLASS}>Schedule & Display</p>
+            <p className={BANNER_SECTION_COPY_CLASS}>Timing, priority, and campaign visibility.</p>
 
-            <div className="mt-4 grid gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-5">
+              <div className="grid gap-5 md:grid-cols-2 md:gap-6">
                 <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>Start time</label>
+                  <label className={FILTER_LABEL_CLASS}>Start</label>
                   <AdminDateTimePicker
                     value={startTime}
                     onChange={(value) => setValue("startTime", value, { shouldDirty: true })}
@@ -625,7 +556,7 @@ function BannerEditor() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className={FILTER_LABEL_CLASS}>End time</label>
+                  <label className={FILTER_LABEL_CLASS}>End</label>
                   <AdminDateTimePicker
                     value={endTime}
                     onChange={(value) => setValue("endTime", value, { shouldDirty: true })}
@@ -634,25 +565,20 @@ function BannerEditor() {
                 </div>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-end">
-                <div className="flex max-w-[220px] flex-col gap-2">
+              <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-start">
+                <div className="flex flex-col gap-2">
                   <label className={FILTER_LABEL_CLASS}>Priority</label>
-                  <input
-                    type="number"
-                    className={FILTER_FIELD_CLASS}
-                    {...register("priority")}
-                    placeholder="100"
-                  />
+                  <input type="number" className={FILTER_FIELD_CLASS} {...register("priority")} placeholder="100" />
                 </div>
 
-                <div className="flex flex-wrap gap-3 lg:justify-start">
-                  <label className={TOGGLE_CARD_CLASS}>
+                <div className="flex flex-col gap-3 md:pt-[34px]">
+                  <label className="inline-flex items-center gap-3 text-sm text-brand-dark">
                     <CandleCheckbox className="h-4 w-4" {...register("active")} />
-                    Campaign active
+                    Campaign Active
                   </label>
-                  <label className={TOGGLE_CARD_CLASS}>
+                  <label className="inline-flex items-center gap-3 text-sm text-brand-dark">
                     <CandleCheckbox className="h-4 w-4" {...register("showOnce")} />
-                    Show only once
+                    Show Only Once
                   </label>
                 </div>
               </div>
@@ -660,153 +586,95 @@ function BannerEditor() {
           </section>
 
           <section className={BANNER_SECTION_CLASS}>
-            <p className={BANNER_SECTION_TITLE_CLASS}>CTA</p>
-            <p className={BANNER_SECTION_COPY_CLASS}>
-              Guide shoppers to the best destination after they accept the festive offer.
-            </p>
+            <p className={BANNER_SECTION_TITLE_CLASS}>CTA (Button)</p>
+            <p className={BANNER_SECTION_COPY_CLASS}>Button label and redirect path.</p>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4">
               <div className="flex flex-col gap-2">
-                <label className={FILTER_LABEL_CLASS}>Button text</label>
-                <input className={FILTER_FIELD_CLASS} {...register("ctaLabel")} placeholder="Apply offer" />
+                <label className={FILTER_LABEL_CLASS}>Button Text</label>
+                <input className={FILTER_FIELD_CLASS} {...register("ctaLabel")} placeholder="Apply Offer" />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className={FILTER_LABEL_CLASS}>Redirect URL</label>
-                <input className={FILTER_FIELD_CLASS} {...register("redirectUrl")} placeholder="/shop?occasion=festivals" />
+                <input className={FILTER_FIELD_CLASS} {...register("redirectUrl")} placeholder="/shop" />
               </div>
             </div>
           </section>
         </div>
 
-        <aside className="space-y-4">
-          <section className={BANNER_SECTION_CLASS}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className={BANNER_SECTION_TITLE_CLASS}>Popup status</p>
-                <p className={BANNER_SECTION_COPY_CLASS}>
-                  See instantly why this banner will or will not appear on the home page popup.
-                </p>
-              </div>
+        <section className={BANNER_SECTION_CLASS}>
+          <div className="flex flex-col gap-3 border-b border-black/8 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className={BANNER_SECTION_TITLE_CLASS}>Preview</p>
+              <p className={BANNER_SECTION_COPY_CLASS}>A lighter popup preview using the current CandleOra storefront theme.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
               <span className={getStatusBadgeClassName(visibilityStatus.tone)}>{visibilityStatus.badge}</span>
-            </div>
-
-            <p className="mt-4 text-sm leading-6 text-brand-dark">{visibilityStatus.summary}</p>
-
-            <div className="mt-4 space-y-2.5">
-              {visibilityStatus.rows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex flex-col gap-1 rounded-[18px] border border-black/8 bg-white/88 px-4 py-3"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-                    {row.label}
-                  </p>
-                  <p className="text-sm leading-6 text-brand-dark">{row.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {visibilityStatus.showResetAction ? (
-              <div className="mt-4 rounded-[18px] border border-[#e7c98e] bg-[#fff6e8] px-4 py-3">
-                <p className="text-sm leading-6 text-brand-dark">
-                  This browser has already dismissed the popup, so the storefront preview may stay hidden even if the
-                  banner is otherwise eligible.
-                </p>
-                <button
-                  type="button"
-                  className={`${SECONDARY_BUTTON_CLASS} mt-3`}
-                  onClick={handleResetDismissal}
-                >
-                  Reset popup dismissal
+              {visibilityStatus.showResetAction ? (
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={handleResetDismissal}>
+                  Reset Dismissal
                 </button>
-              </div>
-            ) : null}
-          </section>
+              ) : null}
+            </div>
+          </div>
 
-          <section className={`${BANNER_SECTION_CLASS} xl:sticky xl:top-6`}>
-            <p className={BANNER_SECTION_TITLE_CLASS}>Live preview</p>
-            <p className={BANNER_SECTION_COPY_CLASS}>
-              This is how the festive popup will feel on the storefront.
-            </p>
+          <p className="mt-4 text-sm leading-6 text-brand-muted">{visibilityStatus.summary}</p>
 
-            <div className="mt-4 overflow-hidden rounded-[28px] border border-[#d8c29b] bg-[linear-gradient(180deg,#fff9ee_0%,#ffffff_100%)] shadow-[0_18px_40px_rgba(27,17,10,0.08)]">
-              <div className="border-b border-[#ead9ba] px-5 py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8d6d36]">
-                      Festive offer
-                    </p>
-                    <h3 className="mt-2 font-display text-[1.8rem] font-semibold leading-[1.05] text-brand-dark">
-                      {title || "Festive campaign title"}
-                    </h3>
-                  </div>
-                  <span className="rounded-full border border-[#dcc59b] bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8d6d36]">
-                    {showOnce ? "Show once" : "Repeat"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-4 px-5 py-5">
-                {imageUrl ? (
-                  <div
-                    className={`flex items-center justify-center overflow-hidden rounded-[24px] border border-black/8 bg-[radial-gradient(circle_at_top,#fff8ee_0%,#f9eedb_52%,#f4e3c2_100%)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] ${
-                      artworkLayout.shape === "portrait"
-                        ? "min-h-[320px]"
-                        : artworkLayout.shape === "ultra-wide"
-                          ? "min-h-[180px]"
-                          : "min-h-[220px]"
-                    }`}
-                  >
+          <div className="mt-5 flex justify-center">
+            <div className="w-full max-w-[620px] overflow-hidden rounded-[30px] border border-[#dcc59b] bg-[linear-gradient(140deg,#fff9ee_0%,#ffffff_62%,#fff6e8_100%)] shadow-[0_18px_40px_rgba(27,17,10,0.08)]">
+              {imageUrl ? (
+                <div className="border-b border-[#ead9ba] bg-[radial-gradient(circle_at_top,#fff8ec_0%,#f7ecd7_50%,#f2dfbe_100%)] px-5 py-5 sm:px-6">
+                  <div className="overflow-hidden rounded-[24px] border border-white/65 bg-white/40">
                     <img
                       src={imageUrl}
                       alt={title || "Festive banner preview"}
-                      className={`block max-w-full rounded-[18px] object-contain ${
-                        artworkLayout.shape === "portrait"
-                          ? "max-h-[360px]"
-                          : artworkLayout.shape === "ultra-wide"
-                            ? "max-h-[220px] w-full"
-                            : "max-h-[260px] w-full"
-                      }`}
-                      style={{ aspectRatio: artworkLayout.aspectRatio }}
+                      className="h-[170px] w-full object-cover sm:h-[190px]"
                     />
                   </div>
-                ) : (
-                  <div className="flex h-[220px] items-center justify-center rounded-[24px] border border-dashed border-[#dcc59b] bg-[#fff7ea] text-sm text-brand-muted">
-                    Upload festive artwork to preview it here
-                  </div>
-                )}
+                </div>
+              ) : null}
 
-                <p className="text-sm leading-7 text-brand-muted">
-                  {description || "Add a short festive message to encourage shoppers to explore the campaign."}
-                </p>
-
-                <div className="rounded-[22px] border border-black/8 bg-[#fffaf3] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-brand-muted">Linked offer</p>
-                  <p className="mt-2 text-base font-semibold text-brand-dark">
-                    {autoGenerateCoupon
-                      ? `${formatOfferValue({ discountType, discountValue })}${minOrderAmount ? ` · Min cart ${formatCurrency(minOrderAmount)}` : ""}`
-                      : existingCouponCode || "Select a coupon to link"}
-                  </p>
+              <div className="relative px-6 pb-7 pt-7 text-center sm:px-8">
+                <div className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d9c29a] bg-white/92 text-brand-dark">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 6L18 18" strokeLinecap="round" />
+                    <path d="M18 6L6 18" strokeLinecap="round" />
+                  </svg>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-brand-dark">Festive Offer</p>
+                <h3 className="mt-3 font-display text-[2.1rem] font-semibold leading-[0.96] text-brand-dark sm:text-[2.45rem]">
+                  {title || "Banner Title"}
+                </h3>
+                <p className="mt-4 text-[2rem] font-semibold leading-none text-danger">
+                  {autoGenerateCoupon
+                    ? formatOfferValue({ discountType, discountValue }).toUpperCase()
+                    : existingCouponCode || "LINKED COUPON"}
+                </p>
+                <p className="mt-4 text-sm text-brand-muted">Auto-applied at checkout</p>
+                <p className="mt-1 text-sm text-brand-muted">
+                  {endTime ? `Ends on ${formatPreviewDate(endTime)}` : "Add campaign timing"}
+                </p>
+
+                <div className="mt-5 border-t border-[#ead9ba]" />
+
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     onClick={handlePreviewApplyOffer}
-                    className="btn btn-primary min-h-[52px] px-6"
+                    className="btn btn-primary min-h-[46px] px-5"
                   >
-                    {ctaLabel || "Apply offer"}
+                    {ctaLabel || "Apply Offer"}
                   </button>
-                  <div className="text-right text-xs leading-5 text-brand-muted">
-                    <p>{redirectUrl || "/shop"}</p>
-                    <p>{endTime ? `Ends ${formatDateTime(endTime)}` : "Add campaign timing"}</p>
-                  </div>
+                  <button type="button" className="btn btn-outline min-h-[46px] px-5">
+                    Maybe Later
+                  </button>
                 </div>
               </div>
             </div>
-          </section>
-        </aside>
+          </div>
+        </section>
       </form>
     </div>
   );
@@ -817,7 +685,7 @@ function formatOfferValue(banner) {
     return "No linked offer";
   }
 
-  if (banner.discountType === "PERCENTAGE") {
+  if (String(banner.discountType).toUpperCase() === "PERCENTAGE") {
     return `${Number(banner.discountValue)}% off`;
   }
 
@@ -840,6 +708,20 @@ function formatStatusDateTime(value) {
 
   const normalized = value instanceof Date ? value.toISOString() : value;
   return formatDateTime(normalized);
+}
+
+function formatPreviewDate(value) {
+  const parsed = parseEditorDateTime(value);
+  if (!parsed) {
+    return "Not set";
+  }
+
+  return parsed.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function isBannerEligibleNow(banner, now = new Date()) {
@@ -889,7 +771,7 @@ function toFormValues(banner) {
     description: banner?.description ?? "",
     imageUrl: banner?.imageUrl ?? "",
     redirectUrl: banner?.redirectUrl ?? "/shop",
-    ctaLabel: banner?.ctaLabel ?? "Apply offer",
+    ctaLabel: banner?.ctaLabel ?? "Apply Offer",
     autoGenerateCoupon: banner?.autoGenerateCoupon ?? true,
     existingCouponCode: banner?.autoGenerateCoupon ? "" : banner?.couponCode ?? "",
     discountType: banner?.discountType ?? "PERCENTAGE",

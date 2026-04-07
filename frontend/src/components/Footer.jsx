@@ -11,8 +11,6 @@ const whatsappHref = `https://wa.me/918999908639?text=${whatsappMessage}`;
 const instagramHref = "https://instagram.com";
 const emailHref = "mailto:candleora25@gmail.com";
 
-const footerStaticItemClassName =
-  "block text-[15px] font-normal leading-7 text-white/88 lg:whitespace-nowrap";
 const footerInteractiveItemClassName =
   "group flex items-center text-[15px] font-normal leading-7 text-white/88 transition-colors duration-200 hover:text-white lg:whitespace-nowrap";
 
@@ -96,7 +94,7 @@ function Footer() {
         <div className="mx-auto w-full max-w-[1440px] px-6 py-10 sm:px-10 sm:py-12 lg:px-[72px] lg:py-[64px]">
           <div className="grid gap-y-10 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-x-20">
             <div className="flex flex-col justify-end lg:min-h-[250px]">
-              <div className="flex w-fit flex-col items-start">
+              <div className="flex w-fit flex-col items-center text-center">
                 <BrandLogo tone="light" className="max-w-[190px]" imageClassName="opacity-100" />
                 <p className="mt-10 text-[14px] leading-6 text-[#6A6A6A] sm:text-[15px]">
                   Copyright {"\u00A9"} 2026 candleora.in
@@ -119,7 +117,9 @@ function Footer() {
               <div>
                 <FooterHeading>Customer Care</FooterHeading>
                 <div className="mt-8 space-y-3.5">
-                  <p className={footerStaticItemClassName}>Returns & Cancellation</p>
+                  <FooterLink to="/faq" onClick={handleFooterNavigation}>
+                    Replacement & Cancellation
+                  </FooterLink>
                   <FooterLink to="/privacy-policy" onClick={handleFooterNavigation}>
                     Privacy Policy
                   </FooterLink>
@@ -129,7 +129,9 @@ function Footer() {
                   <FooterLink to="/faq" onClick={handleFooterNavigation}>
                     FAQ
                   </FooterLink>
-                  <p className={footerStaticItemClassName}>Shipping & Delivery</p>
+                  <FooterLink to="/faq" onClick={handleFooterNavigation}>
+                    Shipping & Delivery
+                  </FooterLink>
                 </div>
               </div>
 

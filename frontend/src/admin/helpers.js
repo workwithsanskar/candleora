@@ -22,23 +22,49 @@ export const ORDER_STATUS_OPTIONS = [
 ];
 
 export function formatAdminStatus(value) {
-  return titleCase(value);
+  const normalized = String(value ?? "").toUpperCase();
+
+  switch (normalized) {
+    case "PENDING_PAYMENT":
+      return "Payment Pending";
+    case "OUT_FOR_DELIVERY":
+      return "Out for Delivery";
+    case "COD_PENDING":
+      return "COD Pending";
+    case "REPLACEMENT":
+      return "Replaced";
+    case "PICKUP_SCHEDULED":
+      return "Pickup Scheduled";
+    case "UNDER_REVIEW":
+      return "Under Review";
+    default:
+      return titleCase(normalized);
+  }
 }
 
 export function statusClassName(value) {
   switch (String(value ?? "").toUpperCase()) {
     case "CONFIRMED":
     case "DELIVERED":
+    case "APPROVED":
     case "LIVE":
       return "bg-[#e7f7ea] text-success";
     case "SHIPPED":
     case "OUT_FOR_DELIVERY":
+    case "PICKUP_SCHEDULED":
     case "SCHEDULED":
     case "RESERVED":
       return "bg-[#ebf3ff] text-[#2659b7]";
+    case "REPLACEMENT":
+    case "REQUESTED":
+    case "PENDING_PAYMENT":
+    case "UNDER_REVIEW":
+      return "bg-[#fff3dd] text-[#986700]";
     case "CANCELLED":
     case "EXPIRED":
     case "EXHAUSTED":
+    case "REJECTED":
+    case "REFUNDED":
       return "bg-[#fdeaea] text-danger";
     case "LOW STOCK":
       return "bg-[#fff3dd] text-[#986700]";

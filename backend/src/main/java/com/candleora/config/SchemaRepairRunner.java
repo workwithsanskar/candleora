@@ -66,6 +66,9 @@ public class SchemaRepairRunner implements ApplicationRunner {
         executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS one_use_per_customer BOOLEAN DEFAULT FALSE NOT NULL");
         executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS target_category_slugs VARCHAR(1000)");
         executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS target_product_ids VARCHAR(2000)");
+        executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS description VARCHAR(600)");
+        executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS detail_summary VARCHAR(600)");
+        executeSchemaUpdate("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS detail_terms VARCHAR(4000)");
     }
 
     private void createAnnouncementMessagesTableIfNeeded() {

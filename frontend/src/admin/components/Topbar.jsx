@@ -207,7 +207,7 @@ function Topbar({ title, searchValue, onSearchChange, onOpenSidebar, placeholder
           </button>
 
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-brand-muted">Admin workspace</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-brand-muted">Admin</p>
             <h2 className="mt-1 font-display text-2xl font-semibold text-brand-dark">{title}</h2>
           </div>
         </div>

@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import useScrollShadows from "../../hooks/useScrollShadows";
+import { pauseSmoothScroll, resumeSmoothScroll } from "../../utils/smoothScroll";
 
 function normalizeWheelDelta(event) {
   if (!event) {
@@ -116,6 +117,7 @@ function Modal({ open, onClose, title, children, footer, size, scrollable, align
     }
 
     lockBackgroundScroll();
+    pauseSmoothScroll();
 
     const handleEscape = (event) => {
       if (event.key === "Escape") {
@@ -127,6 +129,7 @@ function Modal({ open, onClose, title, children, footer, size, scrollable, align
 
     return () => {
       window.removeEventListener("keydown", handleEscape);
+      resumeSmoothScroll();
       unlockBackgroundScroll();
     };
   }, [onClose, open]);
@@ -201,8 +204,8 @@ function Modal({ open, onClose, title, children, footer, size, scrollable, align
     sizeClassName,
   ].join(" ");
   const bodyClassName = scrollable
-    ? "smooth-scroll-hidden min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-4"
-    : "min-h-0 px-4 py-4 sm:px-5 sm:py-4";
+    ? "smooth-scroll-hidden min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3.5 sm:px-5 sm:py-4"
+    : "min-h-0 px-4 py-3.5 sm:px-5 sm:py-4";
 
   return (
     <AnimatePresence>
@@ -234,13 +237,10 @@ function Modal({ open, onClose, title, children, footer, size, scrollable, align
               className={shellClassName}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="sticky top-0 z-10 shrink-0 border-b border-black/8 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_70%)]/95 px-4 py-4 backdrop-blur sm:px-5 sm:py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="sticky top-0 z-10 shrink-0 border-b border-black/8 bg-[linear-gradient(180deg,#fffdf8_0%,#ffffff_70%)]/95 px-4 py-3.5 backdrop-blur sm:px-5 sm:py-3.5">
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-muted">
-                      Workspace form
-                    </p>
-                    <h3 className="mt-1.5 min-w-0 font-display text-[1.8rem] font-semibold leading-none text-brand-dark sm:text-[2rem]">
+                    <h3 className="min-w-0 font-display text-[1.7rem] font-semibold leading-none text-brand-dark sm:text-[1.95rem]">
                       {title}
                     </h3>
                   </div>

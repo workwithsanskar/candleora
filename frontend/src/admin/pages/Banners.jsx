@@ -8,11 +8,7 @@ import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
-import {
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
-  statusClassName,
-} from "../helpers";
+import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, statusClassName } from "../helpers";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import adminApi from "../services/adminApi";
 
@@ -28,7 +24,7 @@ const PAGE_SIZE = 8;
 
 function Banners() {
   const navigate = useNavigate();
-  const { search } = useOutletContext();
+  const { search, setSearch } = useOutletContext();
   const debouncedSearch = useDebouncedValue(search, 300);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
@@ -72,28 +68,6 @@ function Banners() {
     [filteredBanners, page],
   );
 
-  const summaryCards = useMemo(() => {
-    const banners = bannersQuery.data ?? [];
-    return [
-      { label: "Total banners", value: banners.length, tone: "text-brand-dark" },
-      {
-        label: "Live popups",
-        value: banners.filter((banner) => getBannerStatus(banner) === "LIVE").length,
-        tone: "text-success",
-      },
-      {
-        label: "Scheduled campaigns",
-        value: banners.filter((banner) => getBannerStatus(banner) === "SCHEDULED").length,
-        tone: "text-[#2659b7]",
-      },
-      {
-        label: "Show once",
-        value: banners.filter((banner) => banner.showOnce).length,
-        tone: "text-brand-dark",
-      },
-    ];
-  }, [bannersQuery.data]);
-
   const deleteBannerMutation = useMutation({
     mutationFn: (bannerId) => adminApi.deleteFestiveBanner(bannerId),
     onSuccess: async () => {
@@ -115,18 +89,11 @@ function Banners() {
         key: "banner",
         header: "Banner",
         cell: (banner) => (
-          <div className="flex gap-3">
-            <img
-              src={banner.imageUrl}
-              alt={banner.title}
-              className="h-16 w-24 rounded-[18px] border border-black/8 object-cover"
-            />
-            <div className="min-w-0">
-              <p className="font-medium text-brand-dark">{banner.title}</p>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-brand-muted">
-                {banner.description || "Festive storefront popup"}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="font-medium text-brand-dark">{banner.title}</p>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-brand-muted">
+              {banner.description || "Festive popup banner"}
+            </p>
           </div>
         ),
       },
@@ -135,9 +102,9 @@ function Banners() {
         header: "Coupon",
         cell: (banner) => (
           <div>
-            <p className="font-medium tracking-[0.08em] text-brand-dark">{banner.couponCode || "Not linked"}</p>
+            <p className="font-medium text-brand-dark">{banner.couponCode || "Not linked"}</p>
             <p className="mt-1 text-xs text-brand-muted">
-              {banner.autoGenerateCoupon ? "Auto-generated from banner" : "Linked from coupon library"}
+              {banner.autoGenerateCoupon ? "Auto generated" : "Linked coupon"}
             </p>
           </div>
         ),
@@ -149,7 +116,9 @@ function Banners() {
           <div>
             <p className="font-medium text-brand-dark">{formatOfferValue(banner)}</p>
             <p className="mt-1 text-xs text-brand-muted">
-              {banner.minOrderAmount ? `Min cart ${formatCurrency(banner.minOrderAmount)}` : "No minimum cart value"}
+              {banner.minOrderAmount
+                ? `Min cart ${formatCurrency(banner.minOrderAmount)}`
+                : "No minimum order"}
             </p>
           </div>
         ),
@@ -159,8 +128,9 @@ function Banners() {
         header: "Schedule",
         cell: (banner) => (
           <div>
-            <p className="font-medium text-brand-dark">{formatDateTime(banner.startTime)}</p>
-            <p className="mt-1 text-xs text-brand-muted">Ends {formatDateTime(banner.endTime)}</p>
+            <p className="font-medium text-brand-dark">
+              {formatDateTime(banner.startTime)} to {formatDateTime(banner.endTime)}
+            </p>
           </div>
         ),
       },
@@ -171,13 +141,11 @@ function Banners() {
           const status = getBannerStatus(banner);
 
           return (
-            <div className="space-y-2">
-              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${statusClassName(status)}`}>
+            <div className="space-y-1.5">
+              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(status)}`}>
                 {formatBannerStatus(status)}
               </span>
-              <p className="text-xs text-brand-muted">
-                Priority {banner.priority} · {banner.showOnce ? "Show once" : "Repeat"}
-              </p>
+              <p className="text-xs font-medium text-brand-muted">Priority: {banner.priority}</p>
             </div>
           );
         },
@@ -186,15 +154,20 @@ function Banners() {
         key: "actions",
         header: "Actions",
         cell: (banner) => (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
             <button
               type="button"
-              className={SECONDARY_BUTTON_CLASS}
+              className="text-brand-dark transition hover:underline hover:underline-offset-4"
               onClick={() => navigate(`/admin/banners/${banner.id}/edit`)}
             >
               Edit
             </button>
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setConfirmingBanner(banner)}>
+            <span className="text-black/25">|</span>
+            <button
+              type="button"
+              className="text-brand-dark transition hover:underline hover:underline-offset-4"
+              onClick={() => setConfirmingBanner(banner)}
+            >
               Delete
             </button>
           </div>
@@ -207,9 +180,9 @@ function Banners() {
   if (bannersQuery.isError) {
     return (
       <div className="rounded-[28px] border border-black/10 bg-white p-8 shadow-sm">
-        <h2 className="font-display text-2xl font-semibold text-brand-dark">Festive banners unavailable</h2>
+        <h2 className="font-display text-2xl font-semibold text-brand-dark">Banners unavailable</h2>
         <p className="mt-3 text-sm leading-6 text-brand-muted">
-          The festive banner workspace could not load. Verify the backend and try again.
+          The banner list could not be loaded. Verify the backend and try again.
         </p>
       </div>
     );
@@ -218,76 +191,58 @@ function Banners() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Festive banners"
-        description="Manage popup campaigns that appear automatically across the storefront and can generate their own linked festive coupons."
+        title="Festive Banners"
+        description="Create and manage popup banners shown on your website."
         actions={(
           <button
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             onClick={() => navigate("/admin/banners/new")}
           >
-            Create festive banner
+            Create Banner
           </button>
         )}
-      />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <article key={card.label} className="rounded-[24px] border border-black/10 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-muted">{card.label}</p>
-            <p className={`mt-3 font-display text-3xl font-semibold ${card.tone}`}>{card.value}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-        <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-brand-muted">Campaign search</p>
-              <p className="mt-1 text-sm text-brand-muted">
-                {debouncedSearch ? debouncedSearch : "Use the topbar search to filter banners by title or coupon code."}
-              </p>
-            </div>
-            <div className="w-full md:max-w-[240px]">
-              <AdminSelect
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={BANNER_STATUS_FILTER_OPTIONS}
-                placeholder="All banner statuses"
-              />
-            </div>
-          </div>
+      >
+        <div className="min-w-[280px] flex-1 lg:max-w-[360px]">
+          <label className="sr-only" htmlFor="banner-search">Search banners</label>
+          <input
+            id="banner-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-11 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm text-brand-dark outline-none transition placeholder:text-brand-muted focus:border-black/20"
+            placeholder="Search banners..."
+          />
         </div>
 
-        <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.22em] text-brand-muted">Campaign rules</p>
-          <p className="mt-2 text-sm leading-6 text-brand-muted">
-            Live banners are chosen by priority. Higher priority values win when multiple festive campaigns overlap.
-          </p>
+        <div className="w-full min-w-[180px] md:max-w-[220px]">
+          <AdminSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={BANNER_STATUS_FILTER_OPTIONS}
+            placeholder="All banner statuses"
+          />
         </div>
-      </div>
+      </FiltersBar>
 
       <DataTable
         columns={columns}
         rows={paginatedBanners}
         isLoading={bannersQuery.isLoading}
-        emptyTitle="No festive banners match the current filters"
-        emptyDescription="Create a new festive campaign or widen the status filter to see more banners."
+        emptyTitle="No banners found"
+        emptyDescription="Try a different filter or create a new banner."
       />
 
-      {totalPages > 1 ? (
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-      ) : null}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <Modal
         open={Boolean(confirmingBanner)}
         onClose={() => setConfirmingBanner(null)}
-        title="Delete festive banner"
+        title="Delete Banner"
         footer={(
           <div className="flex flex-wrap justify-end gap-3">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setConfirmingBanner(null)}>
-              Keep banner
+              Keep Banner
             </button>
             <button
               type="button"
@@ -299,14 +254,15 @@ function Banners() {
                 }
               }}
             >
-              {deleteBannerMutation.isPending ? "Deleting..." : "Delete banner"}
+              {deleteBannerMutation.isPending ? "Deleting..." : "Delete Banner"}
             </button>
           </div>
         )}
       >
         <p className="text-sm leading-6 text-brand-muted">
-          This will remove <span className="font-medium text-brand-dark">{confirmingBanner?.title}</span> from the
-          festive campaign workspace. Auto-generated linked coupons are deactivated to avoid accidental reuse.
+          This will remove{" "}
+          <span className="font-medium text-brand-dark">{confirmingBanner?.title}</span>
+          {" "}from the banner list.
         </p>
       </Modal>
     </div>

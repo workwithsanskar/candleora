@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +41,11 @@ class CartOrderFlowIntegrationTest extends IntegrationTestSupport {
 
         JsonNode cartPayload = objectMapper.readTree(addResult.getResponse().getContentAsString());
         long itemId = cartPayload.get("items").get(0).get("id").asLong();
+        assertTrue(cartPayload.get("items").get(0).get("stock").asInt() > 0);
+        assertTrue(
+            cartPayload.get("items").get(0).get("originalUnitPrice").decimalValue()
+                .compareTo(cartPayload.get("items").get(0).get("unitPrice").decimalValue()) >= 0
+        );
 
         mockMvc.perform(
                 MockMvcRequestBuilders.put("/api/cart/items/{itemId}", itemId)

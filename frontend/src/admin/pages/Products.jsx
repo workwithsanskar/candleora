@@ -3,11 +3,11 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
 import Pagination from "../components/Pagination";
-import AdminSelect from "../components/AdminSelect";
 import adminApi from "../services/adminApi";
 import {
   FILTER_FIELD_CLASS,
@@ -24,11 +24,16 @@ const blankAdjustmentValues = {
   note: "",
 };
 
-const INVENTORY_FILTER_OPTIONS = [
+const STOCK_FILTER_OPTIONS = [
   { value: "", label: "All" },
   { value: "low-stock", label: "Low stock" },
   { value: "out-of-stock", label: "Out of stock" },
-  { value: "hidden", label: "Hidden" },
+];
+
+const VISIBILITY_FILTER_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "VISIBLE", label: "Visible" },
+  { value: "HIDDEN", label: "Hidden" },
 ];
 
 function Products() {
@@ -38,6 +43,7 @@ function Products() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [category, setCategory] = useState("");
+  const [visibility, setVisibility] = useState("");
   const [stock, setStock] = useState("");
   const [inventoryProduct, setInventoryProduct] = useState(null);
   const [confirmingProduct, setConfirmingProduct] = useState(null);
@@ -53,7 +59,7 @@ function Products() {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, category, stock]);
+  }, [category, debouncedSearch, stock, visibility]);
 
   useEffect(() => {
     if (inventoryProduct) {
@@ -83,6 +89,18 @@ function Products() {
     queryFn: () => adminApi.getProductInventoryHistory(inventoryProduct.id),
     enabled: Boolean(inventoryProduct?.id),
   });
+
+  const filteredRows = useMemo(() => {
+    const rows = productsQuery.data?.content ?? [];
+
+    if (!visibility) {
+      return rows;
+    }
+
+    return rows.filter((product) =>
+      visibility === "VISIBLE" ? Boolean(product.visible) : !product.visible,
+    );
+  }, [productsQuery.data?.content, visibility]);
 
   const adjustInventoryMutation = useMutation({
     mutationFn: ({ productId, payload }) => adminApi.adjustProductInventory(productId, payload),
@@ -127,8 +145,10 @@ function Products() {
     mutationFn: ({ id, visible }) => adminApi.updateProduct(id, { visible }),
     onSuccess: async () => {
       toast.success("Product visibility updated.");
-      await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-      await queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "products"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "overview"] }),
+      ]);
     },
     onError: (error) => {
       toast.error(formatApiError(error));
@@ -149,31 +169,31 @@ function Products() {
     });
   });
 
-  const inventorySummary = useMemo(() => {
-    const rows = productsQuery.data?.content ?? [];
-    return [
+  const inventorySummary = useMemo(
+    () => [
       {
         label: "Catalog items",
-        value: productsQuery.data?.totalElements ?? 0,
+        value: filteredRows.length,
         hint: "Products matching the current filters",
       },
       {
         label: "Low stock",
-        value: rows.filter((product) => product.status === "Low stock").length,
+        value: filteredRows.filter((product) => product.status === "Low stock").length,
         hint: "Low-stock products on this page",
       },
       {
         label: "Reserved units",
-        value: rows.reduce((total, product) => total + Number(product.reservedStock ?? 0), 0),
-        hint: "Units held for pending online orders",
+        value: filteredRows.reduce((total, product) => total + Number(product.reservedStock ?? 0), 0),
+        hint: "Units held for pending orders",
       },
       {
         label: "Out of stock",
-        value: rows.filter((product) => product.status === "Out of stock").length,
+        value: filteredRows.filter((product) => product.status === "Out of stock").length,
         hint: "Products with no available units",
       },
-    ];
-  }, [productsQuery.data]);
+    ],
+    [filteredRows],
+  );
 
   const categoryOptions = useMemo(
     () => [
@@ -223,11 +243,9 @@ function Products() {
         header: "Inventory",
         cell: (product) => (
           <div>
-            <p className="font-medium text-brand-dark">
-              {product.availableStock} available
-            </p>
+            <p className="font-medium text-brand-dark">{product.availableStock} available</p>
             <p className="mt-1 text-xs text-brand-muted">
-              On hand {product.stock} · Reserved {product.reservedStock}
+              On hand {product.stock} | Reserved {product.reservedStock}
             </p>
             <p className="mt-1 text-xs text-brand-muted">
               Low-stock threshold {product.lowStockThreshold}
@@ -239,9 +257,12 @@ function Products() {
         key: "status",
         header: "Status",
         cell: (product) => (
-          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(product.status)}`}>
-            {product.status}
-          </span>
+          <div className="space-y-2">
+            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusClassName(product.status)}`}>
+              {product.status}
+            </span>
+            <p className="text-xs text-brand-muted">{product.visible ? "Visible" : "Hidden"}</p>
+          </div>
         ),
       },
       {
@@ -261,7 +282,7 @@ function Products() {
               className="rounded-2xl border border-black/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-dark transition hover:border-black/20 hover:bg-black/5"
               onClick={() => setInventoryProduct(product)}
             >
-              Adjust stock
+              Adjust Stock
             </button>
             <button
               type="button"
@@ -303,8 +324,8 @@ function Products() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Inventory control"
-        description="Manage CandleOra catalog readiness with SKU structure, low-stock thresholds, reserved inventory, and a stock movement trail."
+        title="Products & Inventory"
+        description="Manage your CandleOra products, track stock levels, and monitor inventory easily."
         actions={
           <button
             type="button"
@@ -318,7 +339,7 @@ function Products() {
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Search</label>
           <div className={`${FILTER_FIELD_CLASS} flex items-center bg-[#fbf7f0] text-brand-muted`}>
-            {debouncedSearch ? debouncedSearch : "Use the topbar search to filter by name, SKU, slug, or description"}
+            {debouncedSearch ? debouncedSearch : "Search products..."}
           </div>
         </div>
 
@@ -333,11 +354,21 @@ function Products() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className={FILTER_LABEL_CLASS}>Inventory</label>
+          <label className={FILTER_LABEL_CLASS}>Status</label>
+          <AdminSelect
+            value={visibility}
+            onChange={setVisibility}
+            options={VISIBILITY_FILTER_OPTIONS}
+            placeholder="All products"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className={FILTER_LABEL_CLASS}>Stock</label>
           <AdminSelect
             value={stock}
             onChange={setStock}
-            options={INVENTORY_FILTER_OPTIONS}
+            options={STOCK_FILTER_OPTIONS}
             placeholder="All products"
           />
         </div>
@@ -361,10 +392,10 @@ function Products() {
 
       <DataTable
         columns={columns}
-        rows={productsQuery.data?.content ?? []}
+        rows={filteredRows}
         isLoading={productsQuery.isLoading}
         emptyTitle="No products found"
-        emptyDescription="Try adjusting the category or inventory filters."
+        emptyDescription="Try adjusting the category, status, or stock filters."
       />
 
       <Pagination
@@ -376,7 +407,7 @@ function Products() {
       <Modal
         open={Boolean(inventoryProduct)}
         onClose={() => setInventoryProduct(null)}
-        title={inventoryProduct ? `Inventory for ${inventoryProduct.name}` : "Inventory control"}
+        title={inventoryProduct ? `Inventory for ${inventoryProduct.name}` : "Inventory"}
         size="xl"
         footer={
           <div className="flex items-center justify-between gap-3">
@@ -384,7 +415,7 @@ function Products() {
               Close
             </button>
             <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={isAdjusting} onClick={onAdjustInventory}>
-              {isAdjusting ? "Updating..." : "Apply adjustment"}
+              {isAdjusting ? "Updating..." : "Apply Adjustment"}
             </button>
           </div>
         }
@@ -461,7 +492,7 @@ function Products() {
                           </div>
 
                           <p className="mt-3 text-sm text-brand-muted">
-                            After event: {movement.onHandAfter} on hand · {movement.reservedAfter} reserved · {movement.availableAfter} available
+                            After event: {movement.onHandAfter} on hand | {movement.reservedAfter} reserved | {movement.availableAfter} available
                           </p>
 
                           {movement.referenceType || movement.referenceId ? (
@@ -494,7 +525,7 @@ function Products() {
       <Modal
         open={Boolean(confirmingProduct)}
         onClose={() => setConfirmingProduct(null)}
-        title="Delete product"
+        title="Delete Product"
         footer={
           <div className="flex items-center justify-between">
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setConfirmingProduct(null)}>
@@ -510,14 +541,24 @@ function Products() {
                 }
               }}
             >
-              {deleteProductMutation.isPending ? "Deleting..." : "Delete permanently"}
+              {deleteProductMutation.isPending ? "Deleting..." : "Delete Permanently"}
             </button>
           </div>
         }
       >
-        <p className="text-sm leading-6 text-brand-muted">
-          This will remove <span className="font-medium text-brand-dark">{confirmingProduct?.name}</span> from the catalog. Existing order items keep a snapshot of product details, but live catalog access will be removed.
-        </p>
+        <div className="space-y-4 text-sm leading-6 text-brand-muted">
+          <p>
+            Are you sure you want to delete <span className="font-medium text-brand-dark">{confirmingProduct?.name}</span>?
+          </p>
+          <div>
+            <p className="font-medium text-brand-dark">This action will:</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>Remove from catalog</li>
+              <li>Not available for purchase</li>
+            </ul>
+          </div>
+          <p>Note: Existing orders remain unaffected.</p>
+        </div>
       </Modal>
     </div>
   );
@@ -558,13 +599,12 @@ function formatDelta(value) {
 
 function deltaClassName(value) {
   const amount = Number(value ?? 0);
-  if (amount > 0) {
-    return "bg-[#e7f7ea] text-success";
+
+  if (!Number.isFinite(amount) || amount === 0) {
+    return "bg-black/8 text-brand-muted";
   }
-  if (amount < 0) {
-    return "bg-[#fdeaea] text-danger";
-  }
-  return "bg-black/8 text-brand-muted";
+
+  return amount > 0 ? "bg-[#e7f7ea] text-success" : "bg-[#fdeaea] text-danger";
 }
 
 export default Products;

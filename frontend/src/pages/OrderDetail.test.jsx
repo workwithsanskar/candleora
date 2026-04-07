@@ -148,20 +148,18 @@ describe("OrderDetail", () => {
 
     renderOrderDetail();
 
-    expect(await screen.findByText("#CNDL-20260327-101")).toBeInTheDocument();
+    expect((await screen.findAllByText("CNDL-20260327-101")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Amber Bloom Candle").length).toBeGreaterThan(0);
-    expect(screen.getByText("Delivery and fulfillment timeline")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "The active step is highlighted so you can quickly see where the order sits right now.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Delivery Timeline")).toBeInTheDocument();
+    expect(screen.getByText("Track where your order is right now.")).toBeInTheDocument();
     expect(screen.getByText("Shipping address")).toBeInTheDocument();
     expect(screen.getByText("Order Summary")).toBeInTheDocument();
+    expect(screen.getByText("Order Policies")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Need help?" })).toBeInTheDocument();
+    expect(screen.getByText("Items in this order")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Invoice" })).toBeInTheDocument();
     expect(screen.getByText("Cancellation Policy")).toBeInTheDocument();
     expect(screen.getByText("Replacement Policy")).toBeInTheDocument();
-    expect(screen.getByText("Contact Support")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Cancel Order/i })).toBeInTheDocument();
   });
 
@@ -181,7 +179,7 @@ describe("OrderDetail", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Cancel Order" }));
 
     expect(
-      await screen.findByText("Do you really want to cancel this order?"),
+      await screen.findByText("Are you sure you want to cancel this order?"),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Yes" }));
@@ -246,16 +244,15 @@ describe("OrderDetail", () => {
     renderOrderDetail();
 
     expect((await screen.findAllByText("Handed to the in-house delivery rider.")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Current update")).toBeInTheDocument();
+    expect(screen.getAllByText("Confirmed").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Delivered").length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(
-        "We are waiting for payment confirmation before the order moves into production.",
-      ).length,
-    ).toBeGreaterThan(0);
+      screen.queryByText("We are waiting for payment confirmation before the order moves into production."),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(
-        "The package has been delivered and the order record is now complete.",
-      ).length,
-    ).toBeGreaterThan(0);
+      screen.queryByText("The package has been delivered and the order record is now complete."),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the cancelled state without cancellation actions", async () => {

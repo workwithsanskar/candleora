@@ -22,6 +22,14 @@ vi.mock("../Modal", () => ({
   ) : null),
 }));
 
+function findOfferCard(code) {
+  const match = screen
+    .getAllByText(code)
+    .find((node) => node.closest("article"));
+
+  return match?.closest("article") ?? null;
+}
+
 describe("CouponCodePanel", () => {
   beforeEach(() => {
     mockCouponApi.getOffers.mockReset();
@@ -31,7 +39,7 @@ describe("CouponCodePanel", () => {
     cleanup();
   });
 
-  it("surfaces the best eligible coupon first and reveals the rest through the themed offers panel", async () => {
+  it("surfaces the best eligible coupon first and reveals the rest through the offers modal", async () => {
     mockCouponApi.getOffers.mockResolvedValue([
       {
         code: "SAVE12",
@@ -70,15 +78,15 @@ describe("CouponCodePanel", () => {
     );
 
     expect(await screen.findByText("BIG20")).toBeInTheDocument();
-    expect(screen.getByText("Best offer unlocked!")).toBeInTheDocument();
-    expect(screen.queryByText("WELCOME10")).not.toBeInTheDocument();
+    expect(screen.getByText("Best offer available")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /apply more coupons\/gift cards/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /apply more coupons\/gift cards/i }));
 
-    expect(screen.getByText("Coupons & Offers")).toBeInTheDocument();
-    expect(screen.getByText("WELCOME10")).toBeInTheDocument();
-    expect(screen.getByText("SAVE12")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter Coupon Code")).toBeInTheDocument();
+    expect(screen.getByText("Available Coupons")).toBeInTheDocument();
+    expect(screen.getAllByText("WELCOME10").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("SAVE12").length).toBeGreaterThan(0);
   });
 
   it("applies a coupon directly from the modal list", async () => {
@@ -119,10 +127,10 @@ describe("CouponCodePanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /apply more coupons\/gift cards/i }));
 
-    const targetCard = screen.getByText("WELCOME10").closest("article");
+    const targetCard = findOfferCard("WELCOME10");
     expect(targetCard).not.toBeNull();
 
-    fireEvent.click(within(targetCard).getByRole("button", { name: "Use" }));
+    fireEvent.click(within(targetCard).getByRole("button", { name: "APPLY" }));
 
     await waitFor(() => {
       expect(handleCouponCodeChange).toHaveBeenCalledWith("WELCOME10");
@@ -130,7 +138,56 @@ describe("CouponCodePanel", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Coupons & Offers")).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Enter Coupon Code")).not.toBeInTheDocument();
+    });
+  });
+
+  it("opens a detail popup from the modal list", async () => {
+    mockCouponApi.getOffers.mockResolvedValue([
+      {
+        code: "PARTY10",
+        title: "Save 10% instantly",
+        description: "Valid across the CandleOra collection.",
+        detailSummary: "Get 10% Instant Discount on orders above Rs.1499",
+        detailTerms: [
+          "Get 10% Instant Discount up to Rs.500",
+          "Valid on cart value of Rs.1499 or more",
+        ],
+        eligibilityHint: "Min order Rs. 1499 | One use per customer",
+        expiryText: "Ends soon",
+      },
+    ]);
+
+    render(
+      <CouponCodePanel
+        couponCode=""
+        isApplying={false}
+        couponError=""
+        appliedCoupon={null}
+        onCouponCodeChange={vi.fn()}
+        onApplyCoupon={vi.fn()}
+        onRemoveCoupon={vi.fn()}
+        subtotalAmount={1600}
+      />,
+    );
+
+    expect(await screen.findByText("PARTY10")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /apply more coupons\/gift cards/i }));
+
+    const targetCard = findOfferCard("PARTY10");
+    expect(targetCard).not.toBeNull();
+
+    fireEvent.click(within(targetCard).getByRole("button", { name: "View Details" }));
+
+    expect(screen.getByText("Terms & Conditions")).toBeInTheDocument();
+    expect(screen.getByText("Get 10% Instant Discount up to Rs.500")).toBeInTheDocument();
+    expect(screen.queryByText("Only one coupon can be applied per order.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close PARTY10 details panel" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Terms & Conditions")).not.toBeInTheDocument();
     });
   });
 

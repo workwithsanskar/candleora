@@ -5,9 +5,14 @@ import com.candleora.dto.admin.AdminOrderTrackingUpdateRequest;
 import com.candleora.dto.admin.AdminOrderStatusUpdateRequest;
 import com.candleora.dto.admin.AdminOrderSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
+import com.candleora.entity.CustomerOrder;
 import com.candleora.service.AdminOrderService;
+import com.candleora.service.InvoiceService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,9 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminOrderController {
 
     private final AdminOrderService adminOrderService;
+    private final InvoiceService invoiceService;
 
-    public AdminOrderController(AdminOrderService adminOrderService) {
+    public AdminOrderController(AdminOrderService adminOrderService, InvoiceService invoiceService) {
         this.adminOrderService = adminOrderService;
+        this.invoiceService = invoiceService;
     }
 
     @GetMapping
@@ -45,6 +52,20 @@ public class AdminOrderController {
     @GetMapping("/{id}")
     public AdminOrderDetailResponse getOrder(@PathVariable Long id) {
         return adminOrderService.getOrder(id);
+    }
+
+    @GetMapping(value = "/{id}/invoice", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long id) {
+        CustomerOrder order = adminOrderService.getOrderEntity(id);
+        byte[] pdf = invoiceService.generateInvoicePdf(order);
+
+        return ResponseEntity.ok()
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + invoiceService.buildInvoiceFilename(order) + "\""
+            )
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(pdf);
     }
 
     @PutMapping("/{id}/reviewed")

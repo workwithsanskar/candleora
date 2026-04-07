@@ -49,6 +49,9 @@ const blankFormValues = {
   type: "PERCENTAGE",
   scope: "ALL_PRODUCTS",
   value: "",
+  description: "",
+  detailSummary: "",
+  detailTermsText: "",
   maxDiscount: "",
   minOrderAmount: "",
   usageLimit: "",
@@ -157,6 +160,9 @@ function CouponEditor() {
       type: values.type,
       scope: values.scope,
       value: values.value,
+      description: values.description,
+      detailSummary: values.detailSummary,
+      detailTermsText: values.detailTermsText,
       maxDiscount: values.type === "PERCENTAGE" ? values.maxDiscount : null,
       minOrderAmount: values.minOrderAmount,
       usageLimit: values.usageLimit,
@@ -186,7 +192,7 @@ function CouponEditor() {
       <div className="rounded-[28px] border border-danger/20 bg-white p-8 shadow-sm">
         <h2 className="font-display text-2xl font-semibold text-brand-dark">Coupon unavailable</h2>
         <p className="mt-3 text-sm leading-6 text-brand-muted">
-          The coupon editor could not load this campaign. Verify the backend and try again.
+          The coupon could not be loaded. Verify the backend and try again.
         </p>
         <button type="button" className={`${SECONDARY_BUTTON_CLASS} mt-5`} onClick={() => navigate("/admin/coupons")}>
           Back to coupons
@@ -200,12 +206,12 @@ function CouponEditor() {
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Campaign editor</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-muted">Coupon editor</p>
             <h1 className="mt-2 font-display text-4xl font-semibold text-brand-dark">
               {isEdit ? "Edit coupon" : "Create coupon"}
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-brand-muted">
-              Manage discount setup in a dedicated page so long-form campaign rules stay easy to review and edit.
+              Create or update coupon rules, limits, and schedule.
             </p>
           </div>
 
@@ -226,11 +232,11 @@ function CouponEditor() {
             <div>
               <p className={COUPON_SECTION_TITLE_CLASS}>Offer structure</p>
               <p className={COUPON_SECTION_COPY_CLASS}>
-                Define the headline offer first, then decide where this campaign should be allowed to run.
+                Set the coupon code, discount type, and scope.
               </p>
             </div>
             <span className="rounded-full border border-[#f3b33d]/35 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#986700]">
-              {isEdit ? "Editing live campaign" : "New campaign"}
+              {isEdit ? "Editing coupon" : "New coupon"}
             </span>
           </div>
 
@@ -281,13 +287,56 @@ function CouponEditor() {
         <section className={COUPON_SECTION_CLASS}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className={COUPON_SECTION_TITLE_CLASS}>Guardrails and timing</p>
+              <p className={COUPON_SECTION_TITLE_CLASS}>Storefront copy</p>
               <p className={COUPON_SECTION_COPY_CLASS}>
-                Set the cart threshold, cap the reward, and choose how long the offer should stay active.
+                Customize what shoppers see on the coupon card and inside View Details. Leave blank to use generated defaults.
               </p>
             </div>
             <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
-              Rules + schedule
+              Optional overrides
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-3 lg:grid-cols-12">
+            <div className="flex flex-col gap-2 lg:col-span-6">
+              <label className={FILTER_LABEL_CLASS}>Card description</label>
+              <textarea
+                className={`${FILTER_FIELD_CLASS} min-h-[108px] resize-y py-3`}
+                {...register("description")}
+                placeholder="Short storefront description shown on the coupon card."
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 lg:col-span-6">
+              <label className={FILTER_LABEL_CLASS}>View details summary</label>
+              <textarea
+                className={`${FILTER_FIELD_CLASS} min-h-[108px] resize-y py-3`}
+                {...register("detailSummary")}
+                placeholder="Optional summary line shown in the coupon details popup."
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 lg:col-span-12">
+              <label className={FILTER_LABEL_CLASS}>View details terms</label>
+              <textarea
+                className={`${FILTER_FIELD_CLASS} min-h-[144px] resize-y py-3`}
+                {...register("detailTermsText")}
+                placeholder={"Add one term per line.\nExample: Valid on carts above Rs. 1499"}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className={COUPON_SECTION_CLASS}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className={COUPON_SECTION_TITLE_CLASS}>Guardrails and timing</p>
+              <p className={COUPON_SECTION_COPY_CLASS}>
+                Set the order limit, discount cap, and active dates.
+              </p>
+            </div>
+            <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+              Rules and schedule
             </span>
           </div>
 
@@ -363,7 +412,7 @@ function CouponEditor() {
           <section className={COUPON_SECTION_CLASS}>
             <p className={COUPON_SECTION_TITLE_CLASS}>Targeted categories</p>
             <p className={COUPON_SECTION_COPY_CLASS}>
-              Select the collections this coupon can unlock for shoppers.
+              Choose which categories this coupon applies to.
             </p>
 
             <div className="mt-3 flex flex-col gap-2">
@@ -384,7 +433,7 @@ function CouponEditor() {
           <section className={COUPON_SECTION_CLASS}>
             <p className={COUPON_SECTION_TITLE_CLASS}>Targeted products</p>
             <p className={COUPON_SECTION_COPY_CLASS}>
-              Choose the specific candles or accessories that should trigger this offer for customers.
+              Choose which products this coupon applies to.
             </p>
 
             <div className="mt-3 flex flex-col gap-2">
@@ -404,9 +453,9 @@ function CouponEditor() {
         <section className={COUPON_SECTION_CLASS}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className={COUPON_SECTION_TITLE_CLASS}>Campaign rules</p>
+              <p className={COUPON_SECTION_TITLE_CLASS}>Coupon rules</p>
               <p className={COUPON_SECTION_COPY_CLASS}>
-                Turn on only the restrictions you want the checkout to enforce for this discount.
+                Choose which checkout rules apply to this coupon.
               </p>
             </div>
             <span className="rounded-full border border-black/8 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
@@ -427,7 +476,7 @@ function CouponEditor() {
 
             <label className={COUPON_TOGGLE_CARD_CLASS}>
               <CandleCheckbox className="h-4 w-4" {...register("oneUsePerCustomer")} />
-              Limit this coupon to one successful redemption per customer
+              One use per customer
             </label>
           </div>
         </section>
@@ -443,15 +492,15 @@ function formatCouponType(type) {
 function describeDurationMode(durationMode) {
   switch (durationMode) {
     case "7_DAYS":
-      return "The coupon becomes active now and expires after 7 days.";
+      return "This coupon stays active for 7 days.";
     case "30_DAYS":
-      return "The coupon becomes active now and expires after 30 days.";
+      return "This coupon stays active for 30 days.";
     case "90_DAYS":
-      return "The coupon becomes active now and expires after 90 days.";
+      return "This coupon stays active for 90 days.";
     case "CUSTOM":
-      return "Set a precise campaign start and end time for this coupon.";
+      return "Set a custom start and end time.";
     default:
-      return "The coupon stays available until you pause it or delete it.";
+      return "This coupon stays active until you pause or delete it.";
   }
 }
 
@@ -484,6 +533,9 @@ function toCouponPayload(source, overrides = {}) {
     type: payload.type,
     scope: payload.scope ?? "ALL_PRODUCTS",
     value: payload.value === "" || payload.value == null ? null : Number(payload.value),
+    description: payload.description?.trim() || null,
+    detailSummary: payload.detailSummary?.trim() || null,
+    detailTerms: parseTextAreaLines(payload.detailTermsText),
     maxDiscount:
       payload.type === "PERCENTAGE" && payload.maxDiscount !== "" && payload.maxDiscount != null
         ? Number(payload.maxDiscount)
@@ -509,6 +561,9 @@ function toFormValues(coupon) {
     type: coupon.type ?? "PERCENTAGE",
     scope: coupon.scope ?? "ALL_PRODUCTS",
     value: coupon.value ?? "",
+    description: coupon.description ?? "",
+    detailSummary: coupon.detailSummary ?? "",
+    detailTermsText: Array.isArray(coupon.detailTerms) ? coupon.detailTerms.join("\n") : "",
     maxDiscount: coupon.maxDiscount ?? "",
     minOrderAmount: coupon.minOrderAmount ?? "",
     usageLimit: coupon.usageLimit ?? "",
@@ -548,6 +603,13 @@ function normalizeNumberArray(value) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? [parsed] : [];
+}
+
+function parseTextAreaLines(value) {
+  return String(value ?? "")
+    .split("\n")
+    .map((line) => line.replace(/^[\s\-•]+/, "").trim())
+    .filter(Boolean);
 }
 
 function toDateTimeLocalValue(value) {

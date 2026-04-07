@@ -3,6 +3,16 @@ import { useEffect, useRef, useState } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import SavedAddressCard from "./SavedAddressCard";
 
+function chunkAddresses(addresses, size) {
+  const chunks = [];
+
+  for (let index = 0; index < addresses.length; index += size) {
+    chunks.push(addresses.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
 function ArrowButton({ direction, onClick, disabled }) {
   const rotateClass = direction === "right" ? "" : "rotate-180";
 
@@ -31,9 +41,11 @@ function ArrowButton({ direction, onClick, disabled }) {
 
 function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
   const [startIndex, setStartIndex] = useState(0);
-  const [viewportWidth, setViewportWidth] = useState(680);
+  const [viewportWidth, setViewportWidth] = useState(1320);
   const prefersReducedMotion = useReducedMotion();
   const viewportRef = useRef(null);
+  const pairedSlides = chunkAddresses(addresses, 2);
+  const shouldCarouselDesktop = pairedSlides.length > 1;
 
   useEffect(() => {
     const viewportElement = viewportRef.current;
@@ -47,7 +59,7 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
     const measureViewport = () => {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = window.requestAnimationFrame(() => {
-        const nextWidth = Math.min(viewportElement.getBoundingClientRect().width || 680, 680);
+        const nextWidth = viewportElement.getBoundingClientRect().width || 1320;
         setViewportWidth((currentWidth) =>
           Math.abs(currentWidth - nextWidth) < 1 ? currentWidth : nextWidth,
         );
@@ -70,14 +82,14 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
   }, []);
 
   useEffect(() => {
-    setStartIndex((currentIndex) => Math.min(currentIndex, Math.max(0, addresses.length - 1)));
-  }, [addresses.length]);
+    setStartIndex((currentIndex) => Math.min(currentIndex, Math.max(0, pairedSlides.length - 1)));
+  }, [pairedSlides.length]);
 
   if (!addresses.length) {
     return null;
   }
 
-  const maxStartIndex = Math.max(0, addresses.length - 1);
+  const maxStartIndex = Math.max(0, pairedSlides.length - 1);
   const trackOffset = startIndex * viewportWidth;
 
   return (
@@ -91,9 +103,9 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
       </div>
 
       <div className="hidden md:block">
-        <div className="relative w-full max-w-[680px]">
-          {addresses.length > 1 ? (
-            <div className="absolute -left-14 top-[168px] -translate-y-1/2 lg:-left-16">
+        <div className="relative w-full">
+          {shouldCarouselDesktop ? (
+            <div className="absolute -left-14 top-1/2 -translate-y-1/2 lg:-left-16">
               <ArrowButton
                 direction="left"
                 onClick={() => setStartIndex((currentIndex) => Math.max(0, currentIndex - 1))}
@@ -102,7 +114,7 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
             </div>
           ) : null}
 
-          <div ref={viewportRef} className="overflow-hidden">
+          <div ref={viewportRef} className="overflow-hidden px-[1px] pb-[5px] pt-[1px]">
             <m.div
               className="flex transform-gpu items-start will-change-transform"
               animate={{ x: -trackOffset }}
@@ -118,20 +130,29 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
                     }
               }
             >
-              {addresses.map((address) => (
+              {pairedSlides.map((slide, slideIndex) => (
                 <div
-                  key={address.id}
+                  key={`saved-address-slide-${slideIndex}`}
                   className="shrink-0"
                   style={{ width: `${viewportWidth}px` }}
                 >
-                  <SavedAddressCard address={address} onEdit={onEdit} onRemove={onRemove} />
+                  <div className="grid gap-4 px-[1px] xl:grid-cols-2">
+                    {slide.map((address) => (
+                      <SavedAddressCard
+                        key={address.id}
+                        address={address}
+                        onEdit={onEdit}
+                        onRemove={onRemove}
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
             </m.div>
           </div>
 
-          {addresses.length > 1 ? (
-            <div className="absolute -right-14 top-[168px] -translate-y-1/2 lg:-right-16">
+          {shouldCarouselDesktop ? (
+            <div className="absolute -right-14 top-1/2 -translate-y-1/2 lg:-right-16">
               <ArrowButton
                 direction="right"
                 onClick={() => setStartIndex((currentIndex) => Math.min(maxStartIndex, currentIndex + 1))}
@@ -142,16 +163,17 @@ function SavedAddressCarousel({ addresses, onEdit, onRemove }) {
         </div>
       </div>
 
-      {addresses.length > 1 ? (
+      {shouldCarouselDesktop ? (
         <div className="hidden items-center justify-center gap-2 md:flex">
-          {addresses.map((address, index) => {
+          {pairedSlides.map((slide, index) => {
             const isActive = index === startIndex;
+            const firstAddressId = slide[0]?.id ?? index;
 
             return (
               <button
-                key={address.id}
+                key={firstAddressId}
                 type="button"
-                aria-label={`Go to saved address ${index + 1}`}
+                aria-label={`Go to saved address group ${index + 1}`}
                 aria-pressed={isActive}
                 onClick={() => setStartIndex(index)}
                 className={`h-2.5 rounded-full transition-all duration-200 ${

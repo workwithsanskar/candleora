@@ -19,6 +19,9 @@ public record AdminCouponUpdateRequest(
     Instant startsAt,
     Instant endsAt,
     Integer usageLimit,
+    String description,
+    String detailSummary,
+    List<String> detailTerms,
     List<String> categorySlugs,
     List<Long> productIds
 ) {

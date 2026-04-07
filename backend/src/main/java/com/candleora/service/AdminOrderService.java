@@ -1,12 +1,13 @@
 package com.candleora.service;
 
 import com.candleora.dto.admin.AdminOrderDetailResponse;
+import com.candleora.dto.admin.AdminOrderItemResponse;
+import com.candleora.dto.admin.AdminOrderItemReviewResponse;
 import com.candleora.dto.admin.AdminOrderTrackingEventRequest;
 import com.candleora.dto.admin.AdminOrderTrackingUpdateRequest;
 import com.candleora.dto.admin.AdminOrderStatusUpdateRequest;
 import com.candleora.dto.admin.AdminOrderSummaryResponse;
 import com.candleora.dto.common.PagedResponse;
-import com.candleora.dto.order.OrderItemResponse;
 import com.candleora.dto.order.OrderTrackingEventResponse;
 import com.candleora.entity.CustomerOrder;
 import com.candleora.entity.OrderItem;
@@ -14,8 +15,10 @@ import com.candleora.entity.OrderStatus;
 import com.candleora.entity.OrderTrackingEvent;
 import com.candleora.entity.PaymentStatus;
 import com.candleora.entity.Product;
+import com.candleora.entity.ProductReview;
 import com.candleora.entity.ReplacementRequest;
 import com.candleora.repository.CustomerOrderRepository;
+import com.candleora.repository.ProductReviewRepository;
 import com.candleora.repository.ProductRepository;
 import com.candleora.repository.ReplacementRepository;
 import java.math.BigDecimal;
@@ -28,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -55,20 +59,26 @@ public class AdminOrderService {
 
     private final CustomerOrderRepository customerOrderRepository;
     private final ProductRepository productRepository;
+    private final ProductReviewRepository productReviewRepository;
     private final ReplacementRepository replacementRepository;
     private final InventoryService inventoryService;
+    private final InvoiceService invoiceService;
     private final ZoneId zoneId = ZoneId.systemDefault();
 
     public AdminOrderService(
         CustomerOrderRepository customerOrderRepository,
         ProductRepository productRepository,
+        ProductReviewRepository productReviewRepository,
         ReplacementRepository replacementRepository,
-        InventoryService inventoryService
+        InventoryService inventoryService,
+        InvoiceService invoiceService
     ) {
         this.customerOrderRepository = customerOrderRepository;
         this.productRepository = productRepository;
+        this.productReviewRepository = productReviewRepository;
         this.replacementRepository = replacementRepository;
         this.inventoryService = inventoryService;
+        this.invoiceService = invoiceService;
     }
 
     @Transactional(readOnly = true)
@@ -109,6 +119,11 @@ public class AdminOrderService {
     public AdminOrderDetailResponse getOrder(Long id) {
         CustomerOrder order = findOrder(id);
         return toDetail(order, resolveLatestReplacement(order.getId()));
+    }
+
+    @Transactional(readOnly = true)
+    public CustomerOrder getOrderEntity(Long id) {
+        return findOrder(id);
     }
 
     public AdminOrderDetailResponse markReviewed(Long id) {
@@ -440,6 +455,9 @@ public class AdminOrderService {
     private AdminOrderDetailResponse toDetail(CustomerOrder order, ReplacementRequest replacement) {
         BigDecimal subtotalAmount = order.getSubtotalAmount() != null ? order.getSubtotalAmount() : order.getTotalAmount();
         BigDecimal discountAmount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
+        boolean invoiceAvailable = invoiceService.isInvoiceAvailable(order);
+        String invoiceNumber = invoiceAvailable ? invoiceService.buildInvoiceNumber(order) : null;
+        Map<Long, ProductReview> reviewsByProductId = resolveReviewsByProductId(order);
 
         return new AdminOrderDetailResponse(
             order.getId(),
@@ -457,6 +475,8 @@ public class AdminOrderService {
             subtotalAmount,
             discountAmount,
             order.getCouponCode(),
+            invoiceAvailable,
+            invoiceNumber,
             order.getCreatedAt(),
             order.getEstimatedDeliveryStart(),
             order.getEstimatedDeliveryEnd(),
@@ -474,16 +494,62 @@ public class AdminOrderService {
             order.getPostalCode(),
             order.getCountry(),
             order.getItems().stream()
-                .map(item -> new OrderItemResponse(
+                .map(item -> new AdminOrderItemResponse(
                     item.getId(),
                     item.getProductId(),
                     item.getProductName(),
                     item.getImageUrl(),
                     item.getQuantity(),
-                    item.getPrice()
+                    item.getPrice(),
+                    toItemReview(reviewsByProductId.get(item.getProductId()))
                 ))
                 .toList(),
             buildTrackingEvents(order)
+        );
+    }
+
+    private Map<Long, ProductReview> resolveReviewsByProductId(CustomerOrder order) {
+        List<Long> productIds = order.getItems().stream()
+            .map(OrderItem::getProductId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, ProductReview> reviewsByProductId = new LinkedHashMap<>();
+        Long reviewerUserId = order.getUser() != null ? order.getUser().getId() : null;
+
+        if (reviewerUserId != null) {
+            for (ProductReview review : productReviewRepository.findAllByProductIdInAndReviewerUserId(productIds, reviewerUserId)) {
+                reviewsByProductId.putIfAbsent(review.getProduct().getId(), review);
+            }
+        }
+
+        String reviewerEmail = StringUtils.hasText(order.getContactEmail()) ? order.getContactEmail().trim() : null;
+        if (reviewerEmail != null) {
+            for (ProductReview review : productReviewRepository.findAllByProductIdInAndReviewerEmailIgnoreCase(productIds, reviewerEmail)) {
+                reviewsByProductId.putIfAbsent(review.getProduct().getId(), review);
+            }
+        }
+
+        return reviewsByProductId;
+    }
+
+    private AdminOrderItemReviewResponse toItemReview(ProductReview review) {
+        if (review == null) {
+            return null;
+        }
+
+        return new AdminOrderItemReviewResponse(
+            review.getId(),
+            review.getRating(),
+            review.getMessage(),
+            review.getReviewerName(),
+            review.getReviewerEmail(),
+            review.getCreatedAt()
         );
     }
 

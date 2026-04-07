@@ -94,8 +94,12 @@ public class CartService {
             item.getId(),
             item.getProduct().getId(),
             item.getProduct().getName(),
+            item.getProduct().getSlug(),
+            item.getProduct().getOccasionTag(),
             item.getProduct().getImageUrls().isEmpty() ? "" : item.getProduct().getImageUrls().get(0),
             unitPrice,
+            item.getProduct().getOriginalPrice(),
+            item.getProduct().getAvailableStock(),
             item.getQuantity(),
             lineTotal
         );

@@ -57,7 +57,7 @@ describe("Navbar wishlist preview", () => {
     });
   });
 
-  it("keeps wishlist product names as explicit links and caps the quick panel to the first 3 saved items", async () => {
+  it("keeps wishlist product names as explicit links and allows the quick panel to scroll through all saved items", async () => {
     const { container } = render(
       <MemoryRouter>
         <Navbar />
@@ -80,6 +80,6 @@ describe("Navbar wishlist preview", () => {
     );
 
     expect(quickPanelScroller).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Garden Bloom Trio" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Garden Bloom Trio" })).toBeInTheDocument();
   });
 });

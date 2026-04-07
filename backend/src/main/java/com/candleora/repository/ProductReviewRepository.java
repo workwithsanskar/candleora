@@ -9,6 +9,10 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
 
     List<ProductReview> findAllByProductIdOrderByCreatedAtDescIdDesc(Long productId);
 
+    List<ProductReview> findAllByProductIdInAndReviewerUserId(List<Long> productIds, Long reviewerUserId);
+
+    List<ProductReview> findAllByProductIdInAndReviewerEmailIgnoreCase(List<Long> productIds, String reviewerEmail);
+
     Optional<ProductReview> findByProductIdAndReviewerUserId(Long productId, Long reviewerUserId);
 
     Optional<ProductReview> findByProductIdAndReviewerEmailIgnoreCase(Long productId, String reviewerEmail);

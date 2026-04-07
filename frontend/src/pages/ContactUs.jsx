@@ -16,7 +16,7 @@ const emptyForm = {
 };
 
 const fieldLabelClassName =
-  "text-[14px] font-medium text-black";
+  "text-[14px] font-medium leading-5 text-black";
 const fieldInputClassName =
   "h-[54px] w-full rounded-full border border-black/15 bg-white px-6 py-2.5 text-[0.98rem] text-black outline-none transition placeholder:text-black/38 focus:border-black";
 const fieldTextareaClassName =
@@ -117,18 +117,18 @@ function ContactUs() {
         <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white">
           <div className="bg-black px-6 py-4 sm:px-8 lg:px-10">
             <h1 className="font-display text-[1.8rem] font-semibold leading-[1.05] text-white sm:text-[1.95rem]">
-              Get In Touch With Us
+              Get in Touch with Us
             </h1>
           </div>
 
-          <div className="grid gap-10 px-6 py-8 sm:px-8 lg:grid-cols-[0.52fr_1.48fr] lg:gap-10 lg:px-10 lg:py-10">
-            <div className="space-y-6 pt-1">
-              <div className="border-b border-black/10 pb-5">
+          <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[0.52fr_1.48fr] lg:gap-8 lg:px-10 lg:py-9">
+            <div className="space-y-5 pt-1">
+              <div className="border-b border-black/10 pb-4">
                 <p className="text-[1rem] font-medium text-black">Phone Number</p>
                 <p className="mt-1 text-[1rem] leading-6 text-black/68">8999908639</p>
               </div>
 
-              <div className="border-b border-black/10 pb-5">
+              <div className="border-b border-black/10 pb-4">
                 <p className="text-[1rem] font-medium text-black">Email Address</p>
                 <p className="mt-1 text-[1rem] leading-6 text-black/68">
                   candleora25@gmail.com
@@ -145,19 +145,19 @@ function ContactUs() {
 
             <div>
               <div className="max-w-[840px]">
-                <h2 className="text-[1.05rem] font-medium leading-7 text-black sm:text-[1.1rem]">
-                  Send us a message
+                <h2 className="text-[1.18rem] font-semibold leading-7 text-black sm:text-[1.24rem]">
+                  Send Us a Message
                 </h2>
-                <p className="mt-1 max-w-[760px] text-[1rem] leading-8 text-black/62">
-                  Have a question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
+                <p className="mt-0 max-w-[700px] text-[0.98rem] leading-[1.5] text-black/62">
+                  Have a Question about an order, gifting, custom candles, or bulk enquiries? Send us a message and our team will get back to you shortly.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-6">
+              <form onSubmit={handleSubmit} className="mt-4.5">
                 <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className={fieldLabelClassName}>Your name <span className="text-danger">*</span></span>
+                  <label className="space-y-1">
+                    <span className={fieldLabelClassName}>Your Name <span className="text-danger">*</span></span>
                     <input
                       type="text"
                       name="name"
@@ -167,8 +167,8 @@ function ContactUs() {
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-2">
-                    <span className={fieldLabelClassName}>Email address <span className="text-danger">*</span></span>
+                  <label className="space-y-1">
+                    <span className={fieldLabelClassName}>Email Address <span className="text-danger">*</span></span>
                     <input
                       type="email"
                       name="email"
@@ -181,8 +181,8 @@ function ContactUs() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className={fieldLabelClassName}>Phone number <span className="text-danger">*</span></span>
+                  <label className="space-y-1">
+                    <span className={fieldLabelClassName}>Phone Number <span className="text-danger">*</span></span>
                     <input
                       type="tel"
                       name="phone"
@@ -192,7 +192,7 @@ function ContactUs() {
                       className={fieldInputClassName}
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-1">
                     <span className={fieldLabelClassName}>Subject <span className="text-danger">*</span></span>
                     <input
                       type="text"
@@ -205,7 +205,7 @@ function ContactUs() {
                   </label>
                 </div>
 
-                <label className="space-y-2">
+                <label className="space-y-1">
                   <span className={fieldLabelClassName}>Message <span className="text-danger">*</span></span>
                   <textarea
                     rows="2"

@@ -158,12 +158,12 @@ function ContactMessages() {
     <div className="space-y-6">
       <FiltersBar
         title="Contact inbox"
-        description="Every Contact Us submission lands here so the operations team can review customer questions without leaving the admin workspace."
+        description="Review customer messages from the contact form."
       >
         <div className="flex flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Search</label>
           <div className={`${FILTER_FIELD_CLASS} flex items-center`}>
-            {debouncedSearch ? debouncedSearch : "Use the topbar search to filter by sender, phone, subject, or message"}
+            {debouncedSearch ? debouncedSearch : "Search by name, email, phone, or subject"}
           </div>
         </div>
       </FiltersBar>
@@ -173,7 +173,7 @@ function ContactMessages() {
         rows={contactMessagesQuery.data?.content ?? []}
         isLoading={contactMessagesQuery.isLoading}
         emptyTitle="No contact submissions yet"
-        emptyDescription="Messages from the Contact Us page will appear here as soon as customers send them."
+        emptyDescription="Messages from the contact page will appear here."
       />
 
       <Pagination

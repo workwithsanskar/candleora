@@ -175,7 +175,7 @@ describe("ProductDetail", () => {
     expect(await screen.findByText("Checkout address page")).toBeInTheDocument();
   });
 
-  it("locks the review form for signed-out visitors", async () => {
+  it("keeps the review summary visible but removes the write-review form from the item page", async () => {
     render(
       <MemoryRouter initialEntries={["/product/1"]}>
         <Routes>
@@ -184,19 +184,14 @@ describe("ProductDetail", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Write a Review")).toBeInTheDocument();
-    expect(screen.getAllByText("Sign in to write a review for this candle.").length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("button", { name: "Sign In to Review" }).every((button) => button.disabled)).toBe(true);
-    expect(screen.getAllByPlaceholderText("John Doe").every((input) => input.disabled)).toBe(true);
-    expect(screen.getAllByPlaceholderText("you@example.com").every((input) => input.disabled)).toBe(true);
-    expect(
-      screen
-        .getAllByPlaceholderText("Share your experience with the fragrance, finish, packaging, and burn quality...")
-        .every((input) => input.disabled),
-    ).toBe(true);
+    expect(await screen.findByText("Customer Rating")).toBeInTheDocument();
+    expect(screen.queryByText("Write a Review")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign In to Review" })).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("John Doe")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("you@example.com")).not.toBeInTheDocument();
   });
 
-  it("shows the user's existing review in disabled form fields and enables smooth hidden scrolling for longer review lists", async () => {
+  it("keeps longer review lists scrollable after removing the write-review form", async () => {
     mockUseAuth.mockReturnValue({
       user: {
         name: "Sanskar Amle",
@@ -229,29 +224,9 @@ describe("ProductDetail", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      (await screen.findAllByRole("button", { name: "Review Posted" })).every((button) => button.disabled),
-    ).toBe(true);
-
-    await waitFor(() => {
-      expect(
-        screen
-          .getAllByPlaceholderText("John Doe")
-          .some((input) => input.disabled && input.value === "Sanskar Amle"),
-      ).toBe(true);
-      expect(
-        screen
-          .getAllByPlaceholderText("you@example.com")
-          .some((input) => input.disabled && input.value === "sanskar@example.com"),
-      ).toBe(true);
-      expect(
-        screen
-          .getAllByPlaceholderText(
-            "Share your experience with the fragrance, finish, packaging, and burn quality...",
-          )
-          .some((input) => input.disabled && input.value === "My saved review"),
-      ).toBe(true);
-    });
+    expect(await screen.findByText("Customer Rating")).toBeInTheDocument();
+    expect(screen.getByText("My saved review")).toBeInTheDocument();
+    expect(screen.queryByText("Write a Review")).not.toBeInTheDocument();
 
     const reviewListScroller = screen
       .getAllByText("Loved it")

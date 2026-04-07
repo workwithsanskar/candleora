@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import fallbackImage from "../assets/designer/image-optimized.jpg";
+import Modal from "../components/Modal";
 import CheckoutPriceSummary from "../components/checkout/CheckoutPriceSummary";
 import CouponCodePanel from "../components/checkout/CouponCodePanel";
 import PrimaryButton from "../components/checkout/PrimaryButton";
@@ -36,11 +37,25 @@ function HeartIcon({ filled = false }) {
   );
 }
 
+function createWishlistProduct(item) {
+  return {
+    id: item.productId ?? item.id,
+    slug: item.slug,
+    name: item.productName,
+    price: item.unitPrice,
+    originalPrice: item.originalUnitPrice,
+    stock: item.stock,
+    imageUrl: item.imageUrl,
+    occasionTag: item.occasionTag,
+    category: { name: item.occasionTag || "CandleOra" },
+  };
+}
+
 function Cart() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { items, grandTotal, updateQuantity, removeFromCart, isLoading, error } = useCart();
-  const { isWishlisted, toggleWishlist } = useWishlist();
+  const { addToWishlist, isWishlisted, toggleWishlist } = useWishlist();
   const {
     session,
     startCartCheckout,
@@ -62,6 +77,8 @@ function Cart() {
     applyCoupon,
     clearCoupon,
   });
+  const [pendingRemovalItem, setPendingRemovalItem] = useState(null);
+  const [isRemovingItem, setIsRemovingItem] = useState(false);
 
   useEffect(() => {
     if (!items.length) {
@@ -124,6 +141,56 @@ function Cart() {
     navigate("/checkout/address");
   };
 
+  const openRemoveModal = (item) => {
+    setPendingRemovalItem(item);
+  };
+
+  const closeRemoveModal = () => {
+    if (isRemovingItem) {
+      return;
+    }
+
+    setPendingRemovalItem(null);
+  };
+
+  const handleDecreaseQuantity = (item) => {
+    if (Number(item.quantity) <= 1) {
+      openRemoveModal(item);
+      return;
+    }
+
+    updateQuantity(item.id, Number(item.quantity) - 1);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!pendingRemovalItem) {
+      return;
+    }
+
+    setIsRemovingItem(true);
+    try {
+      await removeFromCart(pendingRemovalItem.id);
+      setPendingRemovalItem(null);
+    } finally {
+      setIsRemovingItem(false);
+    }
+  };
+
+  const handleSaveForLater = async () => {
+    if (!pendingRemovalItem) {
+      return;
+    }
+
+    setIsRemovingItem(true);
+    try {
+      addToWishlist(createWishlistProduct(pendingRemovalItem));
+      await removeFromCart(pendingRemovalItem.id);
+      setPendingRemovalItem(null);
+    } finally {
+      setIsRemovingItem(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="container-shell py-16">
@@ -170,15 +237,19 @@ function Cart() {
           </div>
 
           <div className={`space-y-4 ${items.length > 3 ? "mini-cart-scroll-view max-h-[940px] overflow-y-auto pr-2" : ""}`}>
-            {items.map((item) => (
-              <article
-                key={item.id}
-                className="overflow-hidden rounded-[28px] border border-black/10 bg-white p-4 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-5"
-              >
+            {items.map((item) => {
+              const isAvailable = item.stock == null || Number(item.stock) > 0;
+              const wishlistProduct = createWishlistProduct(item);
+
+              return (
+                <article
+                  key={item.id}
+                  className="overflow-hidden rounded-[28px] border border-black/10 bg-white p-4 shadow-[0_18px_34px_rgba(0,0,0,0.05)] sm:p-5"
+                >
                 <div className="grid gap-5 md:grid-cols-[24px_170px_minmax(0,1fr)_136px] md:items-start">
                   <button
                     type="button"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => openRemoveModal(item)}
                     className="text-2xl leading-none text-black/52 transition hover:text-danger"
                     aria-label={`Remove ${item.productName} from bag`}
                   >
@@ -186,7 +257,7 @@ function Cart() {
                   </button>
 
                   <Link
-                    to={getProductPath({ id: item.productId, name: item.productName })}
+                    to={getProductPath({ id: item.productId, slug: item.slug, name: item.productName })}
                     className="relative self-start overflow-hidden rounded-[22px] bg-[#F2ECE2]"
                   >
                     <img
@@ -206,15 +277,7 @@ function Cart() {
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        toggleWishlist({
-                          id: item.productId,
-                          name: item.productName,
-                          price: item.unitPrice,
-                          originalPrice: item.originalUnitPrice,
-                          stock: item.stock,
-                          imageUrl: item.imageUrl,
-                          category: { name: item.occasionTag || "CandleOra" },
-                        });
+                        toggleWishlist(wishlistProduct);
                       }}
                       className={`absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/92 transition ${
                         isWishlisted(item.productId)
@@ -234,28 +297,32 @@ function Cart() {
                         </span>
                         <span
                           className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
-                            item.stock > 0
+                            isAvailable
                               ? "bg-[#eef7ee] text-[#2d7d32]"
                               : "bg-[#fff1f1] text-[#c62828]"
                           }`}
                         >
-                          {item.stock > 0 ? "In stock" : "Out of stock"}
+                          {isAvailable ? "In Stock" : "Out of Stock"}
                         </span>
                       </div>
 
                       <div className="space-y-2">
                         <Link
-                          to={getProductPath({ id: item.productId, name: item.productName })}
+                          to={getProductPath({ id: item.productId, slug: item.slug, name: item.productName })}
                           className="block"
                         >
                           <h2 className="text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.03em] text-black transition hover:underline hover:underline-offset-4 sm:text-[1.35rem]">
                             {item.productName}
                           </h2>
                         </Link>
-                        <p className="max-w-[520px] text-sm leading-6 text-black/62">
-                          {item.stock > 0
+                        <p
+                          className={`max-w-[520px] text-sm leading-6 ${
+                            isAvailable ? "text-black/62" : "font-medium text-[#c93232]"
+                          }`}
+                        >
+                          {isAvailable
                             ? "Get it within 3-6 delivery days."
-                            : "This item is currently unavailable. Saved in for later."}
+                            : "This item is currently unavailable, saved in for later."}
                         </p>
                       </div>
                     </div>
@@ -264,13 +331,13 @@ function Cart() {
                       <QuantityControl
                         value={item.quantity}
                         compact
-                        onDecrease={() => updateQuantity(item.id, Number(item.quantity) - 1)}
+                        onDecrease={() => handleDecreaseQuantity(item)}
                         onIncrease={() => updateQuantity(item.id, Number(item.quantity) + 1)}
                       />
-                      <p className="inline-flex h-[42px] items-center rounded-full border border-[#f2d29a] bg-white px-4 text-sm text-black/62">
+                      <p className="text-sm font-medium text-black/62">
                         {formatCurrency(item.unitPrice)} each
                       </p>
-                      <span className="inline-flex items-center gap-2 text-sm font-medium text-black/62">
+                      <span className="inline-flex items-center gap-2 text-sm font-medium text-[#1f8a3d]">
                         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
                           <path d="M3 7H15V17H3Z" />
                           <path d="M15 10H18.5L21 13V17H15Z" />
@@ -293,8 +360,9 @@ function Cart() {
                     ) : null}
                   </div>
                 </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
 
@@ -313,6 +381,7 @@ function Cart() {
           <CheckoutPriceSummary
             summary={effectiveSummary}
             itemCount={items.length}
+            title="Price Summary"
             sticky
             cta={isAuthenticated ? (
               <PrimaryButton className="w-full" onClick={handleProceed}>
@@ -328,20 +397,6 @@ function Cart() {
               </Link>
             )}
             note=""
-            extraContent={(
-              <div className="space-y-2 border-t border-black/8 pt-4">
-                <div className="grid gap-2 text-sm text-black/62">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-[#F1B85A]" />
-                    <span>Quality Assurance</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-[#F1B85A]" />
-                    <span>100% Secure Payments</span>
-                  </div>
-                </div>
-              </div>
-            )}
           />
         </div>
       </div>
@@ -361,6 +416,96 @@ function Cart() {
           </Link>
         )}
       />
+
+      <Modal
+        isOpen={Boolean(pendingRemovalItem)}
+        onClose={closeRemoveModal}
+        title="Clear From Bag"
+        maxWidthClass="max-w-[860px]"
+        bodyScrollable={false}
+        headerClassName="bg-white"
+        titleClassName="text-[1.55rem] leading-none tracking-[-0.04em] sm:text-[1.8rem]"
+      >
+        {pendingRemovalItem ? (
+          <div className="space-y-5">
+            <p className="text-[1.05rem] font-medium text-[#1A1A1A]">
+              Are you sure you want to remove this item from bag?
+            </p>
+
+            <div className="grid gap-4 rounded-[24px] border border-black/10 bg-white p-4 sm:grid-cols-[118px_minmax(0,1fr)_auto] sm:items-center sm:p-5">
+              <div className="overflow-hidden rounded-[18px] bg-[#F2ECE2]">
+                <img
+                  {...getResponsiveImageProps(pendingRemovalItem.imageUrl, {
+                    widths: [180, 240, 320],
+                    quality: 64,
+                    sizes: "(min-width: 640px) 118px, 100vw",
+                  })}
+                  alt={pendingRemovalItem.productName}
+                  loading="lazy"
+                  decoding="async"
+                  onError={(event) => applyImageFallback(event, fallbackImage)}
+                  className="aspect-square h-full w-full object-cover"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[1.1rem] font-semibold text-[#1A1A1A]">
+                  {pendingRemovalItem.occasionTag || "CandleOra"}
+                </p>
+                <p className="text-base text-black/68">{pendingRemovalItem.productName}</p>
+                <p
+                  className={`text-sm font-medium ${
+                    pendingRemovalItem.stock == null || Number(pendingRemovalItem.stock) > 0
+                      ? "text-[#1f8a3d]"
+                      : "text-[#c93232]"
+                  }`}
+                >
+                  {pendingRemovalItem.stock == null || Number(pendingRemovalItem.stock) > 0
+                    ? "Get it within 3-6 delivery days."
+                    : "This item is currently unavailable, saved in for later."}
+                </p>
+              </div>
+
+              <div className="space-y-1 text-left sm:text-right">
+                <p className="text-[1.9rem] font-semibold leading-none tracking-[-0.04em] text-[#1A1A1A]">
+                  {formatCurrency(pendingRemovalItem.lineTotal)}
+                </p>
+                {Number(pendingRemovalItem.originalUnitPrice ?? pendingRemovalItem.unitPrice) > Number(pendingRemovalItem.unitPrice) ? (
+                  <>
+                    <p className="text-sm text-black/40 line-through">
+                      {formatCurrency(pendingRemovalItem.originalUnitPrice)}
+                    </p>
+                    <p className="text-sm font-medium text-[#1f8a3d]">
+                      You saved {formatCurrency(
+                        Number(pendingRemovalItem.originalUnitPrice) - Number(pendingRemovalItem.unitPrice),
+                      )}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={handleConfirmRemove}
+                disabled={isRemovingItem}
+                className="inline-flex min-h-[56px] items-center justify-center rounded-[16px] border border-black/12 bg-white px-6 text-base font-semibold uppercase tracking-[0.03em] text-[#1A1A1A] transition hover:bg-black/[0.02] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isRemovingItem ? "Removing..." : "Remove"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveForLater}
+                disabled={isRemovingItem}
+                className="inline-flex min-h-[56px] items-center justify-center rounded-[16px] bg-brand-primary px-6 text-base font-semibold uppercase tracking-[0.03em] text-[#1A1A1A] transition hover:bg-[#dfa129] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isRemovingItem ? "Saving..." : "Save For Later"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {visibleRecommendations.length ? (
         <div className="space-y-5 pt-12">

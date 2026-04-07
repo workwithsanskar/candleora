@@ -158,11 +158,11 @@ function Orders() {
             <div className="hidden grid-cols-[92px_minmax(0,2.1fr)_138px_140px_140px_96px_156px] items-center gap-6 bg-black/35 px-5 py-4 text-sm font-medium text-white lg:grid">
               <p>Order No.</p>
               <p>Items</p>
-              <p>Status</p>
+              <p className="text-left">Status</p>
               <p>Tracking ID</p>
               <p>Delivery Date</p>
               <p>Price</p>
-              <p className="text-right">Action</p>
+              <p className="text-center">Action</p>
             </div>
 
             <div>
@@ -230,7 +230,7 @@ function Orders() {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
+                      <div className="space-y-1 lg:justify-self-start">
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                           Status
                         </p>
@@ -250,7 +250,7 @@ function Orders() {
                         </p>
                         <Link
                           to={`/orders/${order.id}`}
-                          className="inline-flex items-center gap-1 text-sm text-[#1b75bc] hover:text-[#15588e]"
+                          className="inline-flex items-center gap-1 text-sm font-semibold text-[#1b75bc] hover:text-[#15588e]"
                         >
                           <span className="underline underline-offset-2">{trackingReference}</span>
                           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -279,11 +279,11 @@ function Orders() {
                         </p>
                       </div>
 
-                      <div className="space-y-2 lg:text-right">
+                      <div className="space-y-2 lg:text-center">
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-black/44 lg:hidden">
                           Action
                         </p>
-                        <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap text-sm font-semibold lg:justify-end">
+                        <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap text-sm font-semibold lg:justify-center">
                           <Link
                             to="/shop"
                             className="text-black transition hover:underline hover:underline-offset-4"

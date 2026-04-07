@@ -144,9 +144,9 @@ function Login() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-[14px] font-semibold text-brand-dark underline underline-offset-4"
+                  className="text-[14px] font-semibold text-brand-dark transition hover:underline hover:underline-offset-4"
                 >
-                  Forgot Your Password?
+                  Forgot Password?
                 </button>
               </div>
             </form>

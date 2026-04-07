@@ -138,7 +138,7 @@ describe("OccasionPicks", () => {
     expect(screen.getByRole("button", { name: "Birthday" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Wedding" })).toBeInTheDocument();
     expect(await screen.findByText("Golden Aura Holder Set")).toBeInTheDocument();
-    expect(screen.getAllByText("Showing 1-8 of 10 item(s) for Birthday").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Showing 1-8 of 10 products for Birthday").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Load More" })).toBeInTheDocument();
     expect(mockCatalogApi.getProducts).toHaveBeenCalledTimes(1);
     expect(mockCatalogApi.getProducts).toHaveBeenCalledWith(
@@ -153,7 +153,7 @@ describe("OccasionPicks", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load More" }));
 
     expect(await screen.findByText("Warm Welcome Holder")).toBeInTheDocument();
-    expect(screen.getAllByText("Showing 1-10 of 10 item(s) for Birthday")).toHaveLength(1);
+    expect(screen.getAllByText("Showing 1-10 of 10 products for Birthday")).toHaveLength(1);
   });
 
   it("filters the selected occasion picks by search text", async () => {
@@ -161,7 +161,7 @@ describe("OccasionPicks", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Relaxation" }));
 
-    fireEvent.change((await screen.findAllByPlaceholderText("Search An Item"))[0], {
+    fireEvent.change((await screen.findAllByPlaceholderText("Search products"))[0], {
       target: { value: "relaxing" },
     });
 
@@ -170,7 +170,7 @@ describe("OccasionPicks", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText("Showing 1-1 of 1 item(s) for Relaxation").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Showing 1-1 of 1 products for Relaxation").length).toBeGreaterThan(0);
     });
   });
 });

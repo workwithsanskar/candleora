@@ -1,8 +1,12 @@
 import PropTypes from "prop-types";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import CandleSelectControl from "./CandleSelectControl";
 
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) =>
+  new Intl.DateTimeFormat("en-IN", { month: "long" }).format(new Date(2024, index, 1)),
+);
 
 function pad(value) {
   return String(value).padStart(2, "0");
@@ -71,6 +75,14 @@ function getDateKey(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
+function buildYearOptions(minDate, maxDate) {
+  const currentYear = new Date().getFullYear();
+  const startYear = minDate?.getFullYear() ?? currentYear - 100;
+  const endYear = maxDate?.getFullYear() ?? currentYear + 10;
+
+  return Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
+}
+
 function CandleDatePicker({
   value = "",
   onChange,
@@ -127,6 +139,18 @@ function CandleDatePicker({
   const today = useMemo(() => new Date(), []);
   const minKey = minValueDate ? getDateKey(minValueDate) : null;
   const maxKey = maxValueDate ? getDateKey(maxValueDate) : null;
+  const yearOptions = useMemo(
+    () => buildYearOptions(minValueDate, maxValueDate),
+    [maxValueDate, minValueDate],
+  );
+  const monthSelectOptions = useMemo(
+    () => MONTH_OPTIONS.map((label, monthIndex) => ({ value: monthIndex, label })),
+    [],
+  );
+  const yearSelectOptions = useMemo(
+    () => yearOptions.map((year) => ({ value: year, label: String(year) })),
+    [yearOptions],
+  );
   const menuPositionClassName =
     placement === "top" ? "bottom-[calc(100%+10px)]" : "top-[calc(100%+10px)]";
 
@@ -158,7 +182,7 @@ function CandleDatePicker({
         aria-expanded={open}
         aria-controls={dialogId}
         disabled={disabled}
-        className={`flex h-11 w-full items-center justify-between gap-3 rounded-[22px] border border-[#f2d29a] bg-[#fff8ec] px-4 text-left text-sm font-medium text-brand-dark outline-none transition hover:border-[#e0aa44] focus-visible:border-[#d7962f] focus-visible:ring-2 focus-visible:ring-[#f3b33d]/30 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName}`.trim()}
+        className={`flex h-10.5 w-full items-center justify-between gap-3 rounded-[20px] border border-[#f2d29a] bg-[#fff8ec] px-4 text-left text-[0.95rem] font-medium text-brand-dark outline-none transition hover:border-[#e0aa44] focus-visible:border-[#d7962f] focus-visible:ring-2 focus-visible:ring-[#f3b33d]/30 disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName}`.trim()}
         onClick={() => {
           if (!disabled) {
             setOpen((current) => !current);
@@ -169,7 +193,7 @@ function CandleDatePicker({
           {selectedDate ? formatDisplayDate(selectedDate) : placeholder}
         </span>
 
-        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-black/58" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] shrink-0 text-black/58" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="4.5" y="5.5" width="15" height="14" rx="3" />
           <path d="M8 3.75V7.25" strokeLinecap="round" />
           <path d="M16 3.75V7.25" strokeLinecap="round" />
@@ -183,55 +207,53 @@ function CandleDatePicker({
             id={dialogId}
             role="dialog"
             aria-label="Choose date"
-            className={`absolute left-0 z-40 w-[304px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[28px] border border-[#f2d29a] bg-[#fffaf3] p-2.5 shadow-[0_28px_70px_rgba(23,18,15,0.16)] ${menuPositionClassName}`.trim()}
+            className={`absolute left-0 z-40 w-[282px] max-w-[calc(100vw-2rem)] overflow-visible rounded-[24px] border border-[#f2d29a] bg-[#fffaf3] p-1.5 shadow-[0_24px_56px_rgba(23,18,15,0.14)] ${menuPositionClassName}`.trim()}
             initial={prefersReducedMotion ? false : { opacity: 0, y: placement === "top" ? 8 : -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReducedMotion ? undefined : { opacity: 0, y: placement === "top" ? 8 : -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex items-center justify-between gap-3 rounded-[22px] border border-[#f2d29a] bg-[linear-gradient(135deg,#fff8ec_0%,#fffdf7_100%)] px-3 py-2.5">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a56a00]">Calendar</p>
-                <p className="mt-0.5 text-sm font-semibold text-brand-dark">{formatMonthLabel(viewDate)}</p>
-              </div>
+            <div className="rounded-[20px] border border-[#f2d29a] bg-[linear-gradient(135deg,#fff8ec_0%,#fffdf7_100%)] px-2.5 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#a56a00]">Calendar</p>
+              <div className="mt-1 grid grid-cols-[minmax(0,1fr)_96px] gap-2">
+                <CandleSelectControl
+                  value={viewDate.getMonth()}
+                  onChange={(nextMonth) =>
+                    setViewDate((current) => new Date(current.getFullYear(), Number(nextMonth), 1))
+                  }
+                  options={monthSelectOptions}
+                  placeholder="Month"
+                  buttonClassName="h-8 rounded-[15px] border-[#f2d29a] bg-white px-3 text-[0.95rem] font-semibold shadow-none"
+                  menuClassName="z-[60]"
+                />
 
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#f2d29a] bg-white text-brand-dark transition hover:border-[#e0aa44] hover:bg-[#fff1d8]"
-                  onClick={() => setViewDate((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
-                  aria-label="Previous month"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
-                    <path d="M14.5 6L8.5 12L14.5 18" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#f2d29a] bg-white text-brand-dark transition hover:border-[#e0aa44] hover:bg-[#fff1d8]"
-                  onClick={() => setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
-                  aria-label="Next month"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
-                    <path d="M9.5 6L15.5 12L9.5 18" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                <CandleSelectControl
+                  value={viewDate.getFullYear()}
+                  onChange={(nextYear) =>
+                    setViewDate((current) => new Date(Number(nextYear), current.getMonth(), 1))
+                  }
+                  options={yearSelectOptions}
+                  placeholder="Year"
+                  buttonClassName="h-8 rounded-[15px] border-[#f2d29a] bg-white px-3 text-[0.95rem] font-semibold shadow-none"
+                  menuClassName="z-[60]"
+                />
               </div>
+              <p className="mt-0.5 text-[11px] text-black/52">{formatMonthLabel(viewDate)}</p>
             </div>
 
-            <div className="mt-2.5 rounded-[24px] border border-[#f2d29a] bg-white px-3 py-2.5">
-              <div className="grid grid-cols-7 gap-1">
+            <div className="mt-2 rounded-[21px] border border-[#f2d29a] bg-white px-2.5 py-2.5">
+              <div className="grid grid-cols-7 gap-0.5">
                 {WEEKDAY_LABELS.map((day) => (
                   <span
                     key={day}
-                    className="inline-flex h-7 items-center justify-center text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a56a00]/80"
+                    className="inline-flex h-6 items-center justify-center text-[10px] font-semibold uppercase tracking-[0.12em] text-[#a56a00]/80"
                   >
                     {day}
                   </span>
                 ))}
               </div>
 
-              <div className="mt-0.5 grid grid-cols-7 gap-x-1 gap-y-0.5">
+              <div className="mt-0.5 grid grid-cols-7 gap-x-0.5 gap-y-0.5">
                 {calendarDays.map((day) => {
                   const inCurrentMonth = day.getMonth() === viewDate.getMonth();
                   const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
@@ -243,7 +265,7 @@ function CandleDatePicker({
                       key={day.toISOString()}
                       type="button"
                       disabled={isDisabled}
-                      className={`inline-flex h-8 items-center justify-center rounded-2xl text-sm font-medium transition ${
+                      className={`inline-flex h-7.5 items-center justify-center rounded-[15px] text-[0.95rem] font-medium transition ${
                         isSelected
                           ? "bg-[#17120f] text-white"
                           : isToday

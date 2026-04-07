@@ -211,7 +211,7 @@ describe("CheckoutPayment", () => {
     expect(screen.getByText("Get order updates on WhatsApp")).toBeInTheDocument();
     expect(screen.getAllByText(formatCurrency(baseSession.priceSummary.total)).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Place order" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Place Your Order" })[0]);
 
     await waitFor(() => {
       expect(mockBuildOrderPayload).toHaveBeenCalledWith(selectedAddress);
@@ -241,7 +241,11 @@ describe("CheckoutPayment", () => {
     expect(screen.getAllByText(new RegExp(`saving ${formatCurrency(baseSession.priceSummary.savings)}`, "i")).length).toBeGreaterThan(0);
     expect(screen.getByText("Order Summary")).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Pay now" })[0]);
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: `Proceed to Pay ${formatCurrency(baseSession.priceSummary.total)}`,
+      })[0],
+    );
 
     await waitFor(() => {
       expect(mockLoadRazorpayScript).toHaveBeenCalled();

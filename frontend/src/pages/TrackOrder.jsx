@@ -35,25 +35,23 @@ function TrackOrder() {
 
   return (
     <section className="container-shell py-10 sm:py-12">
-      <div className="space-y-8">
+      <div className="space-y-6">
         <header className="space-y-3">
-          <h1 className="page-title uppercase">My Account</h1>
+          <h1 className="page-title">Track Order</h1>
           <p className="max-w-[820px] text-sm leading-7 text-black/58 sm:text-body">
-            Enter your order details below to quickly view the latest CandleOra tracking and
-            delivery information for your purchase.
+            Enter your order details below to view the latest CandleOra tracking and delivery information.
           </p>
         </header>
 
-        <div className="mx-auto max-w-[980px] rounded-[16px] border border-black/14 bg-white px-6 py-12 shadow-[0_24px_70px_rgba(0,0,0,0.10)] sm:px-10 sm:py-16">
+        <div className="mx-auto max-w-[980px] rounded-[16px] border border-black/14 bg-white px-6 py-10 shadow-[0_24px_70px_rgba(0,0,0,0.10)] sm:px-10 sm:py-14">
           <div className="mx-auto max-w-[560px] text-center">
-            <h2 className="font-heading text-heading-lg leading-tight text-black">Track Your Order</h2>
+            <h2 className="font-heading text-heading-lg leading-tight text-black">Enter Your Details</h2>
             <p className="mt-3 text-sm leading-6 text-black/50 sm:text-body">
-              Your order has been confirmed and is on the way. Enter your order details below to
-              view the latest tracking status.
+              Add your order ID and billing email to view the latest tracking status.
             </p>
           </div>
 
-          <form className="mx-auto mt-10 max-w-[560px] space-y-8" onSubmit={handleSubmit}>
+          <form className="mx-auto mt-8 max-w-[560px] space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2 text-left">
                 <span className="text-sm font-medium text-black/72">Order ID</span>

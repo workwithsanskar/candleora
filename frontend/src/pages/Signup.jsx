@@ -128,12 +128,12 @@ function Signup() {
           <div className="mx-auto max-w-[520px]">
             <div>
               <h1 className="page-title tracking-[-0.03em]">
-                Signup
+                Sign Up
               </h1>
               <p className="mt-2 text-[14px] leading-6 text-brand-dark/60">
-                Already Have An Account,{" "}
+                Already have an account?{" "}
                 <Link className="font-semibold text-brand-dark underline underline-offset-4" to="/login">
-                  Login.
+                  Log in.
                 </Link>
               </p>
             </div>
@@ -148,7 +148,7 @@ function Signup() {
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    placeholder="lorem Ipsum"
+                    placeholder="Riya Sharma"
                     autoComplete="name"
                     className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                   />
@@ -162,7 +162,7 @@ function Signup() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="loremipsum@gmail.com"
+                    placeholder="riya@example.com"
                     autoComplete="email"
                     className="w-full rounded-full border border-[#ddd6cf] bg-white px-6 py-3.5 text-[14px] text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary"
                   />

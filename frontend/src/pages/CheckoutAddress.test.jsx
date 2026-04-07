@@ -126,11 +126,11 @@ describe("CheckoutAddress", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Delivery Address" })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Add new saved address" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Add New Address" })).toBeInTheDocument();
     expect(screen.getByText("Order Summary")).toBeInTheDocument();
     expect(screen.getAllByText("₹899").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Save address" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Payment" }));
 
     await waitFor(() => {
       expect(mockCreateAddress).toHaveBeenCalledWith(
@@ -198,7 +198,7 @@ describe("CheckoutAddress", () => {
     expect(mockSetSelectedAddress).toHaveBeenCalledWith(22);
 
     fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
-    expect(await screen.findByRole("heading", { name: "Edit saved address" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Edit Saved Address" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[0]);
     await waitFor(() => {

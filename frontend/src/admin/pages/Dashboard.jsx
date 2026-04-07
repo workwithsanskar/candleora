@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
@@ -17,6 +17,7 @@ import FiltersBar from "../components/FiltersBar";
 import KPICard from "../components/KPICard";
 import adminApi from "../services/adminApi";
 import { PRIMARY_BUTTON_CLASS, formatAdminStatus, formatCurrencyAxisTick, resolveQuickRange, statusClassName } from "../helpers";
+import { useAuth } from "../../context/AuthContext";
 import { formatCurrency, formatDate } from "../../utils/format";
 
 const quickRanges = [
@@ -26,8 +27,18 @@ const quickRanges = [
 ];
 
 function Dashboard() {
+  const { user } = useAuth();
   const [period, setPeriod] = useState("LAST_30_DAYS");
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const range = useMemo(() => resolveQuickRange(period), [period]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const overviewQuery = useQuery({
     queryKey: ["admin", "overview", range.startDate, range.endDate],
@@ -43,6 +54,15 @@ function Dashboard() {
   const salesTrend = overviewQuery.data?.salesTrend ?? [];
   const topProducts = overviewQuery.data?.topProducts ?? [];
   const recentOrders = recentOrdersQuery.data?.content ?? [];
+  const greetingName = user?.name?.trim() || "there";
+  const formattedDateTime = new Intl.DateTimeFormat("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(currentTime);
 
   const columns = useMemo(
     () => [
@@ -101,8 +121,8 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Business snapshot"
-        description="A live operational view of revenue, orders, customer activity, and the products driving CandleOra this week."
+        title={`Hi ${greetingName}, welcome back!`}
+        description={formattedDateTime}
         actions={
           quickRanges.map((option) => (
             <button

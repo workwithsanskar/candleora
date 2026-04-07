@@ -2,6 +2,65 @@ import PropTypes from "prop-types";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import useScrollShadows from "../hooks/useScrollShadows";
+import { pauseSmoothScroll, resumeSmoothScroll } from "../utils/smoothScroll";
+
+function normalizeWheelDelta(event) {
+  if (!event) {
+    return 0;
+  }
+
+  return event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+}
+
+function isScrollableElement(element) {
+  if (!(element instanceof HTMLElement)) {
+    return false;
+  }
+
+  const styles = window.getComputedStyle(element);
+  return (
+    ["auto", "scroll", "overlay"].includes(styles.overflowY) &&
+    element.scrollHeight - element.clientHeight > 1
+  );
+}
+
+function canScrollElement(element, delta) {
+  if (!isScrollableElement(element)) {
+    return false;
+  }
+
+  const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
+  const scrollTop = element.scrollTop;
+
+  if (delta < 0) {
+    return scrollTop > 0;
+  }
+
+  if (delta > 0) {
+    return scrollTop < maxScrollTop - 1;
+  }
+
+  return maxScrollTop > 0;
+}
+
+function findNestedScrollable(startTarget, boundary, delta) {
+  if (!(boundary instanceof HTMLElement)) {
+    return null;
+  }
+
+  let current =
+    startTarget instanceof HTMLElement ? startTarget : startTarget?.parentElement ?? null;
+
+  while (current && current !== boundary) {
+    if (canScrollElement(current, delta)) {
+      return current;
+    }
+
+    current = current.parentElement;
+  }
+
+  return null;
+}
 
 let activeModalLocks = 0;
 let previousDocumentOverflow = "";
@@ -20,9 +79,11 @@ function Modal({
   bodyClassName = "",
   headerClassName = "",
   titleClassName = "",
+  closeButtonClassName = "",
   children,
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const shellRef = useRef(null);
   const bodyRef = useRef(null);
   const { showTop, showBottom } = useScrollShadows(bodyRef, isOpen && bodyScrollable);
 
@@ -45,6 +106,8 @@ function Modal({
       document.body.style.overscrollBehavior = "none";
     }
 
+    pauseSmoothScroll();
+
     const handleEscape = (event) => {
       if (event.key === "Escape") {
         onClose?.();
@@ -61,9 +124,65 @@ function Modal({
         document.body.style.overflow = previousBodyOverflow;
         document.body.style.overscrollBehavior = previousBodyOverscroll;
       }
+      resumeSmoothScroll();
       window.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !bodyScrollable) {
+      return undefined;
+    }
+
+    const shellElement = shellRef.current;
+    const bodyElement = bodyRef.current;
+
+    if (!(shellElement instanceof HTMLElement) || !(bodyElement instanceof HTMLElement)) {
+      return undefined;
+    }
+
+    const handleWheel = (event) => {
+      const delta = normalizeWheelDelta(event);
+      if (!delta || !shellElement.contains(event.target)) {
+        return;
+      }
+
+      const nestedScrollable = findNestedScrollable(event.target, bodyElement, delta);
+      if (nestedScrollable && nestedScrollable !== bodyElement) {
+        return;
+      }
+
+      const maxScrollTop = Math.max(0, bodyElement.scrollHeight - bodyElement.clientHeight);
+      if (maxScrollTop <= 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      const targetInsideBody = bodyElement.contains(event.target);
+
+      if (targetInsideBody) {
+        if (!canScrollElement(bodyElement, delta)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      bodyElement.scrollBy({ top: delta, behavior: "auto" });
+    };
+
+    shellElement.addEventListener("wheel", handleWheel, {
+      passive: false,
+      capture: true,
+    });
+
+    return () => {
+      shellElement.removeEventListener("wheel", handleWheel, true);
+    };
+  }, [isOpen, bodyScrollable]);
 
   const bodyScrollClassName = bodyScrollable
     ? "smooth-scroll-hidden modal-body-scroll modal-body-scroll-storefront min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 sm:py-6"
@@ -92,6 +211,7 @@ function Modal({
 
           <div className="relative flex min-h-full items-center justify-center px-4 py-4 sm:py-6">
             <motion.div
+              ref={shellRef}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 20 }}
@@ -120,7 +240,7 @@ function Modal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#f2d29a] bg-white text-[#1A1A1A] transition hover:border-[#FFA20A] hover:bg-[#fff0d2] sm:h-12 sm:w-12"
+                    className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#f2d29a] bg-white text-[#1A1A1A] transition hover:border-[#FFA20A] hover:bg-[#fff0d2] sm:h-12 sm:w-12 ${closeButtonClassName}`.trim()}
                     aria-label="Close modal"
                   >
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -169,6 +289,7 @@ Modal.propTypes = {
   bodyClassName: PropTypes.string,
   headerClassName: PropTypes.string,
   titleClassName: PropTypes.string,
+  closeButtonClassName: PropTypes.string,
   children: PropTypes.node.isRequired,
 };
 
@@ -180,6 +301,7 @@ Modal.defaultProps = {
   bodyClassName: "",
   headerClassName: "",
   titleClassName: "",
+  closeButtonClassName: "",
 };
 
 export default Modal;

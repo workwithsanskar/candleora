@@ -6,22 +6,22 @@ import Topbar from "../components/Topbar";
 const titles = {
   "/admin": "Dashboard",
   "/admin/orders": "Orders",
-  "/admin/contact-messages": "Contact inbox",
-  "/admin/replacements": "Replacements",
+  "/admin/contact-messages": "Contact Inbox",
+  "/admin/replacements": "Replacement Requests",
   "/admin/products": "Products",
   "/admin/coupons": "Coupons",
-  "/admin/banners": "Festive banners",
+  "/admin/banners": "Banners",
   "/admin/customers": "Customers",
   "/admin/analytics": "Analytics",
-  "/admin/settings": "Settings",
+  "/admin/settings": "Admin Settings",
 };
 
 const placeholders = {
-  "/admin/orders": "Search orders by ID, customer, or email",
-  "/admin/contact-messages": "Search messages by name, email, phone, or subject",
-  "/admin/products": "Search products by name, SKU, slug, or description",
-  "/admin/coupons": "Search coupons by code or campaign status",
-  "/admin/banners": "Search banners by title or linked coupon",
+  "/admin/orders": "Search orders by name, email, or order ID",
+  "/admin/contact-messages": "Search by name, email, phone, or subject",
+  "/admin/products": "Search products...",
+  "/admin/coupons": "Search coupons",
+  "/admin/banners": "Search banners by title or coupon code",
   "/admin/customers": "Search customers by name, email, or phone",
 };
 
@@ -36,35 +36,35 @@ function AdminLayout() {
 
   const title = useMemo(() => {
     if (location.pathname.startsWith("/admin/customers/")) {
-      return "Customer profile";
+      return "Customer Profile";
     }
 
     if (location.pathname.startsWith("/admin/replacements/")) {
-      return "Review replacement";
+      return "Replacement Details";
     }
 
     if (location.pathname === "/admin/products/new") {
-      return "Add product";
+      return "Add Product";
     }
 
     if (location.pathname.startsWith("/admin/products/") && location.pathname.endsWith("/edit")) {
-      return "Edit product";
+      return "Edit Product";
     }
 
     if (location.pathname === "/admin/coupons/new") {
-      return "Create coupon";
+      return "Create Coupon";
     }
 
     if (location.pathname.startsWith("/admin/coupons/") && location.pathname.endsWith("/edit")) {
-      return "Edit coupon";
+      return "Edit Coupon";
     }
 
     if (location.pathname === "/admin/banners/new") {
-      return "Create festive banner";
+      return "Create Banner";
     }
 
     if (location.pathname.startsWith("/admin/banners/") && location.pathname.endsWith("/edit")) {
-      return "Edit festive banner";
+      return "Edit Banner";
     }
 
     return titles[location.pathname] ?? "Admin";
@@ -74,7 +74,7 @@ function AdminLayout() {
       return "Search customer history, orders, or contact details";
     }
 
-    return placeholders[location.pathname] ?? "Search this workspace";
+    return placeholders[location.pathname] ?? "Search this page";
   }, [location.pathname]);
   const search = searchParams.get("q") ?? "";
   const searchEnabled = Boolean(placeholders[location.pathname]);
@@ -104,7 +104,7 @@ function AdminLayout() {
         />
 
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-6 xl:px-8">
-          <Outlet context={{ search }} />
+          <Outlet context={{ search, setSearch: handleSearchChange }} />
         </main>
       </div>
     </div>

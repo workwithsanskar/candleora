@@ -315,7 +315,7 @@ function Sidebar({ open, onClose }) {
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d5bf98]">
                 <span className="h-2 w-2 rounded-full bg-[#f3b33d]" />
-                Control room
+                Admin
               </div>
 
               <BrandLogo
@@ -337,7 +337,7 @@ function Sidebar({ open, onClose }) {
 
           <div className="mt-6">
             <p className="px-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/35">
-              Workspace
+              Navigation
             </p>
             <motion.nav
               className="mt-3 space-y-1.5"
@@ -426,7 +426,7 @@ function Sidebar({ open, onClose }) {
           >
             <p className="text-[10px] uppercase tracking-[0.24em] text-white/42">Security</p>
             <p className="mt-2 text-[13px] leading-6 text-white/70">
-              Admin routes stay role-protected, and customer workflows remain isolated from this workspace.
+              Admin routes stay role-protected and separate from customer flows.
             </p>
           </motion.div>
         </motion.div>

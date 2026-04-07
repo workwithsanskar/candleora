@@ -88,19 +88,26 @@ export function CartProvider({ children }) {
 
   const addToCart = async (product, quantity = 1) => {
     setError("");
-    if (isAuthenticated) {
-      const response = await cartApi.addItem({ productId: product.id, quantity });
-      setCart(normalizeCartResponse(response));
-      toast.success("Added to cart.");
-      return;
-    }
+    try {
+      if (isAuthenticated) {
+        const response = await cartApi.addItem({ productId: product.id, quantity });
+        setCart(normalizeCartResponse(response));
+        toast.success("Added to cart.");
+        return;
+      }
 
-    const nextItems = mergeGuestCartItems(
-      readStoredJson(GUEST_CART_STORAGE_KEY, []),
-      createGuestCartItem(product, quantity),
-    );
-    syncGuestCart(nextItems);
-    toast.success("Added to cart.");
+      const nextItems = mergeGuestCartItems(
+        readStoredJson(GUEST_CART_STORAGE_KEY, []),
+        createGuestCartItem(product, quantity),
+      );
+      syncGuestCart(nextItems);
+      toast.success("Added to cart.");
+    } catch (cartError) {
+      const nextError = formatApiError(cartError);
+      setError(nextError);
+      toast.error(nextError);
+      throw cartError;
+    }
   };
 
   const updateQuantity = async (itemId, quantity) => {
@@ -109,36 +116,50 @@ export function CartProvider({ children }) {
       return removeFromCart(itemId);
     }
 
-    if (isAuthenticated) {
-      const response = await cartApi.updateItem(itemId, { quantity });
-      setCart(normalizeCartResponse(response));
-      toast.success("Cart updated.");
-      return;
-    }
+    try {
+      if (isAuthenticated) {
+        const response = await cartApi.updateItem(itemId, { quantity });
+        setCart(normalizeCartResponse(response));
+        toast.success("Cart updated.");
+        return;
+      }
 
-    const nextItems = updateGuestCartItemQuantity(
-      readStoredJson(GUEST_CART_STORAGE_KEY, []),
-      itemId,
-      quantity,
-    );
-    syncGuestCart(nextItems);
-    toast.success("Cart updated.");
+      const nextItems = updateGuestCartItemQuantity(
+        readStoredJson(GUEST_CART_STORAGE_KEY, []),
+        itemId,
+        quantity,
+      );
+      syncGuestCart(nextItems);
+      toast.success("Cart updated.");
+    } catch (cartError) {
+      const nextError = formatApiError(cartError);
+      setError(nextError);
+      toast.error(nextError);
+      throw cartError;
+    }
   };
 
   const removeFromCart = async (itemId) => {
     setError("");
-    if (isAuthenticated) {
-      const response = await cartApi.removeItem(itemId);
-      setCart(normalizeCartResponse(response));
-      toast.success("Removed from cart.");
-      return;
-    }
+    try {
+      if (isAuthenticated) {
+        const response = await cartApi.removeItem(itemId);
+        setCart(normalizeCartResponse(response));
+        toast.success("Removed from cart.");
+        return;
+      }
 
-    const nextItems = readStoredJson(GUEST_CART_STORAGE_KEY, []).filter(
-      (item) => item.id !== itemId,
-    );
-    syncGuestCart(nextItems);
-    toast.success("Removed from cart.");
+      const nextItems = readStoredJson(GUEST_CART_STORAGE_KEY, []).filter(
+        (item) => item.id !== itemId,
+      );
+      syncGuestCart(nextItems);
+      toast.success("Removed from cart.");
+    } catch (cartError) {
+      const nextError = formatApiError(cartError);
+      setError(nextError);
+      toast.error(nextError);
+      throw cartError;
+    }
   };
 
   const clearCart = () => {

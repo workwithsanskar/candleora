@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import fallbackProductImage from "../assets/designer/image-optimized.jpg";
@@ -7,7 +6,6 @@ import ProductDetailSkeleton from "../components/ProductDetailSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Reveal from "../components/Reveal";
 import StatusView from "../components/StatusView";
-import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useCheckoutSession } from "../context/CheckoutSessionContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -54,30 +52,6 @@ function RatingRow({ rating, reviewCount = null }) {
   );
 }
 
-function RatingSelector({ value, onChange, disabled = false }) {
-  return (
-    <div className="flex items-center gap-1 text-[#f3b33d]">
-      {Array.from({ length: 5 }).map((_, index) => {
-        const nextRating = index + 1;
-        const active = nextRating <= value;
-
-        return (
-          <button
-            key={nextRating}
-            type="button"
-            onClick={() => onChange(nextRating)}
-            disabled={disabled}
-            className={`transition ${active ? "scale-100" : "scale-[0.96] text-black/25 hover:text-[#f3b33d]"} ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
-            aria-label={`Rate ${nextRating} star${nextRating === 1 ? "" : "s"}`}
-          >
-            <StarIcon active={active} className="h-5 w-5" />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function HeartIcon({ filled = false }) {
   return (
     <svg
@@ -101,36 +75,12 @@ function normalizeReviewSummary(payload, fallbackRating) {
     averageRating: Number(payload?.averageRating ?? fallbackRating ?? 0),
     reviewCount: Number(payload?.reviewCount ?? 0),
     reviews: Array.isArray(payload?.reviews) ? payload.reviews : [],
-    currentUserReview: payload?.currentUserReview ?? null,
   };
-}
-
-function createInitialReviewForm(user = null) {
-  return {
-    reviewerName: user?.name ?? "",
-    reviewerEmail: user?.email ?? "",
-    rating: 0,
-    message: "",
-  };
-}
-
-function createReviewFormFromSummary(user = null, summary = null) {
-  if (summary?.currentUserReview) {
-    return {
-      reviewerName: summary.currentUserReview.reviewerName ?? user?.name ?? "",
-      reviewerEmail: user?.email ?? "",
-      rating: Number(summary.currentUserReview.rating ?? 0),
-      message: summary.currentUserReview.message ?? "",
-    };
-  }
-
-  return createInitialReviewForm(user);
 }
 
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { addToCart } = useCart();
   const { startBuyNowCheckout } = useCheckoutSession();
   const { isWishlisted, toggleWishlist } = useWishlist();
@@ -139,26 +89,16 @@ function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [reviewSummary, setReviewSummary] = useState(() => normalizeReviewSummary(null, 4.8));
-  const [reviewForm, setReviewForm] = useState(() => createInitialReviewForm(user));
-  const [reviewError, setReviewError] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const prefersReducedMotion = useReducedMotion();
-  const hasCurrentUserReview = Boolean(reviewSummary.currentUserReview?.id);
-  const isReviewFormLocked = !user || hasCurrentUserReview;
-
-  useEffect(() => {
-    setReviewForm(createReviewFormFromSummary(user, reviewSummary));
-  }, [id, reviewSummary, user]);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
     setIsReviewsLoading(true);
     setError("");
-    setReviewError("");
 
     Promise.all([
       catalogApi.getProduct(id),
@@ -202,61 +142,6 @@ function ProductDetail() {
   const handleBuyNow = async () => {
     startBuyNowCheckout(product, quantity);
     navigate("/checkout/address");
-  };
-
-  const handleReviewChange = (event) => {
-    const { name, value } = event.target;
-    setReviewForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
-    setReviewError("");
-  };
-
-  const handleReviewSubmit = async (event) => {
-    event.preventDefault();
-
-    const payload = {
-      reviewerName: reviewForm.reviewerName.trim(),
-      reviewerEmail: reviewForm.reviewerEmail.trim(),
-      rating: reviewForm.rating,
-      message: reviewForm.message.trim(),
-    };
-
-    if (!user) {
-      setReviewError("Sign in to post a review for this product.");
-      return;
-    }
-
-    if (hasCurrentUserReview) {
-      setReviewError("You have already reviewed this product.");
-      return;
-    }
-
-    if (!payload.reviewerName || !payload.reviewerEmail || !payload.message) {
-      setReviewError("Please complete your name, email, and review before submitting.");
-      return;
-    }
-
-    if (!payload.rating) {
-      setReviewError("Please select a star rating before posting your review.");
-      return;
-    }
-
-    setIsSubmittingReview(true);
-    setReviewError("");
-
-    try {
-      const nextSummary = await catalogApi.createProductReview(id, payload);
-      setReviewSummary(normalizeReviewSummary(nextSummary, product?.rating ?? 0));
-      toast.success("Review posted successfully.");
-    } catch (reviewSubmitError) {
-      const message = formatApiError(reviewSubmitError);
-      setReviewError(message);
-      toast.error(message);
-    } finally {
-      setIsSubmittingReview(false);
-    }
   };
 
   if (isLoading) {
@@ -509,157 +394,54 @@ function ProductDetail() {
             Loading reviews...
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 lg:grid-cols-[0.96fr_1.04fr]">
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45">
-                  Customer Rating
+          <div className="mt-8 max-w-[760px] space-y-4">
+            <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-black/45">
+                Customer Rating
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <p className="font-display text-[2.2rem] font-semibold text-black">
+                  {displayedRating.toFixed(1)}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-4">
-                  <p className="font-display text-[2.2rem] font-semibold text-black">
-                    {displayedRating.toFixed(1)}
-                  </p>
-                  <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
-                </div>
+                <RatingRow rating={displayedRating} reviewCount={reviewSummary.reviewCount} />
               </div>
-
-              {reviewSummary.reviews.length ? (
-                <div
-                  className={`space-y-4 ${
-                    hasScrollableReviews
-                      ? "mini-cart-scroll-view stealth-scrollbar max-h-[572px] touch-pan-y overflow-y-auto overscroll-contain pr-2 scroll-smooth"
-                      : ""
-                  }`}
-                  data-lenis-prevent={hasScrollableReviews ? "true" : undefined}
-                  data-lenis-prevent-wheel={hasScrollableReviews ? "true" : undefined}
-                  data-lenis-prevent-touch={hasScrollableReviews ? "true" : undefined}
-                  tabIndex={hasScrollableReviews ? 0 : undefined}
-                >
-                  {reviewSummary.reviews.map((review) => (
-                    <article
-                      key={review.id}
-                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-base font-semibold text-black">{review.reviewerName}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/42">
-                            {formatDate(review.createdAt)}
-                          </p>
-                        </div>
-                        <RatingRow rating={review.rating} />
-                      </div>
-                      <p className="mt-4 text-sm leading-6 text-black/68">{review.message}</p>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-[20px] border border-dashed border-black/12 px-5 py-8 text-sm leading-7 text-black/58">
-                  No reviews yet. Be the first to share how this candle looked, smelled, and burned in your space.
-                </div>
-              )}
             </div>
 
-            <form
-              onSubmit={handleReviewSubmit}
-              className="rounded-[22px] border border-black/10 bg-white p-5 shadow-[0_12px_28px_rgba(0,0,0,0.05)] sm:p-6"
-            >
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-black">Write a Review</h3>
-                <p className="text-sm leading-6 text-black/58">
-                  Tell us what stood out, how the fragrance felt, and whether the candle matched your expectations.
-                </p>
+            {reviewSummary.reviews.length ? (
+              <div
+                className={`space-y-4 ${
+                  hasScrollableReviews
+                    ? "mini-cart-scroll-view stealth-scrollbar max-h-[572px] touch-pan-y overflow-y-auto overscroll-contain pr-2 scroll-smooth"
+                    : ""
+                }`}
+                data-lenis-prevent={hasScrollableReviews ? "true" : undefined}
+                data-lenis-prevent-wheel={hasScrollableReviews ? "true" : undefined}
+                data-lenis-prevent-touch={hasScrollableReviews ? "true" : undefined}
+                tabIndex={hasScrollableReviews ? 0 : undefined}
+              >
+                {reviewSummary.reviews.map((review) => (
+                  <article
+                    key={review.id}
+                    className="rounded-[18px] border border-black/10 bg-white px-5 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.04)]"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-black">{review.reviewerName}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-black/42">
+                          {formatDate(review.createdAt)}
+                        </p>
+                      </div>
+                      <RatingRow rating={review.rating} />
+                    </div>
+                    <p className="mt-4 text-sm leading-6 text-black/68">{review.message}</p>
+                  </article>
+                ))}
               </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-black">
-                    Your Name<span className="ml-1 text-[#d63d3d]">*</span>
-                  </span>
-                  <input
-                    name="reviewerName"
-                    value={reviewForm.reviewerName}
-                    onChange={handleReviewChange}
-                    disabled={isReviewFormLocked}
-                    className="input-pill h-[50px] rounded-[18px]"
-                    placeholder="John Doe"
-                  />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-semibold text-black">
-                    Your Email<span className="ml-1 text-[#d63d3d]">*</span>
-                  </span>
-                  <input
-                    type="email"
-                    name="reviewerEmail"
-                    value={reviewForm.reviewerEmail}
-                    onChange={handleReviewChange}
-                    disabled={isReviewFormLocked}
-                    className="input-pill h-[50px] rounded-[18px]"
-                    placeholder="you@example.com"
-                  />
-                </label>
+            ) : (
+              <div className="rounded-[20px] border border-dashed border-black/12 px-5 py-8 text-sm leading-7 text-black/58">
+                No reviews yet. Be the first to share how this candle looked, smelled, and burned in your space.
               </div>
-
-              <div className="mt-5 space-y-2">
-                <span className="text-sm font-semibold text-black">
-                  Your Rating<span className="ml-1 text-[#d63d3d]">*</span>
-                </span>
-                <RatingSelector
-                  value={reviewForm.rating}
-                  disabled={isReviewFormLocked}
-                  onChange={(rating) => {
-                    setReviewForm((current) => ({
-                      ...current,
-                      rating,
-                    }));
-                    setReviewError("");
-                  }}
-                />
-              </div>
-
-              <label className="mt-5 block space-y-2">
-                <span className="text-sm font-semibold text-black">
-                  Your Review<span className="ml-1 text-[#d63d3d]">*</span>
-                </span>
-                <textarea
-                  rows="5"
-                  name="message"
-                  value={reviewForm.message}
-                  onChange={handleReviewChange}
-                  disabled={isReviewFormLocked}
-                  className="min-h-[150px] w-full rounded-[18px] border border-black/15 bg-white px-4 py-3 text-sm text-black outline-none transition focus:border-black focus:ring-2 focus:ring-[#f3b33d]/20"
-                  placeholder="Share your experience with the fragrance, finish, packaging, and burn quality..."
-                />
-              </label>
-
-              {reviewError ? (
-                <p className="mt-4 text-sm font-semibold text-danger">{reviewError}</p>
-              ) : null}
-
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm leading-6 text-black/52">
-                  {!user
-                    ? "Sign in to write a review for this candle."
-                    : hasCurrentUserReview
-                      ? "Your submitted review is shown here. Each CandleOra account can review a product once."
-                      : "Posting as your signed-in CandleOra account."}
-                </p>
-                <button
-                  type="submit"
-                  disabled={isSubmittingReview || isReviewFormLocked}
-                  className="btn btn-secondary rounded-full px-7 disabled:opacity-60"
-                >
-                  {isSubmittingReview
-                    ? "Posting..."
-                    : !user
-                      ? "Sign In to Review"
-                      : hasCurrentUserReview
-                        ? "Review Posted"
-                        : "Post Review"}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         )}
       </Reveal>

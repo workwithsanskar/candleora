@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import useFestiveArtworkLayout from "../hooks/useFestiveArtworkLayout";
 import { contentApi } from "../services/api";
-import { formatDateTime } from "../utils/format";
 import {
   dismissFestiveBanner,
   isFestiveBannerDismissed,
@@ -36,7 +34,6 @@ function FestiveBannerPopup() {
   });
 
   const banner = festiveBannerQuery.data ?? null;
-  const artworkLayout = useFestiveArtworkLayout(banner?.imageUrl);
   const shouldSuppressPopup = useMemo(
     () => POPUP_DISABLED_PREFIXES.some((prefix) => location.pathname.startsWith(prefix)),
     [location.pathname],
@@ -119,13 +116,7 @@ function FestiveBannerPopup() {
           exit={{ opacity: 0 }}
         >
           <m.div
-            className={`relative grid w-full max-w-[1080px] overflow-hidden rounded-[36px] border border-[#d8c29b] bg-[linear-gradient(140deg,#fff9ee_0%,#ffffff_58%,#fff6e8_100%)] shadow-[0_35px_120px_rgba(14,10,6,0.35)] ${
-              artworkLayout.popupMode === "stacked"
-                ? "lg:grid-cols-1"
-                : artworkLayout.shape === "portrait"
-                  ? "lg:grid-cols-[0.9fr_1.1fr]"
-                  : "lg:grid-cols-[1.08fr_0.92fr]"
-            }`}
+            className="relative w-full max-w-[620px] overflow-hidden rounded-[34px] border border-[#d8c29b] bg-[linear-gradient(140deg,#fff9ee_0%,#ffffff_62%,#fff6e8_100%)] shadow-[0_30px_100px_rgba(14,10,6,0.28)]"
             initial={{ opacity: 0, scale: 0.96, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: 14 }}
@@ -143,82 +134,40 @@ function FestiveBannerPopup() {
               </svg>
             </button>
 
-            <div
-              className={`border-[#ead9ba] bg-[radial-gradient(circle_at_top,#fff8ec_0%,#f7ecd7_48%,#f2dfbe_100%)] ${
-                artworkLayout.popupMode === "stacked"
-                  ? "border-b px-5 py-5 sm:px-7 sm:py-6"
-                  : "px-4 py-5 sm:px-5 sm:py-6 lg:border-r"
-              }`}
-            >
-              <div
-                className={`flex items-center justify-center overflow-hidden rounded-[30px] border border-white/65 bg-white/35 shadow-[0_22px_50px_rgba(44,31,16,0.12)] ${
-                  artworkLayout.popupMode === "stacked"
-                    ? "min-h-[220px]"
-                    : artworkLayout.shape === "portrait"
-                      ? "min-h-[360px] lg:min-h-[520px]"
-                      : "min-h-[300px] lg:min-h-[380px]"
-                }`}
-              >
-                <img
-                  src={banner.imageUrl}
-                  alt={banner.title}
-                  className={`block max-w-full object-contain ${
-                    artworkLayout.popupMode === "stacked"
-                      ? "max-h-[280px] w-full"
-                      : artworkLayout.shape === "portrait"
-                        ? "max-h-[500px]"
-                        : "max-h-[360px] w-full"
-                  }`}
-                  style={{ aspectRatio: artworkLayout.aspectRatio }}
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between px-6 py-7 sm:px-8 sm:py-8">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full border border-[#d6bb8f] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8b6630]">
-                    Festive special
-                  </span>
-                  {banner.couponCode ? (
-                    <span className="rounded-full bg-[#17120f] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
-                      {banner.couponCode}
-                    </span>
-                  ) : null}
-                </div>
-
-                <h2 className="mt-5 font-display text-[2.2rem] font-semibold leading-[0.96] text-brand-dark sm:text-[2.7rem]">
-                  {banner.title}
-                </h2>
-
-                <p className="mt-4 text-sm leading-7 text-brand-muted sm:text-[15px]">
-                  {banner.description || "Unlock the latest CandleOra festive offer and make your next order feel extra special."}
-                </p>
-
-                <div className="mt-5 rounded-[24px] border border-black/8 bg-white/76 px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-muted">What happens next</p>
-                  <p className="mt-2 text-sm leading-6 text-brand-dark">
-                    {banner.couponCode
-                      ? "We’ll save this coupon for you and apply it automatically in cart or checkout when your order is eligible."
-                      : "We’ll take you straight to the featured festive collection."}
-                  </p>
+            {banner.imageUrl ? (
+              <div className="border-b border-[#ead9ba] bg-[radial-gradient(circle_at_top,#fff8ec_0%,#f7ecd7_50%,#f2dfbe_100%)] px-5 py-5 sm:px-6">
+                <div className="overflow-hidden rounded-[26px] border border-white/65 bg-white/40">
+                  <img
+                    src={banner.imageUrl}
+                    alt={banner.title}
+                    className="h-[170px] w-full object-cover sm:h-[200px]"
+                  />
                 </div>
               </div>
+            ) : null}
 
-              <div className="mt-8 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 text-xs leading-5 text-brand-muted">
-                  <p>{banner.endTime ? `Offer ends ${formatDateTime(banner.endTime)}` : "Limited-time festive campaign"}</p>
-                  <p>{banner.showOnce ? "Shown once per shopper" : "Can reappear during the same campaign"}</p>
-                </div>
+            <div className="px-6 pb-7 pt-7 text-center sm:px-8">
+              <p className="text-sm font-semibold text-brand-dark">Festive Offer</p>
+              <h2 className="mt-3 font-display text-[2.3rem] font-semibold leading-[0.96] text-brand-dark sm:text-[2.7rem]">
+                {banner.title}
+              </h2>
+              <p className="mt-4 text-[2rem] font-semibold leading-none text-danger sm:text-[2.35rem]">
+                {formatPopupOffer(banner)}
+              </p>
+              <p className="mt-4 text-sm text-brand-muted">Auto-applied at checkout</p>
+              <p className="mt-1 text-sm text-brand-muted">
+                {banner.endTime ? `Ends on ${formatPopupDate(banner.endTime)}` : "Limited-time festive offer"}
+              </p>
 
-                <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={handleApplyOffer} className="btn btn-primary min-h-[54px] px-6">
-                    {banner.ctaLabel || "Apply offer"}
-                  </button>
-                  <button type="button" onClick={closePopup} className="btn btn-outline min-h-[54px] px-6">
-                    Maybe later
-                  </button>
-                </div>
+              <div className="mt-5 border-t border-[#ead9ba]" />
+
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <button type="button" onClick={handleApplyOffer} className="btn btn-primary min-h-[50px] px-6">
+                  {banner.ctaLabel || "Apply Offer"}
+                </button>
+                <button type="button" onClick={closePopup} className="btn btn-outline min-h-[50px] px-6">
+                  Maybe Later
+                </button>
               </div>
             </div>
           </m.div>
@@ -226,6 +175,34 @@ function FestiveBannerPopup() {
       ) : null}
     </AnimatePresence>
   );
+}
+
+function formatPopupOffer(banner) {
+  if (banner?.discountType && banner.discountValue != null) {
+    if (String(banner.discountType).toUpperCase() === "PERCENTAGE") {
+      return `${Number(banner.discountValue)}% OFF`;
+    }
+
+    return `Rs.${Number(banner.discountValue)} OFF`;
+  }
+
+  return banner?.couponCode || "LIMITED OFFER";
+}
+
+function formatPopupDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+  });
 }
 
 export default FestiveBannerPopup;

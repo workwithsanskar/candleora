@@ -113,7 +113,7 @@ describe("AccountDetails", () => {
     );
 
     expect(screen.getAllByText("Delivery Addresses").length).toBeGreaterThan(0);
-    fireEvent.click(screen.getAllByRole("button", { name: "Add New Address" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "+ Add New Address" })[0]);
 
     expect(await screen.findByRole("heading", { name: "Add New Address" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("61A GANJHAKHET CHOWK")).toBeInTheDocument();

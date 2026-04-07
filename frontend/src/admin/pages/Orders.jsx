@@ -14,7 +14,6 @@ import {
   FILTER_LABEL_CLASS,
   ORDER_STATUS_OPTIONS,
   PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   formatAdminStatus,
   statusClassName,
 } from "../helpers";
@@ -50,12 +49,15 @@ const TRACKING_STEPS = [
 ];
 
 const ORDER_STATUS_FILTER_OPTIONS = [
-  { value: "ALL", label: "All statuses" },
-  { value: "REPLACEMENT", label: "Replacement" },
-  ...ORDER_STATUS_OPTIONS.map((option) => ({
-    value: option,
-    label: formatAdminStatus(option),
-  })),
+  { value: "ALL", label: "All" },
+  { value: "PENDING_PAYMENT", label: "Payment Pending" },
+  { value: "CONFIRMED", label: "Confirmed" },
+  { value: "SHIPPED", label: "Shipped" },
+  { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
+  { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
+  { value: "REFUNDED", label: "Refunded", disabled: true },
+  { value: "REPLACEMENT", label: "Replaced" },
 ];
 
 const TRACKING_TEXTAREA_CLASS =
@@ -358,17 +360,17 @@ function Orders() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Orders management"
-        description="Monitor each order, review customer details, and move fulfilment forward without leaving the dashboard."
+        title="Orders"
+        description="Manage and track all customer orders."
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-[280px] flex-1 flex-col gap-2">
           <label className={FILTER_LABEL_CLASS}>Search</label>
           <div className={`${FILTER_FIELD_CLASS} flex items-center bg-[#fbf7f0] text-brand-muted`}>
-            {debouncedSearch ? debouncedSearch : "Use the topbar search to filter orders"}
+            {debouncedSearch ? debouncedSearch : "Search orders by name, email, or order ID"}
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-[220px]">
           <label className={FILTER_LABEL_CLASS}>Status</label>
           <AdminSelect
             value={status}
@@ -378,13 +380,13 @@ function Orders() {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className={FILTER_LABEL_CLASS}>Start date</label>
+        <div className="flex w-full flex-col gap-2 sm:w-[220px]">
+          <label className={FILTER_LABEL_CLASS}>Start Date</label>
           <AdminDatePicker value={startDate} onChange={setStartDate} maxDate={endDate} />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className={FILTER_LABEL_CLASS}>End date</label>
+        <div className="flex w-full flex-col gap-2 sm:w-[220px]">
+          <label className={FILTER_LABEL_CLASS}>End Date</label>
           <AdminDatePicker value={endDate} onChange={setEndDate} minDate={startDate} />
         </div>
       </FiltersBar>
@@ -393,8 +395,8 @@ function Orders() {
         columns={columns}
         rows={ordersQuery.data?.content ?? []}
         isLoading={ordersQuery.isLoading}
-        emptyTitle="No orders match the current filters"
-        emptyDescription="Try widening the date range or removing the active status filter."
+        emptyTitle="No orders found!"
+        emptyDescription="Try changing the filters or date range."
       />
 
       <Pagination
@@ -406,42 +408,36 @@ function Orders() {
       <Modal
         open={Boolean(selectedOrderId)}
         onClose={() => setSelectedOrderId(null)}
-        title={detail ? `Order #${detail.id}` : "Order details"}
+        title={detail ? `Order #${detail.id}` : "Order Details"}
         size="xl"
+        align="top"
         footer={
           detail ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center">
-                  <AdminSelect
-                    value={detailStatus}
-                    onChange={setDetailStatus}
-                    options={ORDER_STATUS_OPTIONS.map((option) => ({
-                      value: option,
-                      label: formatAdminStatus(option),
-                    }))}
-                    placeholder="Update status"
-                    placement="top"
-                    className="w-full sm:min-w-[220px]"
-                  />
-                  <button
-                    type="button"
-                    className={`${PRIMARY_BUTTON_CLASS} whitespace-nowrap sm:shrink-0`}
-                    disabled={updateStatusMutation.isPending || detailStatus === detail.status}
-                    onClick={() =>
-                      updateStatusMutation.mutate({
-                        id: detail.id,
-                        nextStatus: detailStatus,
-                      })
-                    }
-                  >
-                    {updateStatusMutation.isPending ? "Updating..." : "Update status"}
-                  </button>
-                </div>
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setSelectedOrderId(null)}>
-                  Close
-                </button>
-              </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end">
+              <AdminSelect
+                value={detailStatus}
+                onChange={setDetailStatus}
+                options={ORDER_STATUS_OPTIONS.map((option) => ({
+                  value: option,
+                  label: formatAdminStatus(option),
+                }))}
+                placeholder="Update status"
+                placement="top"
+                className="w-full sm:min-w-[220px]"
+              />
+              <button
+                type="button"
+                className={`${PRIMARY_BUTTON_CLASS} whitespace-nowrap sm:shrink-0`}
+                disabled={updateStatusMutation.isPending || detailStatus === detail.status}
+                onClick={() =>
+                  updateStatusMutation.mutate({
+                    id: detail.id,
+                    nextStatus: detailStatus,
+                  })
+                }
+              >
+                {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+              </button>
             </div>
           ) : null
         }
@@ -455,22 +451,22 @@ function Orders() {
         ) : null}
 
         {detail ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
-                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Customer</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Customer Details</p>
                 <p className="mt-2 text-base font-medium text-brand-dark">{detail.customerName}</p>
                 <p className="mt-1 text-sm text-brand-muted">{detail.customerEmail}</p>
                 <p className="mt-1 text-sm text-brand-muted">{detail.phone}</p>
               </div>
               <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
-                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Order</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Order Details</p>
                 <p className="mt-2 text-base font-medium text-brand-dark">{formatCurrency(detail.totalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Subtotal {formatCurrency(detail.subtotalAmount)}</p>
                 <p className="mt-1 text-sm text-brand-muted">Discount {formatCurrency(detail.discountAmount)}</p>
                 {detail.hasReplacement ? (
                   <p className="mt-1 text-sm text-brand-muted">
-                    Replacement {formatAdminStatus(detail.replacementStatus || "REQUESTED")}
+                    Replaced {detail.replacementStatus ? `- ${formatAdminStatus(detail.replacementStatus)}` : ""}
                   </p>
                 ) : null}
                 {detail.deliveredAt ? (
@@ -478,7 +474,7 @@ function Orders() {
                 ) : null}
               </div>
               <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
-                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Address</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Shipping Address</p>
                 <p className="mt-2 text-sm leading-6 text-brand-dark">
                   {detail.addressLine1}
                   {detail.addressLine2 ? `, ${detail.addressLine2}` : ""}

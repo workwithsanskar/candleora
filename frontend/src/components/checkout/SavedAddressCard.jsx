@@ -27,7 +27,7 @@ function SavedAddressCard({ address, onEdit, onRemove }) {
     .join(", ");
 
   return (
-    <article className="w-full max-w-[640px] rounded-[22px] border border-[#f2d29a] bg-white px-4 py-4 pr-3 shadow-[0_10px_24px_rgba(0,0,0,0.03)] sm:px-[18px] sm:py-[18px] sm:pr-[14px]">
+    <article className="w-full max-w-[640px] rounded-[22px] border border-[#efc46d] bg-white px-4 py-4 pr-3 shadow-[0_12px_28px_rgba(0,0,0,0.04)] ring-1 ring-inset ring-[rgba(255,162,10,0.14)] sm:px-[18px] sm:py-[18px] sm:pr-[14px]">
       <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1fr)_max-content] sm:items-start">
         <div className="flex min-w-0 items-start gap-3">
           <span className="mt-[3px] inline-flex shrink-0 items-start justify-center">

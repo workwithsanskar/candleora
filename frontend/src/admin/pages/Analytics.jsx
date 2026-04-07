@@ -76,8 +76,8 @@ function Analytics() {
   return (
     <div className="space-y-6">
       <FiltersBar
-        title="Revenue intelligence"
-        description="Track performance trends, customer mix, category contribution, and the short-term revenue forecast from one place."
+        title="Analytics"
+        description="Track revenue, orders, customers, and forecast trends."
         actions={quickRanges.map((option) => (
           <button
             key={option.value}

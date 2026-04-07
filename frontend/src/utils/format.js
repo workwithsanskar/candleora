@@ -77,25 +77,28 @@ export function formatTimeRemaining(endValue, nowValue = Date.now()) {
 }
 
 export function titleCase(value) {
-  const normalized = String(value ?? "");
-
-  if (normalized === "PHONEPE") {
-    return "PhonePe";
-  }
-
-  if (normalized === "RAZORPAY") {
-    return "Razorpay";
-  }
-
-  if (normalized && normalized === normalized.toUpperCase() && normalized.length <= 8) {
-    return normalized;
-  }
+  const normalized = String(value ?? "").trim();
 
   return normalized
-    .toLowerCase()
-    .split("_")
+    .split(/[\s_]+/)
     .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => {
+      const upperPart = part.toUpperCase();
+
+      if (upperPart === "PHONEPE") {
+        return "PhonePe";
+      }
+
+      if (upperPart === "RAZORPAY") {
+        return "Razorpay";
+      }
+
+      if (["COD", "UPI", "OTP", "SKU", "ID"].includes(upperPart)) {
+        return upperPart;
+      }
+
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
     .join(" ");
 }
 
