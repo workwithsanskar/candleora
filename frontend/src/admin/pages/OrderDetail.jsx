@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import fallbackProductImage from "../../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../../assets/designer/image-optimized.webp";
 import { formatApiError, formatCurrency, formatDate, formatDateRange, formatDateTime } from "../../utils/format";
 import AdminDateTimePicker from "../components/AdminDateTimePicker";
 import AdminSelect from "../components/AdminSelect";

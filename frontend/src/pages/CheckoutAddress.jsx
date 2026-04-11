@@ -8,6 +8,7 @@ import CheckoutPriceSummary from "../components/checkout/CheckoutPriceSummary";
 import PrimaryButton from "../components/checkout/PrimaryButton";
 import StickyCTA from "../components/checkout/StickyCTA";
 import StatusView from "../components/StatusView";
+import CheckoutSkeleton from "../components/CheckoutSkeleton";
 import { useAddresses } from "../context/AddressContext";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -201,18 +202,10 @@ function CheckoutAddress() {
     window.setTimeout(() => setHighlightSelectedAddress(false), 1800);
   };
 
-  if (!hasActiveSession || !session.items.length) {
+  if (isLoading || !hasActiveSession) {
     return (
-      <section className="container-shell py-16">
-        <StatusView
-          title="Address step unavailable"
-          message="Add items to your bag before choosing the delivery address."
-          action={
-            <Link to="/cart" className="btn btn-primary mt-6">
-              Back to cart
-            </Link>
-          }
-        />
+      <section className="container-shell py-10 sm:py-12">
+        <CheckoutSkeleton />
       </section>
     );
   }

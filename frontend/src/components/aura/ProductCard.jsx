@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import fallbackProductImage from "../../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../../assets/designer/image-optimized.webp";
 import { useCart } from "../../context/CartContext";
 import { chatApi } from "../../services/api";
 import { formatCurrency } from "../../utils/format";

@@ -19,4 +19,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long>, JpaSpec
     Optional<AppUser> findByPhoneNumber(String phoneNumber);
 
     Optional<AppUser> findByEmailVerificationToken(String emailVerificationToken);
+
+    Optional<AppUser> findByPasswordResetToken(String passwordResetToken);
 }

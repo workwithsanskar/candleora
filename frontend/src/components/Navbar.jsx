@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../assets/designer/image-optimized.webp";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { contentApi } from "../services/api";

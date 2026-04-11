@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
-import candleFixesCard from "../assets/designer/candle-fixes-card.png";
-import bookshelfImage from "../assets/designer/bookshelf-floral.png";
-import stylingGuideCard from "../assets/designer/styling-guides-card.png";
+import candleFixesCard from "../assets/designer/candle-fixes-card.webp";
+import bookshelfImage from "../assets/designer/bookshelf-floral.webp";
+import stylingGuideCard from "../assets/designer/styling-guides-card.webp";
 
 const featureContent = {
   "styling-guides": {

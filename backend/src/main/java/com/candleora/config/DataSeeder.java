@@ -6,6 +6,7 @@ import com.candleora.entity.AuthProvider;
 import com.candleora.entity.CandleFix;
 import com.candleora.entity.Category;
 import com.candleora.entity.Faq;
+import com.candleora.entity.HomepageTestimonial;
 import com.candleora.entity.Product;
 import com.candleora.entity.Role;
 import com.candleora.entity.StylingGuide;
@@ -14,6 +15,7 @@ import com.candleora.repository.AnnouncementMessageRepository;
 import com.candleora.repository.CandleFixRepository;
 import com.candleora.repository.CategoryRepository;
 import com.candleora.repository.FaqRepository;
+import com.candleora.repository.HomepageTestimonialRepository;
 import com.candleora.repository.ProductRepository;
 import com.candleora.repository.StylingGuideRepository;
 import java.math.BigDecimal;
@@ -31,6 +33,7 @@ public class DataSeeder implements ApplicationRunner {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final HomepageTestimonialRepository homepageTestimonialRepository;
     private final AnnouncementMessageRepository announcementMessageRepository;
     private final CandleFixRepository candleFixRepository;
     private final StylingGuideRepository stylingGuideRepository;
@@ -41,6 +44,7 @@ public class DataSeeder implements ApplicationRunner {
     public DataSeeder(
         CategoryRepository categoryRepository,
         ProductRepository productRepository,
+        HomepageTestimonialRepository homepageTestimonialRepository,
         AnnouncementMessageRepository announcementMessageRepository,
         CandleFixRepository candleFixRepository,
         StylingGuideRepository stylingGuideRepository,
@@ -50,6 +54,7 @@ public class DataSeeder implements ApplicationRunner {
     ) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.homepageTestimonialRepository = homepageTestimonialRepository;
         this.announcementMessageRepository = announcementMessageRepository;
         this.candleFixRepository = candleFixRepository;
         this.stylingGuideRepository = stylingGuideRepository;
@@ -238,6 +243,7 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedContent() {
+        seedHomepageTestimonials();
         seedAnnouncementMessages();
 
         if (candleFixRepository.count() == 0) {
@@ -334,6 +340,36 @@ public class DataSeeder implements ApplicationRunner {
         announcementMessageRepository.save(announcementMessage);
     }
 
+    private void seedHomepageTestimonials() {
+        if (homepageTestimonialRepository.count() > 0) {
+            return;
+        }
+
+        homepageTestimonialRepository.saveAll(List.of(
+            testimonial(
+                "Riya Sharma",
+                "18 Jan 2026",
+                "The candles look premium, burn evenly, and the packaging felt gift-ready the moment it arrived.",
+                5,
+                0
+            ),
+            testimonial(
+                "Aarav Mehta",
+                "12 Jan 2026",
+                "Exactly the kind of warm, elegant decor piece I wanted for my bedroom corner and work desk.",
+                5,
+                1
+            ),
+            testimonial(
+                "Sana Khan",
+                "06 Jan 2026",
+                "I ordered for a housewarming and the whole set looked much more expensive than the price suggested.",
+                5,
+                2
+            )
+        ));
+    }
+
     private void seedUsers() {
         ensureUserExists("Demo Customer", "demo@candleora.com", Role.USER);
         ensureUserExists("CandleOra Admin", "admin@candleora.com", Role.ADMIN);
@@ -401,6 +437,23 @@ public class DataSeeder implements ApplicationRunner {
         fix.setBeforeImage("https://images.unsplash.com/photo-1602874801006-e26c327f2f17?auto=format&fit=crop&w=900&q=80");
         fix.setAfterImage("https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=80");
         return fix;
+    }
+
+    private HomepageTestimonial testimonial(
+        String customerName,
+        String displayDate,
+        String quote,
+        int rating,
+        int orderIndex
+    ) {
+        HomepageTestimonial testimonial = new HomepageTestimonial();
+        testimonial.setCustomerName(customerName);
+        testimonial.setDisplayDate(displayDate);
+        testimonial.setQuote(quote);
+        testimonial.setRating(rating);
+        testimonial.setActive(true);
+        testimonial.setOrderIndex(orderIndex);
+        return testimonial;
     }
 
     private StylingGuide stylingGuide(

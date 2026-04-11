@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import FiltersBar from "../components/FiltersBar";
 import {
   FILTER_FIELD_CLASS,
@@ -19,6 +20,7 @@ const storeSettingItems = [
 ];
 
 function Settings() {
+  const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
   const {
     register,
@@ -126,7 +128,7 @@ function Settings() {
             <button
               type="button"
               className={`mt-5 ${SECONDARY_BUTTON_CLASS}`}
-              onClick={() => toast("Use Forgot Password on the login page to change your password.")}
+              onClick={() => navigate(user?.email ? `/forgot-password?email=${encodeURIComponent(user.email)}` : "/forgot-password")}
             >
               Change Password
             </button>

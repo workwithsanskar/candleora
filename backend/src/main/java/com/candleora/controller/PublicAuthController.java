@@ -4,6 +4,9 @@ import com.candleora.dto.auth.AuthRequest;
 import com.candleora.dto.auth.AuthResponse;
 import com.candleora.dto.auth.EmailVerificationRequest;
 import com.candleora.dto.auth.GoogleAuthRequest;
+import com.candleora.dto.auth.PasswordResetConfirmRequest;
+import com.candleora.dto.auth.PasswordResetLinkRequest;
+import com.candleora.dto.auth.PasswordResetLinkResponse;
 import com.candleora.dto.auth.PhoneAuthRequest;
 import com.candleora.dto.auth.SignupRequest;
 import com.candleora.dto.auth.UserResponse;
@@ -47,6 +50,16 @@ public class PublicAuthController {
     @PostMapping("/phone")
     public AuthResponse phone(@Valid @RequestBody PhoneAuthRequest request) {
         return authService.phoneAuth(request);
+    }
+
+    @PostMapping("/password-reset/request")
+    public PasswordResetLinkResponse requestPasswordReset(@Valid @RequestBody PasswordResetLinkRequest request) {
+        return authService.requestPasswordReset(request.email());
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public UserResponse confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        return authService.resetPassword(request.token(), request.password());
     }
 
     @PostMapping("/email-verification/verify")

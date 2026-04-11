@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import CandleCheckbox from "../components/CandleCheckbox";
 import LazyProductCard from "../components/LazyProductCard";
 import StatusView from "../components/StatusView";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import { FILTERABLE_CATEGORIES } from "../constants/categories";
 import { catalogApi } from "../services/api";
 import { formatApiError } from "../utils/format";

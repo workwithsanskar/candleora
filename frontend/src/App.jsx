@@ -30,6 +30,7 @@ const AdminCoupons = lazy(() => import("./admin/pages/Coupons"));
 const AdminCouponEditor = lazy(() => import("./admin/pages/CouponEditor"));
 const AdminBanners = lazy(() => import("./admin/pages/Banners"));
 const AdminBannerEditor = lazy(() => import("./admin/pages/BannerEditor"));
+const AdminPromotions = lazy(() => import("./admin/pages/Promotions"));
 const AdminSettings = lazy(() => import("./admin/pages/Settings"));
 const CandleFixes = lazy(() => import("./pages/CandleFixes"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -38,6 +39,7 @@ const CheckoutAddress = lazy(() => import("./pages/CheckoutAddress"));
 const CheckoutPayment = lazy(() => import("./pages/CheckoutPayment"));
 const ContactUs = lazy(() => import("./pages/ContactUs"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -56,6 +58,7 @@ const StylingGuides = lazy(() => import("./pages/StylingGuides"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const UnderConstruction = lazy(() => import("./pages/UnderConstruction"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 
@@ -117,6 +120,7 @@ function AppShell() {
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="coupons/new" element={<AdminCouponEditor />} />
                   <Route path="coupons/:couponId/edit" element={<AdminCouponEditor />} />
+                  <Route path="promotions" element={<AdminPromotions />} />
                   <Route path="banners" element={<AdminBanners />} />
                   <Route path="banners/new" element={<AdminBannerEditor />} />
                   <Route path="banners/:bannerId/edit" element={<AdminBannerEditor />} />
@@ -138,8 +142,10 @@ function AppShell() {
                 <Route path="/candle-fixes" element={<CandleFixes />} />
                 <Route path="/fixes" element={<CandleFixes />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/login" element={<Login />} />

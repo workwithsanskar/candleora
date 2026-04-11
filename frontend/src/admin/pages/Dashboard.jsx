@@ -35,7 +35,7 @@ function Dashboard() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000);
+    }, 1000);
 
     return () => window.clearInterval(intervalId);
   }, []);
@@ -55,13 +55,16 @@ function Dashboard() {
   const topProducts = overviewQuery.data?.topProducts ?? [];
   const recentOrders = recentOrdersQuery.data?.content ?? [];
   const greetingName = user?.name?.trim() || "there";
-  const formattedDateTime = new Intl.DateTimeFormat("en-IN", {
+  const formattedDate = new Intl.DateTimeFormat("en-IN", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+  }).format(currentTime);
+  const formattedClock = new Intl.DateTimeFormat("en-IN", {
     hour: "numeric",
     minute: "2-digit",
+    second: "2-digit",
   }).format(currentTime);
 
   const columns = useMemo(
@@ -122,20 +125,35 @@ function Dashboard() {
     <div className="space-y-6">
       <FiltersBar
         title={`Hi ${greetingName}, welcome back!`}
-        description={formattedDateTime}
+        description={(
+          <span className="inline-flex flex-wrap items-center gap-2 text-brand-muted">
+            <span>{formattedDate} at</span>
+            <span className="inline-flex items-center gap-2 font-medium text-brand-dark">
+              <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFA20A]/55" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFA20A]" />
+              </span>
+              <time dateTime={currentTime.toISOString()} className="tabular-nums">
+                {formattedClock}
+              </time>
+            </span>
+          </span>
+        )}
         actions={
-          quickRanges.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${
-                period === option.value ? "bg-[#17120f] text-white" : "border border-black/10 bg-white text-brand-dark hover:border-black/20"
-              }`}
-              onClick={() => setPeriod(option.value)}
-            >
-              {option.label}
-            </button>
-          ))
+          <>
+            {quickRanges.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`rounded-2xl px-4 py-2 text-sm font-medium transition ${
+                  period === option.value ? "bg-[#17120f] text-white" : "border border-black/10 bg-white text-brand-dark hover:border-black/20"
+                }`}
+                onClick={() => setPeriod(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </>
         }
       />
 

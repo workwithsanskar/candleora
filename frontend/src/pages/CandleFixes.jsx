@@ -63,21 +63,55 @@ function normalizeFixes(rawFixes) {
   });
 }
 
+function CandleFixSkeleton() {
+  return (
+    <article className="grid gap-6 lg:grid-cols-[340px_685px] lg:items-start lg:gap-x-12">
+      <div className="min-w-0 max-w-[340px] space-y-4 text-left">
+        <div className="space-y-2">
+          <div className="h-8 w-[80%] rounded-md bg-brand-muted/15 animate-pulse"></div>
+          <div className="h-8 w-[60%] rounded-md bg-brand-muted/15 animate-pulse"></div>
+        </div>
+        
+        <div className="h-4 w-full rounded-md bg-danger/15 animate-pulse mt-4"></div>
+
+        <div className="space-y-3 pt-4">
+          <div className="h-4 w-[25%] rounded-md bg-brand-muted/15 animate-pulse"></div>
+          <ul className="space-y-3 pl-5 pt-1">
+            <li className="h-3 w-full rounded-md bg-brand-muted/15 animate-pulse"></li>
+            <li className="h-3 w-[85%] rounded-md bg-brand-muted/15 animate-pulse"></li>
+            <li className="h-3 w-[70%] rounded-md bg-brand-muted/15 animate-pulse"></li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5 lg:w-[685px] lg:grid-cols-3 lg:justify-self-end lg:gap-5">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={`skeleton-image-${index}`}
+            className="h-[180px] w-full rounded-[10px] bg-brand-muted/15 animate-pulse sm:h-[200px] lg:h-[215px]"
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function CandleFixSection({ fix }) {
   const steps = parseFixSteps(fix.fixSteps);
 
   return (
     <article className="grid gap-6 lg:grid-cols-[340px_685px] lg:items-start lg:gap-x-12">
       <div className="min-w-0 max-w-[340px] space-y-2 text-left">
-        <h2 className="max-w-[340px] font-display text-[1.5rem] font-semibold leading-[1.08] tracking-[-0.03em] text-black sm:text-[1.62rem]">
+        <h2 className="max-w-[340px] font-display text-[1.5rem] font-semibold leading-[1.08] tracking-[-0.03em] text-brand-dark sm:text-[1.62rem]">
           {fix.title}
         </h2>
 
         <p className="text-[0.9rem] font-semibold leading-5 text-danger">Cause: {fix.cause}</p>
 
         <div className="space-y-2 pt-1.5">
-          <p className="text-[0.95rem] font-semibold text-black">Fix:</p>
-          <ul className="list-disc space-y-1 pl-5 text-[0.92rem] leading-7 text-black/72">
+          <p className="text-[0.95rem] font-semibold text-brand-dark">Fix:</p>
+          <ul className="list-disc space-y-1 pl-5 text-[0.92rem] leading-7 text-brand-dark/70">
             {steps.map((step) => (
               <li key={step}>{step}</li>
             ))}
@@ -89,7 +123,7 @@ function CandleFixSection({ fix }) {
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={`${fix.id}-image-${index + 1}`}
-            className="h-[180px] w-full rounded-[10px] bg-[#b8b8b8] sm:h-[200px] lg:h-[215px]"
+            className="h-[180px] w-full rounded-[10px] bg-brand-muted/15 sm:h-[200px] lg:h-[215px]"
             aria-hidden="true"
           />
         ))}
@@ -129,17 +163,6 @@ function CandleFixes() {
     };
   }, []);
 
-  if (isLoading) {
-    return (
-      <section className="container-shell py-12 sm:py-16">
-        <StatusView
-          title="Loading candle fixes"
-          message="Fetching CandleOra care and troubleshooting content."
-        />
-      </section>
-    );
-  }
-
   if (error) {
     return (
       <section className="container-shell py-12 sm:py-16">
@@ -153,23 +176,31 @@ function CandleFixes() {
       <div className="mx-auto w-full max-w-[1180px] overflow-hidden">
         <Link
           to="/"
-          className="group inline-flex items-center gap-2 text-sm font-semibold text-black transition"
+          className="group inline-flex items-center gap-2 text-sm font-semibold text-brand-dark transition"
         >
           <span aria-hidden="true">&lt;</span>
           <span className="transition group-hover:underline group-hover:underline-offset-4">Back</span>
         </Link>
 
         <header className="max-w-[820px]">
-          <h1 className="mt-4 font-display text-heading-lg font-semibold text-black">Candle Fixes</h1>
-          <p className="mt-3 text-[0.95rem] leading-6 text-black/62">
+          <h1 className="mt-4 font-display text-heading-lg font-semibold text-brand-dark">Candle Fixes</h1>
+          <p className="mt-3 text-[0.95rem] leading-6 text-brand-dark/60">
             For every candle question, there&apos;s a CandleOra solution - your trusted guide to keep the glow alive.
           </p>
         </header>
 
         <div className="mt-8 space-y-10 sm:mt-9 sm:space-y-12">
-          {fixes.map((fix) => (
-            <CandleFixSection key={fix.id} fix={fix} />
-          ))}
+          {isLoading ? (
+            <>
+              <CandleFixSkeleton />
+              <CandleFixSkeleton />
+              <CandleFixSkeleton />
+            </>
+          ) : (
+            fixes.map((fix) => (
+              <CandleFixSection key={fix.id} fix={fix} />
+            ))
+          )}
         </div>
       </div>
     </section>

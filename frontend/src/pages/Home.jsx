@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
-import candleFixesCard from "../assets/designer/candle-fixes-recommendation.jpeg";
-import heroImage from "../assets/designer/image-optimized.jpg";
-import occasionPicksCard from "../assets/designer/occasion-picks-recommendation.jpeg";
+import candleFixesCard from "../assets/designer/candle-fixes-recommendation.webp";
+import heroImage from "../assets/designer/image-optimized.webp";
+import occasionPicksCard from "../assets/designer/occasion-picks-recommendation.webp";
 import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Recommendations from "../components/Recommendations";
@@ -14,24 +14,30 @@ import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
 import { formatApiError } from "../utils/format";
 
-const customerStories = [
+const fallbackTestimonials = [
   {
-    name: "Riya Sharma",
-    date: "18 Jan 2026",
+    id: "fallback-riya-sharma",
+    customerName: "Riya Sharma",
+    displayDate: "18 Jan 2026",
     quote:
       "The candles look premium, burn evenly, and the packaging felt gift-ready the moment it arrived.",
+    rating: 5,
   },
   {
-    name: "Aarav Mehta",
-    date: "12 Jan 2026",
+    id: "fallback-aarav-mehta",
+    customerName: "Aarav Mehta",
+    displayDate: "12 Jan 2026",
     quote:
       "Exactly the kind of warm, elegant decor piece I wanted for my bedroom corner and work desk.",
+    rating: 5,
   },
   {
-    name: "Sana Khan",
-    date: "06 Jan 2026",
+    id: "fallback-sana-khan",
+    customerName: "Sana Khan",
+    displayDate: "06 Jan 2026",
     quote:
       "I ordered for a housewarming and the whole set looked much more expensive than the price suggested.",
+    rating: 5,
   },
 ];
 
@@ -72,16 +78,25 @@ function TestimonialCard({ story }) {
     >
       <div className="flex items-center gap-2">
         <span className="inline-flex h-4 w-4 rounded-full bg-black" />
-        <p className="text-base font-semibold text-black">{story.name}</p>
-        <span className="text-sm text-black/45">{story.date}</span>
+        <p className="text-base font-semibold text-black">{story.customerName}</p>
+        <span className="text-sm text-black/45">{story.displayDate}</span>
       </div>
       <p className="mt-3 text-base leading-6 text-black/72">{story.quote}</p>
       <div className="mt-3 flex items-center gap-0.5 text-[#f3b33d]">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
-            <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
-          </svg>
-        ))}
+        {Array.from({ length: 5 }).map((_, index) => {
+          const isFilled = index < Math.min(5, Math.max(1, Number(story.rating ?? 5)));
+
+          return (
+            <svg
+              key={index}
+              viewBox="0 0 24 24"
+              className={`h-[18px] w-[18px] ${isFilled ? "fill-current" : "fill-transparent stroke-current opacity-35"}`}
+              strokeWidth={isFilled ? undefined : "1.8"}
+            >
+              <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
+            </svg>
+          );
+        })}
       </div>
     </article>
   );
@@ -101,9 +116,16 @@ function Home() {
     queryFn: () => contentApi.getFaqs(),
     select: (response) => (response ?? []).slice(0, 4),
   });
+  const testimonialsQuery = useQuery({
+    queryKey: ["content", "testimonials"],
+    queryFn: () => contentApi.getTestimonials(),
+  });
 
   const featuredProducts = featuredProductsQuery.data ?? [];
   const faqs = faqsQuery.data ?? [];
+  const testimonials = Array.isArray(testimonialsQuery.data)
+    ? testimonialsQuery.data
+    : fallbackTestimonials;
   const productError = featuredProductsQuery.error
     ? formatApiError(featuredProductsQuery.error)
     : "";
@@ -233,45 +255,47 @@ function Home() {
         </Reveal>
       </section>
 
-      <section className="container-shell pt-12 pb-8 sm:pt-14 sm:pb-10">
-        <Reveal delay={0.1}>
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="section-title">Our Happy Customers</h2>
+      {testimonials.length > 0 ? (
+        <section className="container-shell pt-12 pb-8 sm:pt-14 sm:pb-10">
+          <Reveal delay={0.1}>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="section-title">Our Happy Customers</h2>
 
-            <div className="hidden items-center gap-2 md:flex">
-              <button
-                type="button"
-                onClick={() => scrollTestimonials(-1)}
-                aria-label="Scroll testimonials left"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
-              >
-                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M14.5 6.5L9 12L14.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollTestimonials(1)}
-                aria-label="Scroll testimonials right"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
-              >
-                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M9.5 6.5L15 12L9.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <div className="hidden items-center gap-2 md:flex">
+                <button
+                  type="button"
+                  onClick={() => scrollTestimonials(-1)}
+                  aria-label="Scroll testimonials left"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
+                >
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M14.5 6.5L9 12L14.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTestimonials(1)}
+                  aria-label="Scroll testimonials right"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/12 bg-white text-black/70 transition hover:border-black/22 hover:bg-black/[0.03] hover:text-black"
+                >
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M9.5 6.5L15 12L9.5 17.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div
-            ref={testimonialCarouselRef}
-            className="stealth-scrollbar mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 pr-1 scroll-smooth"
-          >
-            {customerStories.map((story) => (
-              <TestimonialCard key={`${story.name}-${story.date}`} story={story} />
-            ))}
-          </div>
-        </Reveal>
-      </section>
+            <div
+              ref={testimonialCarouselRef}
+              className="stealth-scrollbar mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 pr-1 scroll-smooth"
+            >
+              {testimonials.map((story) => (
+                <TestimonialCard key={story.id ?? `${story.customerName}-${story.displayDate}`} story={story} />
+              ))}
+            </div>
+          </Reveal>
+        </section>
+      ) : null}
 
       <section id="faq" className="container-shell grid gap-10 pt-14 pb-6 lg:grid-cols-[0.85fr_1.15fr]">
         <Reveal className="contents" delay={0.12}>

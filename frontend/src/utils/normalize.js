@@ -1,4 +1,4 @@
-import fallbackImage from "../assets/designer/image-optimized.jpg";
+import fallbackImage from "../assets/designer/image-optimized.webp";
 
 export function getProductPath(product) {
   const slug = String(product?.slug ?? "").trim();

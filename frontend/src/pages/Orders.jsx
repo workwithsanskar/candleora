@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../assets/designer/image-optimized.webp";
 import OrderHistorySkeleton from "../components/OrderHistorySkeleton";
 import StatusView from "../components/StatusView";
 import { orderApi } from "../services/api";

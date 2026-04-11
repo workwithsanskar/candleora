@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../assets/designer/image-optimized.webp";
 import CandleSelectControl from "../components/CandleSelectControl";
 import Modal from "../components/Modal";
 import ReplaceModal from "../components/ReplaceModal";
 import StatusView from "../components/StatusView";
+import OrderHistorySkeleton from "../components/OrderHistorySkeleton";
 import {
   SUPPORT_EMAIL,
   SUPPORT_PHONE_DISPLAY,
@@ -885,11 +886,7 @@ function OrderDetail({ readOnly = false }) {
   ]);
 
   if (isLoading) {
-    return (
-      <section className="container-shell py-16">
-        <StatusView title="Loading order" message="Fetching your CandleOra order details." />
-      </section>
-    );
+    return <OrderHistorySkeleton />;
   }
 
   if (error || !order) {

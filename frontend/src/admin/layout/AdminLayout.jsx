@@ -10,7 +10,8 @@ const titles = {
   "/admin/replacements": "Replacement Requests",
   "/admin/products": "Products",
   "/admin/coupons": "Coupons",
-  "/admin/banners": "Banners",
+  "/admin/promotions": "Promotions",
+  "/admin/banners": "Popup Campaigns",
   "/admin/customers": "Customers",
   "/admin/analytics": "Analytics",
   "/admin/settings": "Admin Settings",
@@ -21,7 +22,8 @@ const placeholders = {
   "/admin/contact-messages": "Search by name, email, phone, or subject",
   "/admin/products": "Search products...",
   "/admin/coupons": "Search coupons",
-  "/admin/banners": "Search banners by title or coupon code",
+  "/admin/promotions": "Search announcements, popup campaigns, or coupon codes",
+  "/admin/banners": "Search popup campaigns by title or coupon code",
   "/admin/customers": "Search customers by name, email, or phone",
 };
 
@@ -60,11 +62,11 @@ function AdminLayout() {
     }
 
     if (location.pathname === "/admin/banners/new") {
-      return "Create Banner";
+      return "Create Popup Campaign";
     }
 
     if (location.pathname.startsWith("/admin/banners/") && location.pathname.endsWith("/edit")) {
-      return "Edit Banner";
+      return "Edit Popup Campaign";
     }
 
     return titles[location.pathname] ?? "Admin";

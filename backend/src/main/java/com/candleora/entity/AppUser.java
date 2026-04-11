@@ -80,6 +80,12 @@ public class AppUser {
     private Instant emailVerificationExpiresAt;
 
     @Column
+    private String passwordResetToken;
+
+    @Column
+    private Instant passwordResetExpiresAt;
+
+    @Column
     private String gender;
 
     @Column
@@ -256,6 +262,22 @@ public class AppUser {
 
     public void setEmailVerificationExpiresAt(Instant emailVerificationExpiresAt) {
         this.emailVerificationExpiresAt = emailVerificationExpiresAt;
+    }
+
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
+    }
+
+    public Instant getPasswordResetExpiresAt() {
+        return passwordResetExpiresAt;
+    }
+
+    public void setPasswordResetExpiresAt(Instant passwordResetExpiresAt) {
+        this.passwordResetExpiresAt = passwordResetExpiresAt;
     }
 
     public String getGender() {

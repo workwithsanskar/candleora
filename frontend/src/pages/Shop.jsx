@@ -181,96 +181,127 @@ function Shop() {
             </p>
           </div>
 
-          {isInitialLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: initialSkeletonCount }).map((_, index) => (
-                <ProductCardSkeleton key={index} />
-              ))}
-            </div>
-          ) : error ? (
-            <StatusView
-              title="Products could not be loaded"
-              message={error}
-              action={
-                <Link to="/" className="btn btn-primary mt-6">
-                  Return home
-                </Link>
-              }
-            />
-          ) : products.length === 0 ? (
-            <StatusView
-              title="No products match those filters"
-              message="Try widening the price range or clearing the category filter."
-            />
-          ) : (
-            <>
+          <AnimatePresence mode="wait">
+            {isInitialLoading ? (
               <m.div
-                layout={!filterMotionDisabled}
-                transition={
-                  filterMotionDisabled
-                    ? undefined
-                    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                }
+                key="skeleton"
+                initial={filterMotionDisabled ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0 }}
+                transition={{ duration: 0.25 }}
                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
               >
-                <AnimatePresence initial={false} mode="popLayout">
-                  {products.map((product, index) => (
-                    <m.div
-                      key={`${gridAnimationKey}-${product.id}`}
-                      layout={!filterMotionDisabled}
-                      initial={
-                        filterMotionDisabled ? false : { opacity: 0, y: 18, scale: 0.985 }
-                      }
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={
-                        filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.985 }
-                      }
-                      transition={{
-                        duration: filterMotionDisabled ? 0 : 0.26,
-                        delay: filterMotionDisabled ? 0 : Math.min(index, 5) * 0.035,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                    >
-                      <LazyProductCard
-                        product={product}
-                        priority={index < initialSkeletonCount}
-                      />
-                    </m.div>
-                  ))}
-                </AnimatePresence>
-
-                {isLoadingMore &&
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <m.div
-                      key={`loading-${index}`}
-                      initial={filterMotionDisabled ? false : { opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -10 }}
-                      transition={{ duration: filterMotionDisabled ? 0 : 0.22 }}
-                    >
-                      <ProductCardSkeleton />
-                    </m.div>
-                  ))}
+                {Array.from({ length: initialSkeletonCount }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
               </m.div>
+            ) : error ? (
+              <m.div
+                key="error"
+                initial={filterMotionDisabled ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <StatusView
+                  title="Products could not be loaded"
+                  message={error}
+                  action={
+                    <Link to="/" className="btn btn-primary mt-6">
+                      Return home
+                    </Link>
+                  }
+                />
+              </m.div>
+            ) : products.length === 0 ? (
+              <m.div
+                key="empty"
+                initial={filterMotionDisabled ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <StatusView
+                  title="No products match those filters"
+                  message="Try widening the price range or clearing the category filter."
+                />
+              </m.div>
+            ) : (
+              <m.div
+                key="content"
+                initial={filterMotionDisabled ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <m.div
+                  layout={!filterMotionDisabled}
+                  transition={
+                    filterMotionDisabled
+                      ? undefined
+                      : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                  }
+                  className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                >
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {products.map((product, index) => (
+                      <m.div
+                        key={`${gridAnimationKey}-${product.id}`}
+                        layout={!filterMotionDisabled}
+                        initial={
+                          filterMotionDisabled ? false : { opacity: 0, y: 18, scale: 0.985 }
+                        }
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={
+                          filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.985 }
+                        }
+                        transition={{
+                          duration: filterMotionDisabled ? 0 : 0.26,
+                          delay: filterMotionDisabled ? 0 : Math.min(index, 5) * 0.035,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      >
+                        <LazyProductCard
+                          product={product}
+                          priority={index < initialSkeletonCount}
+                        />
+                      </m.div>
+                    ))}
+                  </AnimatePresence>
 
-              {hasMorePages && (
-                <div className="pt-8 text-center">
-                  <p className="text-sm text-black/76">
-                    Showing {showingFrom}-{showingTo} of {totalElements} products
-                  </p>
-                  <div className="mx-auto mt-4 h-px w-full max-w-[420px] bg-black/12" />
-                  <button
-                    type="button"
-                    onClick={() => productsQuery.fetchNextPage()}
-                    disabled={isLoadingMore}
-                    className="btn btn-primary mt-6 disabled:cursor-not-allowed disabled:opacity-55"
-                  >
-                    {isLoadingMore ? "Loading..." : "Load More"}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                  {isLoadingMore &&
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <m.div
+                        key={`loading-${index}`}
+                        initial={filterMotionDisabled ? false : { opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={filterMotionDisabled ? { opacity: 0 } : { opacity: 0, y: -10 }}
+                        transition={{ duration: filterMotionDisabled ? 0 : 0.22 }}
+                      >
+                        <ProductCardSkeleton />
+                      </m.div>
+                    ))}
+                </m.div>
+
+                {hasMorePages && (
+                  <div className="pt-8 text-center">
+                    <p className="text-sm text-black/76">
+                      Showing {showingFrom}-{showingTo} of {totalElements} products
+                    </p>
+                    <div className="mx-auto mt-4 h-px w-full max-w-[420px] bg-black/12" />
+                    <button
+                      type="button"
+                      onClick={() => productsQuery.fetchNextPage()}
+                      disabled={isLoadingMore}
+                      className="btn btn-primary mt-6 disabled:cursor-not-allowed disabled:opacity-55"
+                    >
+                      {isLoadingMore ? "Loading..." : "Load More"}
+                    </button>
+                  </div>
+                )}
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </section>

@@ -4,6 +4,7 @@ import com.candleora.dto.auth.AuthRequest;
 import com.candleora.dto.auth.AuthResponse;
 import com.candleora.dto.auth.EmailVerificationResponse;
 import com.candleora.dto.auth.GoogleAuthRequest;
+import com.candleora.dto.auth.PasswordResetLinkResponse;
 import com.candleora.dto.auth.PhoneAuthRequest;
 import com.candleora.dto.auth.ProfileUpdateRequest;
 import com.candleora.dto.auth.SignupRequest;
@@ -267,6 +268,60 @@ public class AuthService {
         );
     }
 
+    public PasswordResetLinkResponse requestPasswordReset(String email) {
+        String normalizedEmail = trimToNull(email);
+        if (!StringUtils.hasText(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+
+        AppUser user = appUserRepository.findByEmailIgnoreCase(normalizedEmail).orElse(null);
+        if (user == null) {
+            return new PasswordResetLinkResponse(
+                "If an account exists for this email, a password reset link has been prepared.",
+                null,
+                null,
+                false
+            );
+        }
+
+        String token = UUID.randomUUID().toString();
+        Instant expiresAt = Instant.now().plusSeconds(30 * 60);
+        user.setPasswordResetToken(token);
+        user.setPasswordResetExpiresAt(expiresAt);
+        appUserRepository.save(user);
+
+        return new PasswordResetLinkResponse(
+            "Password reset link generated. Open the preview link to complete the reset while mail delivery is still being configured.",
+            buildPasswordResetUrl(token),
+            expiresAt,
+            false
+        );
+    }
+
+    public UserResponse resetPassword(String token, String password) {
+        String normalizedToken = trimToNull(token);
+        if (!StringUtils.hasText(normalizedToken)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reset token is required");
+        }
+
+        String normalizedPassword = trimToNull(password);
+        if (!StringUtils.hasText(normalizedPassword) || normalizedPassword.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters long");
+        }
+
+        AppUser user = appUserRepository.findByPasswordResetToken(normalizedToken)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Password reset link is invalid"));
+
+        if (user.getPasswordResetExpiresAt() == null || user.getPasswordResetExpiresAt().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password reset link has expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(normalizedPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
+        return toUserResponse(appUserRepository.save(user));
+    }
+
     public UserResponse verifyEmail(String token) {
         AppUser user = appUserRepository.findByEmailVerificationToken(token)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Verification link is invalid"));
@@ -314,6 +369,13 @@ public class AuthService {
     private AuthResponse toAuthResponse(AppUser user) {
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, jwtService.getExpiration(token), toUserResponse(user));
+    }
+
+    private String buildPasswordResetUrl(String token) {
+        String sanitizedFrontendUrl = frontendUrl.endsWith("/")
+            ? frontendUrl.substring(0, frontendUrl.length() - 1)
+            : frontendUrl;
+        return sanitizedFrontendUrl + "/reset-password?token=" + token;
     }
 
     private void applyProfileFields(

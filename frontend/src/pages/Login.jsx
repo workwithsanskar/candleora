@@ -3,7 +3,7 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import heroImage from "../assets/designer/candle-login-img.jpg";
+import heroImage from "../assets/designer/candle-login-img.webp";
 import { PHONE_AUTH_ENABLED } from "../utils/authFlow";
 import { buildGooglePayload, buildPhonePayload } from "../utils/account";
 import { formatApiError } from "../utils/format";
@@ -142,12 +142,12 @@ function Login() {
               </button>
 
               <div className="text-center">
-                <button
-                  type="button"
+                <Link
+                  to={form.email.trim() ? `/forgot-password?email=${encodeURIComponent(form.email.trim())}` : "/forgot-password"}
                   className="text-[14px] font-semibold text-brand-dark transition hover:underline hover:underline-offset-4"
                 >
                   Forgot Password?
-                </button>
+                </Link>
               </div>
             </form>
 

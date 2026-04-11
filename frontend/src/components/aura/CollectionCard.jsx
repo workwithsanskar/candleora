@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import fallbackProductImage from "../../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../../assets/designer/image-optimized.webp";
 import { formatCurrency } from "../../utils/format";
 import { applyImageFallback } from "../../utils/images";
 import { getProductPath } from "../../utils/normalize";

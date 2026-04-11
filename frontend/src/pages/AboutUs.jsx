@@ -49,22 +49,22 @@ const aboutParagraphs = [
 const visualPanels = [
   {
     className:
-      "absolute left-0 top-[1.8%] h-[44.78%] w-[24.69%] rounded-[12px] bg-[#A6A6A6]",
+      "absolute left-0 top-[1.8%] h-[44.78%] w-[24.69%] rounded-[12px] bg-brand-muted",
     ariaLabel: "Decorative top visual block",
   },
   {
     className:
-      "absolute left-0 top-[55.74%] h-[44.26%] w-[24.68%] rounded-[12px] bg-[#A6A6A6]",
+      "absolute left-0 top-[55.74%] h-[44.26%] w-[24.68%] rounded-[12px] bg-brand-muted",
     ariaLabel: "Decorative bottom visual block",
   },
   {
     className:
-      "absolute right-0 top-0 h-[82.51%] w-[54.8%] rounded-[16px] bg-[#DCDCDC]",
+      "absolute right-0 top-0 h-[82.51%] w-[54.8%] rounded-[16px] bg-brand-light",
     ariaLabel: "Decorative background visual block",
   },
   {
     className:
-      "absolute left-[26.15%] top-[12.91%] h-[87.01%] w-[69.64%] rounded-[16px] bg-[#A6A6A6]",
+      "absolute left-[26.15%] top-[12.91%] h-[87.01%] w-[69.64%] rounded-[16px] bg-brand-muted",
     ariaLabel: "Decorative foreground visual block",
   },
 ];
@@ -82,7 +82,7 @@ function AboutUs() {
 
           <div className="balanced-split-layout mt-6 grid gap-6 sm:mt-7 sm:gap-7 lg:mt-8 lg:grid-cols-[minmax(0,392px)_minmax(480px,592px)] lg:justify-center lg:gap-[42px]">
             <div className="max-w-[392px]">
-              <div className="space-y-5 text-[14.5px] leading-[1.72] text-[#2d2d2d] sm:text-[15px]">
+              <div className="space-y-5 text-[14.5px] leading-[1.72] text-brand-dark sm:text-[15px]">
                 {aboutParagraphs.map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}

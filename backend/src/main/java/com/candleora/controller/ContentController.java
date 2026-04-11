@@ -6,8 +6,10 @@ import com.candleora.dto.content.ContactMessageRequest;
 import com.candleora.dto.content.ContactMessageResponse;
 import com.candleora.dto.content.FaqResponse;
 import com.candleora.dto.content.StylingGuideResponse;
+import com.candleora.dto.content.TestimonialResponse;
 import com.candleora.service.AnnouncementService;
 import com.candleora.service.ContentService;
+import com.candleora.service.HomepageTestimonialService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,15 +24,26 @@ public class ContentController {
 
     private final AnnouncementService announcementService;
     private final ContentService contentService;
+    private final HomepageTestimonialService homepageTestimonialService;
 
-    public ContentController(AnnouncementService announcementService, ContentService contentService) {
+    public ContentController(
+        AnnouncementService announcementService,
+        ContentService contentService,
+        HomepageTestimonialService homepageTestimonialService
+    ) {
         this.announcementService = announcementService;
         this.contentService = contentService;
+        this.homepageTestimonialService = homepageTestimonialService;
     }
 
     @GetMapping("/announcements")
     public List<AnnouncementResponse> getAnnouncements() {
         return announcementService.listPublicAnnouncements();
+    }
+
+    @GetMapping("/testimonials")
+    public List<TestimonialResponse> getTestimonials() {
+        return homepageTestimonialService.listPublicTestimonials();
     }
 
     @GetMapping("/fixes")

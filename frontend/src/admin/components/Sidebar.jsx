@@ -13,7 +13,7 @@ const navigation = [
   { label: "Replacements", to: "/admin/replacements", icon: "refresh" },
   { label: "Products", to: "/admin/products", icon: "box" },
   { label: "Coupons", to: "/admin/coupons", icon: "ticket" },
-  { label: "Banners", to: "/admin/banners", icon: "sparkles" },
+  { label: "Promotions", to: "/admin/promotions", icon: "sparkles" },
   { label: "Customers", to: "/admin/customers", icon: "users" },
   { label: "Analytics", to: "/admin/analytics", icon: "chart" },
   { label: "Settings", to: "/admin/settings", icon: "settings" },

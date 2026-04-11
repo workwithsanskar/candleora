@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import StatusView from "../components/StatusView";
+import CheckoutSkeleton from "../components/CheckoutSkeleton";
 import { useAuth } from "../context/AuthContext";
 import { orderApi } from "../services/api";
 import { readLastPlacedOrderIdForUser } from "../utils/checkoutSession";
@@ -132,11 +133,7 @@ function OrderConfirmation() {
   }, [resolvedOrderId]);
 
   if (isLoading) {
-    return (
-      <section className="container-shell py-16">
-        <StatusView title="Loading confirmation" message="Fetching the latest order details." />
-      </section>
-    );
+    return <div className="mt-8"><CheckoutSkeleton /></div>;
   }
 
   if (error || !order) {

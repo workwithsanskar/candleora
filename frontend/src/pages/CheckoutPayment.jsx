@@ -7,6 +7,7 @@ import CheckoutTimerBanner from "../components/checkout/CheckoutTimerBanner";
 import PrimaryButton from "../components/checkout/PrimaryButton";
 import StickyCTA from "../components/checkout/StickyCTA";
 import StatusView from "../components/StatusView";
+import CheckoutSkeleton from "../components/CheckoutSkeleton";
 import { useAddresses } from "../context/AddressContext";
 import { useCart } from "../context/CartContext";
 import { useCheckoutSession } from "../context/CheckoutSessionContext";
@@ -356,13 +357,10 @@ function CheckoutPayment() {
     );
   }
 
-  if (!selectedAddress) {
+  if (!selectedAddress || !hasActiveSession) {
     return (
-      <section className="container-shell py-16">
-        <StatusView
-          title="Preparing your payment step"
-          message="Loading your delivery details and order summary."
-        />
+      <section className="container-shell py-10 sm:py-12">
+        <CheckoutSkeleton />
       </section>
     );
   }

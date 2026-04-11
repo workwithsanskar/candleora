@@ -4,7 +4,7 @@ import PhoneAuthPanel from "../components/PhoneAuthPanel";
 import CandleCheckbox from "../components/CandleCheckbox";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import signupImage from "../assets/designer/signup-candle-img.jpg";
+import signupImage from "../assets/designer/signup-candle-img.webp";
 import { PHONE_AUTH_ENABLED } from "../utils/authFlow";
 import {
   buildGooglePayload,

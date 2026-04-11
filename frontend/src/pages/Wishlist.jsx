@@ -1,8 +1,9 @@
 import PropTypes from "prop-types";
 import { m, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
-import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../assets/designer/image-optimized.webp";
 import StatusView from "../components/StatusView";
+import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { formatCurrency } from "../utils/format";

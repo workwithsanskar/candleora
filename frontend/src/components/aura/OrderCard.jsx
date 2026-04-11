@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import fallbackProductImage from "../../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../../assets/designer/image-optimized.webp";
 import { orderApi } from "../../services/api";
 import { formatApiError, formatCurrency, formatDateRange, titleCase } from "../../utils/format";
 import { applyImageFallback } from "../../utils/images";

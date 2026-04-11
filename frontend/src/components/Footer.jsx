@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import BrandLogo from "./BrandLogo";
-import gmailFooterIcon from "../assets/gmail-footer.png";
-import instagramFooterIcon from "../assets/instagram-footer.png";
-import whatsappFooterIcon from "../assets/whatsapp-footer.png";
+import gmailFooterIcon from "../assets/gmail-footer.webp";
+import instagramFooterIcon from "../assets/instagram-footer.webp";
+import whatsappFooterIcon from "../assets/whatsapp-footer.webp";
 
 const whatsappMessage = encodeURIComponent(
   "Hello CandleOra, I would like to know more about your candles and current availability.",

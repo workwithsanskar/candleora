@@ -32,6 +32,10 @@ class ContentControllerIntegrationTest extends IntegrationTestSupport {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].slug").exists());
 
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/testimonials"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].customerName").exists());
+
         mockMvc.perform(MockMvcRequestBuilders.get("/api/faqs"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].question").exists());

@@ -18,13 +18,13 @@ function FiltersBar({ title, description, actions, children }) {
 
 FiltersBar.propTypes = {
   title: PropTypes.string.isRequired,
-  description: PropTypes.string,
+  description: PropTypes.node,
   actions: PropTypes.node,
   children: PropTypes.node,
 };
 
 FiltersBar.defaultProps = {
-  description: "",
+  description: null,
   actions: null,
   children: null,
 };

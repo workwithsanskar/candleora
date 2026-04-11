@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import couponMarkImage from "../../assets/designer/logo-candleora-mark.png";
+import couponMarkImage from "../../assets/designer/logo-candleora-mark.webp";
 import { couponApi } from "../../services/api";
 import { formatApiError } from "../../utils/format";
 import Modal from "../Modal";

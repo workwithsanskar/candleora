@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import fallbackProductImage from "../assets/designer/image-optimized.jpg";
+import fallbackProductImage from "../assets/designer/image-optimized.webp";
 import ProductDetailSkeleton from "../components/ProductDetailSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Reveal from "../components/Reveal";
