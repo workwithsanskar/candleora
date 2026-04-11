@@ -9,6 +9,7 @@ import ProductCardSkeleton from "../components/ProductCardSkeleton";
 import ProductSlider from "../components/ProductSlider";
 import Recommendations from "../components/Recommendations";
 import Reveal from "../components/Reveal";
+import Skeleton from "../components/Skeleton";
 import StatusView from "../components/StatusView";
 import { getCategoryBySlug } from "../constants/categories";
 import { catalogApi, contentApi } from "../services/api";
@@ -313,9 +314,9 @@ function Home() {
                   key={`faq-loading-${index}`}
                   className="rounded-[14px] border border-black/12 bg-white px-5 py-4"
                 >
-                  <div className="h-5 w-3/4 animate-pulse rounded bg-black/8" />
-                  <div className="mt-3 h-4 w-full animate-pulse rounded bg-black/6" />
-                  <div className="mt-2 h-4 w-5/6 animate-pulse rounded bg-black/6" />
+                  <Skeleton className="h-5 w-3/4 rounded-full" />
+                  <Skeleton className="mt-3 h-4 w-full rounded-full" />
+                  <Skeleton className="mt-2 h-4 w-5/6 rounded-full" />
                 </article>
               ))
             ) : faqError ? (

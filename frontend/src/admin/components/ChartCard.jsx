@@ -1,4 +1,32 @@
 import PropTypes from "prop-types";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
+
+function ChartSkeleton() {
+  return (
+    <div className="flex h-[280px] flex-col justify-between rounded-[22px] border border-black/8 bg-[linear-gradient(180deg,#fffaf3_0%,#fbf4e8_100%)] p-5">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-40 rounded-full" />
+        <Skeleton className="h-3.5 w-24 rounded-full" />
+      </div>
+
+      <div className="flex items-end gap-3">
+        {["h-20", "h-32", "h-24", "h-40", "h-28", "h-36"].map((heightClassName) => (
+          <Skeleton
+            key={heightClassName}
+            className={`flex-1 rounded-t-[18px] rounded-b-[10px] ${heightClassName}`}
+          />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={`chart-label-${index}`} className="h-3.5 rounded-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ChartCard({ title, subtitle, action, isLoading, children }) {
   return (
@@ -13,11 +41,9 @@ function ChartCard({ title, subtitle, action, isLoading, children }) {
 
       <div className="mt-5 min-h-[280px]">
         {isLoading ? (
-          <div className="flex h-[280px] items-center justify-center rounded-[22px] bg-[#f7f1e6]">
-            <div className="h-40 w-full max-w-md animate-pulse rounded-[18px] bg-black/8" />
-          </div>
+          <ChartSkeleton />
         ) : (
-          children
+          <ContentReveal>{children}</ContentReveal>
         )}
       </div>
     </section>

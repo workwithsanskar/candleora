@@ -2,9 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import ContentReveal from "../../components/ContentReveal";
 import fallbackProductImage from "../../assets/designer/image-optimized.webp";
 import { formatApiError, formatCurrency, formatDate, formatDateRange, formatDateTime } from "../../utils/format";
 import AdminDateTimePicker from "../components/AdminDateTimePicker";
+import {
+  AdminListCardSkeleton,
+  AdminMetricGridSkeleton,
+  AdminPageHeroSkeleton,
+  AdminPanelSkeleton,
+} from "../components/AdminSkeletons";
 import AdminSelect from "../components/AdminSelect";
 import {
   FILTER_FIELD_CLASS,
@@ -267,26 +274,20 @@ function OrderDetail() {
   if (orderQuery.isLoading || !order) {
     return (
       <div className="space-y-6">
-        <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
-          <div className="h-5 w-32 animate-pulse rounded-full bg-black/8" />
-          <div className="mt-4 h-12 animate-pulse rounded-[24px] bg-black/8" />
-          <div className="mt-4 h-5 w-64 animate-pulse rounded-full bg-black/8" />
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-[170px] animate-pulse rounded-[28px] bg-black/8" />
-          ))}
-        </div>
+        <AdminPageHeroSkeleton />
+        <AdminMetricGridSkeleton count={4} className="xl:grid-cols-4" />
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
-          <div className="h-[420px] animate-pulse rounded-[32px] bg-black/8" />
-          <div className="h-[420px] animate-pulse rounded-[32px] bg-black/8" />
+          <AdminPanelSkeleton heightClassName="min-h-[420px]" header lines={2}>
+            <AdminListCardSkeleton count={3} />
+          </AdminPanelSkeleton>
+          <AdminPanelSkeleton heightClassName="min-h-[420px]" header lines={6} actionCount={1} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <ContentReveal className="space-y-6">
       <section className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
@@ -592,7 +593,7 @@ function OrderDetail() {
           </button>
         </div>
       </section>
-    </div>
+    </ContentReveal>
   );
 }
 

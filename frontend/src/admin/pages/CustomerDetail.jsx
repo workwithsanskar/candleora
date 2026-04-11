@@ -2,6 +2,13 @@ import { animate, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import ContentReveal from "../../components/ContentReveal";
+import {
+  AdminListCardSkeleton,
+  AdminMetricGridSkeleton,
+  AdminPageHeroSkeleton,
+  AdminPanelSkeleton,
+} from "../components/AdminSkeletons";
 import adminApi from "../services/adminApi";
 import {
   SECONDARY_BUTTON_CLASS,
@@ -69,22 +76,15 @@ function CustomerDetail() {
   if (customerQuery.isLoading || !customerQuery.data) {
     return (
       <div className="space-y-6">
-        <div className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
-          <div className="h-6 w-40 animate-pulse rounded-full bg-black/8" />
-          <div className="mt-4 h-12 animate-pulse rounded-[24px] bg-black/8" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
-              <div className="h-4 w-24 animate-pulse rounded-full bg-black/8" />
-              <div className="mt-6 h-10 animate-pulse rounded-full bg-black/8" />
-            </div>
-          ))}
-        </div>
+        <AdminPageHeroSkeleton />
+        <AdminMetricGridSkeleton />
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="h-[360px] animate-pulse rounded-[32px] bg-black/8" />
-          <div className="h-[360px] animate-pulse rounded-[32px] bg-black/8" />
+          <AdminPanelSkeleton lines={4} />
+          <AdminPanelSkeleton lines={5} />
         </div>
+        <AdminPanelSkeleton heightClassName="min-h-[340px]" header={true} lines={2}>
+          <AdminListCardSkeleton />
+        </AdminPanelSkeleton>
       </div>
     );
   }
@@ -162,7 +162,7 @@ function CustomerDetail() {
   };
 
   return (
-    <div className="space-y-6">
+    <ContentReveal className="space-y-6">
       <section className="rounded-[32px] border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
@@ -429,7 +429,7 @@ function CustomerDetail() {
           )}
         </div>
       </section>
-    </div>
+    </ContentReveal>
   );
 }
 

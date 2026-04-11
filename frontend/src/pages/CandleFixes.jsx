@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Skeleton from "../components/Skeleton";
 import StatusView from "../components/StatusView";
 import { contentApi } from "../services/api";
 import { formatApiError } from "../utils/format";
@@ -68,28 +69,27 @@ function CandleFixSkeleton() {
     <article className="grid gap-6 lg:grid-cols-[340px_685px] lg:items-start lg:gap-x-12">
       <div className="min-w-0 max-w-[340px] space-y-4 text-left">
         <div className="space-y-2">
-          <div className="h-8 w-[80%] rounded-md bg-brand-muted/15 animate-pulse"></div>
-          <div className="h-8 w-[60%] rounded-md bg-brand-muted/15 animate-pulse"></div>
+          <Skeleton className="h-8 w-[80%] rounded-md"></Skeleton>
+          <Skeleton className="h-8 w-[60%] rounded-md"></Skeleton>
         </div>
         
-        <div className="h-4 w-full rounded-md bg-danger/15 animate-pulse mt-4"></div>
+        <Skeleton className="mt-4 h-4 w-full rounded-md"></Skeleton>
 
         <div className="space-y-3 pt-4">
-          <div className="h-4 w-[25%] rounded-md bg-brand-muted/15 animate-pulse"></div>
+          <Skeleton className="h-4 w-[25%] rounded-md"></Skeleton>
           <ul className="space-y-3 pl-5 pt-1">
-            <li className="h-3 w-full rounded-md bg-brand-muted/15 animate-pulse"></li>
-            <li className="h-3 w-[85%] rounded-md bg-brand-muted/15 animate-pulse"></li>
-            <li className="h-3 w-[70%] rounded-md bg-brand-muted/15 animate-pulse"></li>
+            <li><Skeleton className="h-3 w-full rounded-md"></Skeleton></li>
+            <li><Skeleton className="h-3 w-[85%] rounded-md"></Skeleton></li>
+            <li><Skeleton className="h-3 w-[70%] rounded-md"></Skeleton></li>
           </ul>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5 lg:w-[685px] lg:grid-cols-3 lg:justify-self-end lg:gap-5">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div
+          <Skeleton
             key={`skeleton-image-${index}`}
-            className="h-[180px] w-full rounded-[10px] bg-brand-muted/15 animate-pulse sm:h-[200px] lg:h-[215px]"
-            aria-hidden="true"
+            className="h-[180px] w-full rounded-[10px] sm:h-[200px] lg:h-[215px]"
           />
         ))}
       </div>

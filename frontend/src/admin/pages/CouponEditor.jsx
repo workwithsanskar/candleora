@@ -5,7 +5,9 @@ import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import CandleCheckbox from "../../components/CandleCheckbox";
 import CandleMultiSelectControl from "../../components/CandleMultiSelectControl";
+import ContentReveal from "../../components/ContentReveal";
 import AdminDateTimePicker from "../components/AdminDateTimePicker";
+import { AdminFormPageSkeleton } from "../components/AdminSkeletons";
 import AdminSelect from "../components/AdminSelect";
 import {
   FILTER_FIELD_CLASS,
@@ -179,12 +181,7 @@ function CouponEditor() {
   });
 
   if (isEdit && couponQuery.isLoading) {
-    return (
-      <div className="rounded-[28px] border border-black/10 bg-white p-8 shadow-sm">
-        <div className="h-8 w-48 animate-pulse rounded-full bg-black/8" />
-        <div className="mt-3 h-5 w-72 animate-pulse rounded-full bg-black/8" />
-      </div>
-    );
+    return <AdminFormPageSkeleton sectionCount={5} />;
   }
 
   if (isEdit && couponQuery.isError) {
@@ -202,7 +199,7 @@ function CouponEditor() {
   }
 
   return (
-    <div className="space-y-6">
+    <ContentReveal className="space-y-6">
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -481,7 +478,7 @@ function CouponEditor() {
           </div>
         </section>
       </form>
-    </div>
+    </ContentReveal>
   );
 }
 

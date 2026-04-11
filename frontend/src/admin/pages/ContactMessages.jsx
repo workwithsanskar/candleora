@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
@@ -207,13 +209,26 @@ function ContactMessages() {
       >
         {selectedMessageQuery.isLoading ? (
           <div className="space-y-4">
-            <div className="h-20 animate-pulse rounded-[22px] bg-black/8" />
-            <div className="h-32 animate-pulse rounded-[22px] bg-black/8" />
+            <div className="grid gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={`message-skeleton-${index}`} className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                  <Skeleton className="mt-4 h-5 w-24 rounded-full" />
+                  <Skeleton className="mt-3 h-3.5 w-32 rounded-full" />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-[22px] border border-black/8 bg-white p-4">
+              <Skeleton className="h-4 w-20 rounded-full" />
+              <Skeleton className="mt-4 h-3.5 w-full rounded-full" />
+              <Skeleton className="mt-2 h-3.5 w-full rounded-full" />
+              <Skeleton className="mt-2 h-3.5 w-4/5 rounded-full" />
+            </div>
           </div>
         ) : null}
 
         {selectedMessage ? (
-          <div className="space-y-4">
+          <ContentReveal className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Sender</p>
@@ -243,7 +258,7 @@ function ContactMessages() {
                 {selectedMessage.message}
               </p>
             </section>
-          </div>
+          </ContentReveal>
         ) : null}
       </Modal>
     </div>

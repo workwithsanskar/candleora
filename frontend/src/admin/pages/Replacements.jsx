@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import Skeleton from "../../components/Skeleton";
 import FiltersBar from "../components/FiltersBar";
 import Pagination from "../components/Pagination";
 import adminApi from "../services/adminApi";
@@ -157,7 +158,11 @@ function Replacements() {
                     <tr key={`replacement-loading-${rowIndex}`}>
                       {Array.from({ length: 9 }).map((__, cellIndex) => (
                         <td key={`replacement-loading-${rowIndex}-${cellIndex}`} className="border-b border-black/6 px-4 py-4">
-                          <div className="h-4 animate-pulse rounded-full bg-black/8" />
+                          <Skeleton
+                            className={`h-4 rounded-full ${
+                              cellIndex === 0 ? "w-16" : cellIndex === 3 ? "w-24" : cellIndex === 8 ? "w-20" : "w-28"
+                            }`}
+                          />
                         </td>
                       ))}
                     </tr>

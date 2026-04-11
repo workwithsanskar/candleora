@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
 import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
@@ -379,12 +381,15 @@ function Products() {
           <div key={card.label} className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-muted">{card.label}</p>
             {productsQuery.isLoading ? (
-              <div className="mt-4 h-10 animate-pulse rounded-full bg-black/8" />
+              <div className="mt-4 space-y-3">
+                <Skeleton className="h-10 w-20 rounded-full" />
+                <Skeleton className="h-4 w-36 rounded-full" />
+              </div>
             ) : (
-              <>
-                <p className="mt-4 text-4xl font-semibold text-brand-dark">{card.value}</p>
+              <ContentReveal className="mt-4">
+                <p className="text-4xl font-semibold text-brand-dark">{card.value}</p>
                 <p className="mt-2 text-sm text-brand-muted">{card.hint}</p>
-              </>
+              </ContentReveal>
             )}
           </div>
         ))}
@@ -469,7 +474,22 @@ function Products() {
                   {inventoryHistoryQuery.isLoading ? (
                     <div className="space-y-3">
                       {Array.from({ length: 5 }).map((_, index) => (
-                        <div key={index} className="h-20 animate-pulse rounded-[22px] bg-black/8" />
+                        <div key={index} className="rounded-[22px] border border-black/8 bg-[#fcfaf6] p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32 rounded-full" />
+                              <Skeleton className="h-3 w-24 rounded-full" />
+                            </div>
+                            <div className="flex gap-2">
+                              <Skeleton className="h-6 w-24 rounded-full" />
+                              <Skeleton className="h-6 w-24 rounded-full" />
+                            </div>
+                          </div>
+                          <div className="mt-3 space-y-2">
+                            <Skeleton className="h-3.5 w-full rounded-full" />
+                            <Skeleton className="h-3.5 w-2/3 rounded-full" />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   ) : inventoryHistoryQuery.data?.length ? (

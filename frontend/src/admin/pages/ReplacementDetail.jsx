@@ -2,8 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
+import ContentReveal from "../../components/ContentReveal";
 import FiltersBar from "../components/FiltersBar";
 import Modal from "../components/Modal";
+import {
+  AdminMetricGridSkeleton,
+  AdminPanelSkeleton,
+} from "../components/AdminSkeletons";
 import adminApi from "../services/adminApi";
 import {
   FILTER_FIELD_CLASS,
@@ -216,23 +221,19 @@ function ReplacementDetail() {
 
         {replacementQuery.isLoading ? (
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={`replacement-skeleton-${index}`} className="h-40 animate-pulse rounded-[24px] bg-black/8" />
-              ))}
-            </div>
+            <AdminMetricGridSkeleton />
             <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-              <div className="h-[360px] animate-pulse rounded-[24px] bg-black/8" />
+              <AdminPanelSkeleton heightClassName="h-[360px]" header lines={3} actionCount={1} />
               <div className="space-y-4">
-                <div className="h-56 animate-pulse rounded-[24px] bg-black/8" />
-                <div className="h-44 animate-pulse rounded-[24px] bg-black/8" />
+                <AdminPanelSkeleton heightClassName="h-56" header lines={4} />
+                <AdminPanelSkeleton heightClassName="h-44" header={false} lines={3} actionCount={3} />
               </div>
             </div>
           </div>
         ) : null}
 
         {replacement ? (
-          <>
+          <ContentReveal className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {requestSummary.map((card) => (
                 <div key={card.label} className="rounded-[24px] border border-black/8 bg-[#fbf7f0] p-5">
@@ -401,7 +402,7 @@ function ReplacementDetail() {
                 </div>
               </div>
             </section>
-          </>
+          </ContentReveal>
         ) : null}
       </div>
 

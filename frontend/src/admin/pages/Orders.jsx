@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
 import AdminDatePicker from "../components/AdminDatePicker";
 import DataTable from "../components/DataTable";
 import AdminSelect from "../components/AdminSelect";
@@ -444,14 +446,36 @@ function Orders() {
       >
         {orderDetailQuery.isLoading ? (
           <div className="space-y-4">
-            <div className="h-6 animate-pulse rounded-full bg-black/8" />
-            <div className="h-24 animate-pulse rounded-[22px] bg-black/8" />
-            <div className="h-24 animate-pulse rounded-[22px] bg-black/8" />
+            <div className="grid gap-4 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={`detail-skeleton-${index}`} className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
+                  <Skeleton className="h-4 w-24 rounded-full" />
+                  <Skeleton className="mt-4 h-5 w-28 rounded-full" />
+                  <Skeleton className="mt-3 h-3.5 w-32 rounded-full" />
+                  <Skeleton className="mt-2 h-3.5 w-24 rounded-full" />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-[22px] border border-black/8 bg-white p-4">
+              <Skeleton className="h-4 w-20 rounded-full" />
+              <div className="mt-4 space-y-3">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div key={`item-skeleton-${index}`} className="flex items-center gap-4 rounded-[18px] border border-black/8 bg-[#fcfaf6] p-3">
+                    <Skeleton className="h-16 w-16 rounded-2xl" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-4 w-40 max-w-full rounded-full" />
+                      <Skeleton className="h-3 w-16 rounded-full" />
+                    </div>
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : null}
 
         {detail ? (
-          <div className="space-y-3">
+          <ContentReveal className="space-y-3">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-[22px] border border-black/8 bg-[#fbf7f0] p-3.5">
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted">Customer Details</p>
@@ -504,7 +528,7 @@ function Orders() {
                 ))}
               </div>
             </div>
-          </div>
+          </ContentReveal>
         ) : null}
       </Modal>
     </div>

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import CandleCheckbox from "../../components/CandleCheckbox";
+import ContentReveal from "../../components/ContentReveal";
 import { uploadAssetToCloudinary } from "../../utils/cloudinary";
 import {
   clearFestiveBannerDismissals,
@@ -12,6 +13,7 @@ import {
 } from "../../utils/festiveBanner";
 import { formatApiError, formatCurrency, formatDateTime } from "../../utils/format";
 import AdminDateTimePicker from "../components/AdminDateTimePicker";
+import { AdminFormPageSkeleton } from "../components/AdminSkeletons";
 import AdminSelect from "../components/AdminSelect";
 import {
   FILTER_FIELD_CLASS,
@@ -369,12 +371,7 @@ function BannerEditor() {
   };
 
   if (isEdit && bannerQuery.isLoading) {
-    return (
-      <div className="rounded-[28px] border border-black/10 bg-white p-8 shadow-sm">
-        <div className="h-8 w-52 animate-pulse rounded-full bg-black/8" />
-        <div className="mt-3 h-5 w-80 animate-pulse rounded-full bg-black/8" />
-      </div>
-    );
+    return <AdminFormPageSkeleton sectionCount={4} />;
   }
 
   if (isEdit && bannerQuery.isError) {
@@ -392,7 +389,7 @@ function BannerEditor() {
   }
 
   return (
-    <div className="space-y-6">
+    <ContentReveal className="space-y-6">
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -676,7 +673,7 @@ function BannerEditor() {
           </div>
         </section>
       </form>
-    </div>
+    </ContentReveal>
   );
 }
 

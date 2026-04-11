@@ -4,6 +4,7 @@ import { animate, useReducedMotion } from "framer-motion";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Skeleton from "../../components/Skeleton";
 import { useAuth } from "../../context/AuthContext";
 import adminApi from "../services/adminApi";
 import { formatApiError, formatDateTime } from "../../utils/format";
@@ -300,7 +301,19 @@ function Topbar({ title, searchValue, onSearchChange, onOpenSidebar, placeholder
                   {notificationsQuery.isLoading ? (
                     <div className="space-y-2 px-1 py-2">
                       {Array.from({ length: 4 }).map((_, index) => (
-                        <div key={index} className="h-20 animate-pulse rounded-[22px] bg-black/6" />
+                        <div key={index} className="rounded-[22px] border border-black/8 bg-white px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Skeleton className="h-5 w-16 rounded-full" />
+                                <Skeleton className="h-4 w-28 rounded-full" />
+                              </div>
+                              <Skeleton className="h-3.5 w-full rounded-full" />
+                              <Skeleton className="h-3.5 w-2/3 rounded-full" />
+                            </div>
+                            <Skeleton className="h-3.5 w-14 rounded-full" />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   ) : notificationsQuery.data?.items?.length ? (

@@ -335,4 +335,35 @@
       max-height: calc(100svh - 48px);
     }
   }
+
+  .skeleton-base {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      110deg,
+      rgba(34, 24, 11, 0.08) 8%,
+      rgba(255, 255, 255, 0.72) 18%,
+      rgba(242, 236, 226, 0.95) 33%,
+      rgba(34, 24, 11, 0.08) 48%
+    );
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.45s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: -110% 50%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-base {
+      animation: none;
+      background: rgba(34, 24, 11, 0.1);
+    }
+  }
 }

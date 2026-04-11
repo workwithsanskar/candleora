@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import CandleCheckbox from "../../components/CandleCheckbox";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
+import { AdminFormPageSkeleton } from "../components/AdminSkeletons";
 import AdminSelect from "../components/AdminSelect";
 import {
   FILTER_FIELD_CLASS,
@@ -177,12 +180,7 @@ function ProductEditor() {
   };
 
   if (isEdit && productQuery.isLoading) {
-    return (
-      <div className="rounded-[28px] border border-black/10 bg-white p-8 shadow-sm">
-        <div className="h-8 w-44 animate-pulse rounded-full bg-black/8" />
-        <div className="mt-3 h-5 w-80 animate-pulse rounded-full bg-black/8" />
-      </div>
-    );
+    return <AdminFormPageSkeleton sectionCount={4} />;
   }
 
   if (isEdit && productQuery.isError) {
@@ -200,7 +198,7 @@ function ProductEditor() {
   }
 
   return (
-    <div className="space-y-6">
+    <ContentReveal className="space-y-6">
       <section className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -458,7 +456,18 @@ function ProductEditor() {
                 {productOptionsQuery.isLoading ? (
                   <div className="space-y-3">
                     {Array.from({ length: 5 }).map((_, index) => (
-                      <div key={`similar-loading-${index}`} className="h-20 animate-pulse rounded-[22px] bg-black/8" />
+                      <div
+                        key={`similar-loading-${index}`}
+                        className="flex items-start gap-3 rounded-[22px] border border-black/8 bg-[#fcfaf6] px-3.5 py-3"
+                      >
+                        <Skeleton className="mt-1 h-4 w-4 rounded-[6px]" />
+                        <Skeleton className="h-14 w-14 rounded-[16px]" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <Skeleton className="h-4 w-40 max-w-full rounded-full" />
+                          <Skeleton className="h-3 w-36 rounded-full" />
+                          <Skeleton className="h-3 w-24 rounded-full" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : filteredSimilarProductOptions.length ? (
@@ -516,7 +525,7 @@ function ProductEditor() {
           </div>
         </section>
       </form>
-    </div>
+    </ContentReveal>
   );
 }
 

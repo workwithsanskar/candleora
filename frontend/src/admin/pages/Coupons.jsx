@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import ContentReveal from "../../components/ContentReveal";
+import Skeleton from "../../components/Skeleton";
 import AdminSelect from "../components/AdminSelect";
 import DataTable from "../components/DataTable";
 import FiltersBar from "../components/FiltersBar";
@@ -329,9 +331,14 @@ function Coupons() {
           <div key={card.label} className="rounded-[28px] border border-black/10 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-muted">{card.label}</p>
             {couponsQuery.isLoading ? (
-              <div className="mt-4 h-10 animate-pulse rounded-full bg-black/8" />
+              <div className="mt-4 space-y-3">
+                <Skeleton className="h-10 w-20 rounded-full" />
+                <Skeleton className="h-4 w-28 rounded-full" />
+              </div>
             ) : (
-              <p className={`mt-4 font-display text-4xl font-semibold ${card.tone}`}>{card.value}</p>
+              <ContentReveal className="mt-4">
+                <p className={`font-display text-4xl font-semibold ${card.tone}`}>{card.value}</p>
+              </ContentReveal>
             )}
           </div>
         ))}

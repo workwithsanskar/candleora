@@ -1,43 +1,34 @@
+import Skeleton from "./Skeleton";
+
 function ProductCardSkeleton() {
   return (
-    <article className="mx-auto w-full max-w-[250px] animate-pulse">
-      <div className="relative h-[314px] w-full overflow-hidden rounded-[14px] bg-[#F2ECE2]/80">
-        <div className="absolute right-2.5 top-2.5 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/50 text-black/10">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.1">
-            <path d="M12 20.5L4.8 13.6C2.8 11.6 2.7 8.4 4.5 6.5C6.2 4.8 9 4.8 10.8 6.4L12 7.5L13.2 6.4C15 4.8 17.8 4.8 19.5 6.5C21.3 8.4 21.2 11.6 19.2 13.6L12 20.5Z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+    <article className="mx-auto w-full max-w-[250px]">
+      <div className="relative h-[314px] w-full overflow-hidden rounded-[14px] border border-[#f0e5d5] bg-[linear-gradient(180deg,#f8f1e7_0%,#f2ece2_100%)]">
+        <Skeleton className="absolute left-2.5 top-2.5 z-10 h-[22px] w-[52px] rounded-[8px]" />
+        <Skeleton className="absolute right-2.5 top-2.5 z-10 h-9 w-9 rounded-full" />
+        <Skeleton className="h-full w-full rounded-[14px]" />
       </div>
 
-      <div className="space-y-[6px] pt-2.5 text-center">
-        <div className="mx-auto h-4 w-3/4 rounded bg-brand-muted/15" />
-        
-        <div className="flex items-center justify-center gap-1.5 pt-0.5">
-          <div className="h-4 w-12 rounded bg-brand-muted/15" />
-          <div className="h-4 w-16 rounded bg-brand-muted/20" />
+      <div className="space-y-[2px] pt-1.5 text-center">
+        <div className="flex justify-center">
+          <Skeleton className="h-[22px] w-[72%] rounded-full" />
         </div>
 
-        <div className="flex items-center justify-center gap-1">
-          <div className="flex items-center justify-center gap-0.5 text-brand-muted/20">
+        <div className="flex items-center justify-center gap-1.5 pt-1">
+          <Skeleton className="h-4 w-[74px] rounded-full" />
+          <Skeleton className="h-4 w-[86px] rounded-full" />
+        </div>
+
+        <div className="flex items-center justify-center gap-1 pt-1">
+          <div className="flex items-center justify-center gap-0.5">
             {Array.from({ length: 5 }).map((_, index) => (
-              <svg key={index} viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-current">
-                <path d="M12 2.8L14.8 8.5L21 9.4L16.5 13.8L17.6 20L12 17L6.4 20L7.5 13.8L3 9.4L9.2 8.5L12 2.8Z" />
-              </svg>
+              <Skeleton key={index} className="h-[14px] w-[14px] rounded-full" />
             ))}
           </div>
-          <div className="h-3 w-6 rounded bg-brand-muted/15" />
+          <Skeleton className="h-3 w-8 rounded-full" />
         </div>
 
-        <div className="mt-2 inline-flex h-[36px] w-full items-center justify-center rounded-[8px] bg-brand-muted/10 text-[13px] font-semibold text-brand-muted/40 border border-brand-muted/15">
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="8.5" />
-              <path d="M12 8.5V15.5" strokeLinecap="round" />
-              <path d="M8.5 12H15.5" strokeLinecap="round" />
-            </svg>
-            Add to Cart
-          </div>
-        </div>
+        <Skeleton className="mt-1 h-[36px] w-full rounded-[8px]" />
       </div>
     </article>
   );
