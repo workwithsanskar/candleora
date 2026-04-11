@@ -120,6 +120,42 @@ class ProductReviewIntegrationTest extends IntegrationTestSupport {
         org.junit.jupiter.api.Assertions.assertEquals(demoUser.getId(), updatedReview.getReviewerUser().getId());
     }
 
+    @Test
+    void getReviewsUsesLatestDuplicateReviewForAuthenticatedUser() throws Exception {
+        AppUser demoUser = appUserRepository.findByEmailIgnoreCase("demo@candleora.com")
+            .orElseThrow();
+        Product product = productRepository.findById(1L).orElseThrow();
+
+        ProductReview olderReview = new ProductReview();
+        olderReview.setProduct(product);
+        olderReview.setReviewerUser(demoUser);
+        olderReview.setReviewerName("Demo Customer");
+        olderReview.setReviewerEmail("demo@candleora.com");
+        olderReview.setRating(4);
+        olderReview.setMessage("Older duplicate review.");
+        productReviewRepository.save(olderReview);
+
+        ProductReview latestReview = new ProductReview();
+        latestReview.setProduct(product);
+        latestReview.setReviewerUser(demoUser);
+        latestReview.setReviewerName("Demo Customer");
+        latestReview.setReviewerEmail("demo@candleora.com");
+        latestReview.setRating(5);
+        latestReview.setMessage("Latest duplicate review.");
+        productReviewRepository.save(latestReview);
+
+        String token = loginAsDemoUser();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/api/products/1/reviews")
+                    .header(HttpHeaders.AUTHORIZATION, bearerToken(token))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.reviewCount").value(2))
+            .andExpect(jsonPath("$.currentUserReview.message").value("Latest duplicate review."))
+            .andExpect(jsonPath("$.currentUserReview.rating").value(5));
+    }
+
     private Map<String, Object> reviewPayload() {
         return Map.of(
             "reviewerName", "Demo Customer",

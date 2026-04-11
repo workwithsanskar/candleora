@@ -135,6 +135,25 @@ describe("ProductDetail", () => {
     expect(await screen.findByText("That product is unavailable")).toBeInTheDocument();
   });
 
+  it("keeps the product page visible when reviews fail to load", async () => {
+    mockCatalogApi.getProductReviews.mockRejectedValue(
+      new Error("Reviews are temporarily unavailable."),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/product/1"]}>
+        <Routes>
+          <Route path="/product/:id" element={<ProductDetail />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Lavender Ember Jar" })).toBeInTheDocument();
+    expect(screen.queryByText("That product is unavailable")).not.toBeInTheDocument();
+    expect(screen.getByText("Reviews unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Reviews are temporarily unavailable.")).toBeInTheDocument();
+  });
+
   it("hides the similar products section when no related products are returned", async () => {
     mockCatalogApi.getRelatedProducts.mockResolvedValue([]);
 

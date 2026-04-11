@@ -135,7 +135,7 @@ public class ProductReviewService {
     private Optional<ProductReview> resolveExistingReview(Long productId, AppUser user) {
         Long reviewerUserId = currentUserId(user);
         if (reviewerUserId != null) {
-            Optional<ProductReview> byUser = productReviewRepository.findByProductIdAndReviewerUserId(
+            Optional<ProductReview> byUser = productReviewRepository.findFirstByProductIdAndReviewerUserIdOrderByCreatedAtDescIdDesc(
                 productId,
                 reviewerUserId
             );
@@ -149,7 +149,10 @@ public class ProductReviewService {
             return Optional.empty();
         }
 
-        return productReviewRepository.findByProductIdAndReviewerEmailIgnoreCase(productId, reviewerEmail);
+        return productReviewRepository.findFirstByProductIdAndReviewerEmailIgnoreCaseOrderByCreatedAtDescIdDesc(
+            productId,
+            reviewerEmail
+        );
     }
 
     private void attachReviewToUser(ProductReview review, AppUser user) {

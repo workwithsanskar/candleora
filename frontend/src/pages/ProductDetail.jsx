@@ -90,6 +90,7 @@ function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [reviewSummary, setReviewSummary] = useState(() => normalizeReviewSummary(null, 4.8));
   const [error, setError] = useState("");
+  const [reviewsError, setReviewsError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const prefersReducedMotion = useReducedMotion();
@@ -99,8 +100,10 @@ function ProductDetail() {
     setIsLoading(true);
     setIsReviewsLoading(true);
     setError("");
+    setReviewsError("");
+    setReviewSummary(normalizeReviewSummary(null, 4.8));
 
-    Promise.all([
+    Promise.allSettled([
       catalogApi.getProduct(id),
       catalogApi.getRelatedProducts(id),
       catalogApi.getProductReviews(id),
@@ -110,17 +113,28 @@ function ProductDetail() {
           return;
         }
 
-        const normalized = normalizeProduct(productResponse);
+        if (productResponse.status === "rejected") {
+          setError(formatApiError(productResponse.reason));
+          return;
+        }
+
+        const normalized = normalizeProduct(productResponse.value);
         setProduct(normalized);
         setSelectedImage(normalized.imageUrls[0]);
         setQuantity(1);
-        setRelatedProducts(relatedResponse ?? []);
-        setReviewSummary(normalizeReviewSummary(reviewResponse, normalized.rating));
-      })
-      .catch((productError) => {
-        if (isMounted) {
-          setError(formatApiError(productError));
+        setRelatedProducts(
+          relatedResponse.status === "fulfilled" && Array.isArray(relatedResponse.value)
+            ? relatedResponse.value
+            : [],
+        );
+
+        if (reviewResponse.status === "fulfilled") {
+          setReviewSummary(normalizeReviewSummary(reviewResponse.value, normalized.rating));
+          return;
         }
+
+        setReviewsError(formatApiError(reviewResponse.reason));
+        setReviewSummary(normalizeReviewSummary(null, normalized.rating));
       })
       .finally(() => {
         if (isMounted) {
@@ -180,6 +194,9 @@ function ProductDetail() {
   const lowStockThreshold = Number(product.lowStockThreshold ?? 10);
   const showLowStock = Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= lowStockThreshold;
   const hasScrollableReviews = reviewSummary.reviews.length > 3;
+  const reviewBadgeLabel = reviewsError
+    ? "Reviews unavailable"
+    : `${reviewSummary.reviewCount} ${reviewSummary.reviewCount === 1 ? "review" : "reviews"}`;
 
   return (
     <section className="container-shell py-6 pb-28 sm:py-7 sm:pb-32 lg:py-5 lg:pb-8">
@@ -385,13 +402,17 @@ function ProductDetail() {
             </p>
           </div>
           <div className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black">
-            {reviewSummary.reviewCount} {reviewSummary.reviewCount === 1 ? "review" : "reviews"}
+            {reviewBadgeLabel}
           </div>
         </div>
 
         {isReviewsLoading ? (
           <div className="mt-8 rounded-[20px] border border-dashed border-black/12 px-6 py-10 text-sm leading-7 text-black/58">
             Loading reviews...
+          </div>
+        ) : reviewsError ? (
+          <div className="mt-8 rounded-[20px] border border-dashed border-black/12 bg-[#fffaf0] px-6 py-8 text-sm leading-7 text-black/62">
+            {reviewsError}
           </div>
         ) : (
           <div className="mt-8 max-w-[760px] space-y-4">
